@@ -10,7 +10,7 @@ including but not limited to the Human Microbiome Project, now allow us to ident
 effect sizes for differences among ages and populations, and differences associated
 with obesity, IBD, and other disorders.
 
-The original Evident demo was a web-based software tool that can be found `here <https://github.com/biocore/Evident-initial-demo`__.
+The original Evident demo was a web-based software tool that can be found `here <https://github.com/biocore/Evident-initial-demo>`__.
 
 .. |Build Status| image:: https://travis-ci.org/biocore/evident.svg
    :target: https://travis-ci.org/biocore/evident
