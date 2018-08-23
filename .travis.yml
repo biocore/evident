@@ -1,0 +1,20 @@
+dist: precise
+language: python
+sudo: false
+env:
+  global:
+    - PYTHON_VERSION=3.5
+before_install:
+  - wget http://repo.continuum.io/miniconda/Miniconda3-4.3.31-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda3/bin:$PATH
+install:
+  - wget https://data.qiime2.org/distro/core/qiime2-2018.6-py35-linux-conda.yml
+  - travis_retry conda env create -n qiime2-2018.6 -q --file qiime2-2018.6-py35-linux-conda.yml
+  - rm qiime2-2018.6-py35-linux-conda.yml
+script:
+  - nosetests
+  # - flake8 evident/* setup.py scripts/qiita*
+after_success:
+  - if [ ${TEST_ADD_STUDIES} == "False" ]; then codecov ; fi
