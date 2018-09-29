@@ -1,0 +1,121 @@
+#SampleID	Gender
+1	Male
+2	Male
+3	Male
+4	Male
+5	Male
+6	Male
+7	Male
+8	Male
+9	Male
+10	Male
+11	Male
+12	Male
+13	Male
+14	Male
+15	Male
+16	Male
+17	Male
+18	Male
+19	Male
+20	Male
+21	Male
+22	Male
+23	Male
+24	Male
+25	Male
+26	Male
+27	Male
+28	Male
+29	Male
+30	Male
+31	Male
+32	Male
+33	Male
+34	Male
+35	Male
+36	Male
+37	Male
+38	Male
+39	Male
+40	Male
+41	Male
+42	Male
+43	Male
+44	Male
+45	Male
+46	Male
+47	Male
+48	Male
+49	Male
+50	Male
+51	Female
+52	Female
+53	Female
+54	Female
+55	Female
+56	Female
+57	Female
+58	Female
+59	Female
+60	Female
+61	Female
+62	Female
+63	Female
+64	Female
+65	Female
+66	Female
+67	Female
+68	Female
+69	Female
+70	Female
+71	Female
+72	Female
+73	Female
+74	Female
+75	Female
+76	Female
+77	Female
+78	Female
+79	Female
+80	Female
+81	Female
+82	Female
+83	Female
+84	Female
+85	Female
+86	Female
+87	Female
+88	Female
+89	Female
+90	Female
+91	Female
+92	Female
+93	Female
+94	Female
+95	Female
+96	Female
+97	Female
+98	Female
+99	Female
+100	Female
+101	Not applicable
+102	Not applicable
+103	Not applicable
+104	Not applicable
+105	Not applicable
+106	Not applicable
+107	Not applicable
+108	Not applicable
+109	Not applicable
+110	Not applicable
+111	Not applicable
+112	Not applicable
+113	Not applicable
+114	Not applicable
+115	Not applicable
+116	Not applicable
+117	Not applicable
+118	Not applicable
+119	Not applicable
+120	Not applicable

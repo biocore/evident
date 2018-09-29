@@ -1,0 +1,121 @@
+#SampleID	Country
+1	US
+2	US
+3	US
+4	US
+5	US
+6	US
+7	US
+8	US
+9	US
+10	US
+11	US
+12	US
+13	US
+14	US
+15	US
+16	US
+17	US
+18	US
+19	US
+20	US
+21	US
+22	US
+23	US
+24	US
+25	US
+26	France
+27	France
+28	France
+29	France
+30	France
+31	France
+32	France
+33	France
+34	France
+35	France
+36	France
+37	France
+38	France
+39	France
+40	France
+41	France
+42	France
+43	France
+44	France
+45	France
+46	France
+47	France
+48	France
+49	France
+50	France
+51	Germany
+52	Germany
+53	Germany
+54	Germany
+55	Germany
+56	Germany
+57	Germany
+58	Germany
+59	Germany
+60	Germany
+61	Germany
+62	Germany
+63	Germany
+64	Germany
+65	Germany
+66	Germany
+67	Germany
+68	Germany
+69	Germany
+70	Germany
+71	Germany
+72	Germany
+73	Germany
+74	Germany
+75	Germany
+76	Mexico
+77	Mexico
+78	Mexico
+79	Mexico
+80	Mexico
+81	Mexico
+82	Mexico
+83	Mexico
+84	Mexico
+85	Mexico
+86	Mexico
+87	Mexico
+88	Mexico
+89	Mexico
+90	Mexico
+91	Mexico
+92	Mexico
+93	Mexico
+94	Mexico
+95	Mexico
+96	Mexico
+97	Mexico
+98	Mexico
+99	Mexico
+100	Mexico
+101	Missing: Not provided
+102	Missing: Not provided
+103	Missing: Not provided
+104	Missing: Not provided
+105	Missing: Not provided
+106	Missing: Not provided
+107	Missing: Not provided
+108	Missing: Not provided
+109	Missing: Not provided
+110	Missing: Not provided
+111	Missing: Not provided
+112	Missing: Not provided
+113	Missing: Not provided
+114	Missing: Not provided
+115	Missing: Not provided
+116	Missing: Not provided
+117	Missing: Not provided
+118	Missing: Not provided
+119	Missing: Not provided
+120	Missing: Not provided

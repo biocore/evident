@@ -1,0 +1,121 @@
+#SampleID	Age	Country	Gender
+1	28.0	US	Male
+2	28.0	US	Male
+3	30.0	US	Male
+4	30.0	US	Male
+5	31.0	US	Male
+6	31.0	US	Male
+7	32.0	US	Male
+8	32.0	US	Male
+9	32.0	US	Male
+10	33.0	US	Male
+11	33.0	US	Male
+12	34.0	US	Male
+13	34.0	US	Male
+14	34.0	US	Male
+15	35.0	US	Male
+16	35.0	US	Male
+17	35.0	US	Male
+18	35.0	US	Male
+19	35.0	US	Male
+20	36.0	US	Male
+21	36.0	US	Male
+22	36.0	US	Male
+23	36.0	US	Male
+24	36.0	US	Male
+25	36.0	US	Male
+26	36.0	France	Male
+27	36.0	France	Male
+28	37.0	France	Male
+29	37.0	France	Male
+30	37.0	France	Male
+31	37.0	France	Male
+32	37.0	France	Male
+33	37.0	France	Male
+34	37.0	France	Male
+35	37.0	France	Male
+36	37.0	France	Male
+37	37.0	France	Male
+38	38.0	France	Male
+39	38.0	France	Male
+40	38.0	France	Male
+41	38.0	France	Male
+42	38.0	France	Male
+43	38.0	France	Male
+44	38.0	France	Male
+45	38.0	France	Male
+46	38.0	France	Male
+47	38.0	France	Male
+48	38.0	France	Male
+49	39.0	France	Male
+50	39.0	France	Male
+51	39.0	Germany	Female
+52	39.0	Germany	Female
+53	39.0	Germany	Female
+54	39.0	Germany	Female
+55	39.0	Germany	Female
+56	39.0	Germany	Female
+57	39.0	Germany	Female
+58	39.0	Germany	Female
+59	39.0	Germany	Female
+60	40.0	Germany	Female
+61	40.0	Germany	Female
+62	40.0	Germany	Female
+63	40.0	Germany	Female
+64	40.0	Germany	Female
+65	40.0	Germany	Female
+66	40.0	Germany	Female
+67	40.0	Germany	Female
+68	40.0	Germany	Female
+69	40.0	Germany	Female
+70	41.0	Germany	Female
+71	41.0	Germany	Female
+72	41.0	Germany	Female
+73	41.0	Germany	Female
+74	41.0	Germany	Female
+75	41.0	Germany	Female
+76	41.0	Mexico	Female
+77	42.0	Mexico	Female
+78	43.0	Mexico	Female
+79	43.0	Mexico	Female
+80	43.0	Mexico	Female
+81	43.0	Mexico	Female
+82	43.0	Mexico	Female
+83	44.0	Mexico	Female
+84	44.0	Mexico	Female
+85	45.0	Mexico	Female
+86	45.0	Mexico	Female
+87	46.0	Mexico	Female
+88	46.0	Mexico	Female
+89	46.0	Mexico	Female
+90	46.0	Mexico	Female
+91	47.0	Mexico	Female
+92	47.0	Mexico	Female
+93	48.0	Mexico	Female
+94	48.0	Mexico	Female
+95	49.0	Mexico	Female
+96	49.0	Mexico	Female
+97	50.0	Mexico	Female
+98	51.0	Mexico	Female
+99	52.0	Mexico	Female
+100	53.0	Mexico	Female
+101	nan	Missing: Not provided	Not applicable
+102	nan	Missing: Not provided	Not applicable
+103	nan	Missing: Not provided	Not applicable
+104	nan	Missing: Not provided	Not applicable
+105	nan	Missing: Not provided	Not applicable
+106	nan	Missing: Not provided	Not applicable
+107	nan	Missing: Not provided	Not applicable
+108	nan	Missing: Not provided	Not applicable
+109	nan	Missing: Not provided	Not applicable
+110	nan	Missing: Not provided	Not applicable
+111	nan	Missing: Not provided	Not applicable
+112	nan	Missing: Not provided	Not applicable
+113	nan	Missing: Not provided	Not applicable
+114	nan	Missing: Not provided	Not applicable
+115	nan	Missing: Not provided	Not applicable
+116	nan	Missing: Not provided	Not applicable
+117	nan	Missing: Not provided	Not applicable
+118	nan	Missing: Not provided	Not applicable
+119	nan	Missing: Not provided	Not applicable
+120	nan	Missing: Not provided	Not applicable
