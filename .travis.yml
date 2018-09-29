@@ -15,6 +15,6 @@ install:
   - rm qiime2-2018.6-py35-linux-conda.yml
 script:
   - nosetests
-  # - flake8 evident/* setup.py scripts/qiita*
+  - flake8 evident/* setup.py scripts/qiita*
 after_success:
   - if [ ${TEST_ADD_STUDIES} == "False" ]; then codecov ; fi
