@@ -18,14 +18,14 @@ from os.path import join, basename, exists
 from itertools import combinations
 from functools import partial
 from skbio import DistanceMatrix
+from scipy.stats import mannwhitneyu
 # from skbio.stats.distance import permanova
-from scipy.stats import mannwhitneyu, spearmanr
 
 
 def effect_size(mappings, alphas, betas, output, jobs, permutations,
-                alpha_method, overwrite, na_values):
-    # As we can have multiple mapping, alpha or files, we will construct a mfs
-    # dictionary with all the dataframes. Additionally, we will load the
+                overwrite, na_values):
+    # As we can have multiple mapping, alpha or beta files, we will construct
+    # a mfs dictionary with all the dataframes. Additionally, we will load the
     # data_dictionary.csv file so we can use it to process the data
     mappings = {f: pd.read_csv(f, sep='\t', dtype=str, na_values=na_values)
                 for f in mappings}
@@ -49,10 +49,9 @@ def effect_size(mappings, alphas, betas, output, jobs, permutations,
         for a, af in alphas.items():
             alphas[a].set_index('#SampleID', inplace=True)
 
-        for af, c, fname, method in _generate_alphas(alphas, mappings,
-                                                     output, alpha_method,
-                                                     overwrite):
-            _process_column(af, c, fname, method)
+        for af, c, fname in _generate_alphas(alphas, mappings,
+                                             output, overwrite):
+            _process_column(af, c, fname, alphas, betas)
 
 
 # def _beta(permutations, data, xvalues, yvalues):
@@ -74,16 +73,10 @@ def effect_size(mappings, alphas, betas, output, jobs, permutations,
 #             xvals, yvals)
 
 
-def _alpha(alpha_method, data, xvalues, yvalues):
+def _alpha(data, xvalues, yvalues):
     x_data = data.loc[xvalues.index.values].dropna().tolist()
     y_data = data.loc[yvalues.index.values].dropna().tolist()
-    to_trim = np.min([len(x_data), len(y_data)])
-    if alpha_method == 'mannwhitneyu':
-        stat, pval = mannwhitneyu(x_data, y_data, alternative='two-sided')
-    else:
-        x_data = np.random.choice(x_data, size=to_trim, replace=False)
-        y_data = np.random.choice(y_data, size=to_trim, replace=False)
-        stat, pval = spearmanr(x_data, y_data)
+    stat, pval = mannwhitneyu(x_data, y_data, alternative='two-sided')
     return pval, stat, x_data, y_data
 
 
@@ -100,23 +93,22 @@ def _alpha(alpha_method, data, xvalues, yvalues):
 #                     yield (bf, mf[col].dropna(), fname, method)
 
 
-def _generate_alphas(alphas, mappings, output, alpha_method, overwrite):
-    method = partial(_alpha, alpha_method)
+def _generate_alphas(alphas, mappings, output, overwrite):
     for alpha, af in alphas.items():
         afp = basename(alpha)
         for ac in af.columns.values:
             for mapping, mf in mappings.items():
                 mfp = basename(mapping)
                 for col in mf.columns.values:
-                    fname = join(output, '%s.%s.%s.%s.%s.pickle' % (
-                        alpha_method, afp, ac, mfp, col))
+                    fname = join(output, '%s.%s.%s.%s.pickle' % (
+                        afp, ac, mfp, col))
                     if not exists(fname) or overwrite:
                         yield (
                             pd.to_numeric(af[ac], errors='coerce'),
-                            mf[col].dropna(), fname, method)
+                            mf[col].dropna(), fname)
 
 
-def _process_column(data, cseries, fname, method):
+def _process_column(data, cseries, fname, alphas, betas):
     """calculate significant comparisons and return them as a list/rows
 
     Parameters
@@ -127,6 +119,10 @@ def _process_column(data, cseries, fname, method):
     qip = []
     pairwise_comparisons = []
     for x, y in combinations(values.keys(), 2):
+        if betas:
+            method = partial(_beta, permutations)
+        else:
+            method = _alpha
         pval, stat, xval, yval = method(data, values[x], values[y])
         if np.isnan(pval) or np.isnan(stat):
             continue

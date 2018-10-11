@@ -13,6 +13,7 @@ install:
   - wget https://data.qiime2.org/distro/core/qiime2-2018.6-py35-linux-conda.yml
   - travis_retry conda env create -n qiime2-2018.6 -q --file qiime2-2018.6-py35-linux-conda.yml
   - rm qiime2-2018.6-py35-linux-conda.yml
+  - source activate qiime2-2018.6
 script:
   - nosetests
   - flake8 evident/* setup.py scripts/qiita*
