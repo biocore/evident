@@ -15,6 +15,7 @@ install:
   - rm qiime2-2018.6-py35-linux-conda.yml
   - source activate qiime2-2018.6
   - pip install flake8
+  - pip install joblib
 script:
   - nosetests
   - flake8 evident/* setup.py scripts/qiita*
