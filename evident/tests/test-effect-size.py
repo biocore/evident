@@ -69,11 +69,11 @@ class TestEffectSize(TestCase):
              gender_sn_g, gender_otu, gender_otu_g) = gen_files
 
             with open(pfp(gender_pd), "rb") as file_gender_pd, \
-                open(pfp(gender_pd_g), "rb") as file_gender_pd_g, \
-                open(pfp(gender_sn), "rb") as file_gender_sn, \
-                open(pfp(gender_sn_g), "rb") as file_gender_sn_g, \
-                open(pfp(gender_otu), "rb") as file_gender_otu, \
-                open(pfp(gender_otu_g), "rb") as file_gender_otu_g:
+                    open(pfp(gender_pd_g), "rb") as file_gender_pd_g, \
+                    open(pfp(gender_sn), "rb") as file_gender_sn, \
+                    open(pfp(gender_sn_g), "rb") as file_gender_sn_g, \
+                    open(pfp(gender_otu), "rb") as file_gender_otu, \
+                    open(pfp(gender_otu_g), "rb") as file_gender_otu_g:
 
                 results_gender_pd = pickle.load(file_gender_pd)
                 results_gender_pd_g = pickle.load(file_gender_pd_g)
@@ -124,11 +124,11 @@ class TestEffectSize(TestCase):
              country_sn_g, country_otu, country_otu_g) = country_files
 
             with open(pfp(country_pd), "rb") as file_country_pd, \
-                open(pfp(country_pd_g), "rb") as file_country_pd_g, \
-                open(pfp(country_sn), "rb") as file_country_sn, \
-                open(pfp(country_sn_g), "rb") as file_country_sn_g, \
-                open(pfp(country_otu), "rb") as file_country_otu, \
-                open(pfp(country_otu_g), "rb") as file_country_otu_g:
+                    open(pfp(country_pd_g), "rb") as file_country_pd_g, \
+                    open(pfp(country_sn), "rb") as file_country_sn, \
+                    open(pfp(country_sn_g), "rb") as file_country_sn_g, \
+                    open(pfp(country_otu), "rb") as file_country_otu, \
+                    open(pfp(country_otu_g), "rb") as file_country_otu_g:
 
                 results_country_pd = pickle.load(file_country_pd)
                 results_country_pd_g = pickle.load(file_country_pd_g)
@@ -179,11 +179,11 @@ class TestEffectSize(TestCase):
              age_sn_g, age_otu, age_otu_g) = age_files
 
             with open(pfp(age_pd), "rb") as file_age_pd, \
-                open(pfp(age_pd_g), "rb") as file_age_pd_g, \
-                open(pfp(age_sn), "rb") as file_age_sn, \
-                open(pfp(age_sn_g), "rb") as file_age_sn_g, \
-                open(pfp(age_otu), "rb") as file_age_otu, \
-                open(pfp(age_otu_g), "rb") as file_age_otu_g:
+                    open(pfp(age_pd_g), "rb") as file_age_pd_g, \
+                    open(pfp(age_sn), "rb") as file_age_sn, \
+                    open(pfp(age_sn_g), "rb") as file_age_sn_g, \
+                    open(pfp(age_otu), "rb") as file_age_otu, \
+                    open(pfp(age_otu_g), "rb") as file_age_otu_g:
 
                 results_age_pd = pickle.load(file_age_pd)
                 results_age_pd_g = pickle.load(file_age_pd_g)

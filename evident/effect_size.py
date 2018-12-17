@@ -7,7 +7,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # -----------------------------------------------------------------------------
 
-# import joblib
+import joblib
 import pickle
 
 import pandas as pd
@@ -19,7 +19,7 @@ from itertools import combinations
 from functools import partial
 from skbio import DistanceMatrix
 from scipy.stats import mannwhitneyu
-# from skbio.stats.distance import permanova
+from skbio.stats.distance import permanova
 
 
 def effect_size(mappings, alphas, betas, output, jobs, permutations,
@@ -38,11 +38,11 @@ def effect_size(mappings, alphas, betas, output, jobs, permutations,
                 len(mappings), len(betas), [
                     len(m.columns.values) for _, m in mappings.items()]))
 
-# with joblib.parallel.Parallel(n_jobs=jobs, verbose=100) as par:
-#     par(joblib.delayed(
-#         _process_column)(bf, c, fname, method)
-# for bf, c, fname, method in _generate_betas(
-#     betas, mappings, permutations, output))
+        with joblib.parallel.Parallel(n_jobs=jobs, verbose=100) as par:
+            par(joblib.delayed(
+                _process_column)(bf, c, fname, method)
+                for bf, c, fname, method in _generate_betas(
+                betas, mappings, permutations, output))
     else:
         alphas = {f: pd.read_csv(f, sep='\t', dtype=str, na_values=na_values)
                   for f in alphas}
@@ -54,23 +54,23 @@ def effect_size(mappings, alphas, betas, output, jobs, permutations,
             _process_column(af, c, fname, alphas, betas)
 
 
-# def _beta(permutations, data, xvalues, yvalues):
-#     x_ids = list(xvalues.index.values)
-#     y_ids = list(yvalues.index.values)
-#     ids = x_ids + y_ids
-#     data_test = data.filter(ids)
-#     permanova_result = permanova(
-#         distance_matrix=data_test,
-#         # we can use use either x or y cause they are the same
-#         column=xvalues.name,
-#         grouping=pd.concat([xvalues, yvalues]).to_frame(),
-#         permutations=permutations).to_dict()
-#     xvals = list(
-#         data_test.filter(xvalues.index.values).to_series().dropna().values)
-#     yvals = list(
-#         data_test.filter(yvalues.index.values).to_series().dropna().values)
-#     return (permanova_result['p-value'], permanova_result['test statistic'],
-#             xvals, yvals)
+def _beta(permutations, data, xvalues, yvalues):
+    x_ids = list(xvalues.index.values)
+    y_ids = list(yvalues.index.values)
+    ids = x_ids + y_ids
+    data_test = data.filter(ids)
+    permanova_result = permanova(
+        distance_matrix=data_test,
+        # we can use use either x or y cause they are the same
+        column=xvalues.name,
+        grouping=pd.concat([xvalues, yvalues]).to_frame(),
+        permutations=permutations).to_dict()
+    xvals = list(
+        data_test.filter(xvalues.index.values).to_series().dropna().values)
+    yvals = list(
+        data_test.filter(yvalues.index.values).to_series().dropna().values)
+    return (permanova_result['p-value'], permanova_result['test statistic'],
+            xvals, yvals)
 
 
 def _alpha(data, xvalues, yvalues):
@@ -80,17 +80,17 @@ def _alpha(data, xvalues, yvalues):
     return pval, stat, x_data, y_data
 
 
-# def _generate_betas(betas, mappings, permutations, output):
-#     method = partial(_beta, permutations)
-#     for beta, bf in betas.items():
-#         bfp = basename(beta)
-#         for mapping, mf in mappings.items():
-#             mfp = basename(mapping)
-#             for col in mf.columns.values:
-#                 fname = join(output, '%s.%s.%s.%d.pickle' % (
-#                     bfp, mfp, col, permutations))
-#                 if not exists(fname):
-#                     yield (bf, mf[col].dropna(), fname, method)
+def _generate_betas(betas, mappings, permutations, output):
+    method = partial(_beta, permutations)
+    for beta, bf in betas.items():
+        bfp = basename(beta)
+        for mapping, mf in mappings.items():
+            mfp = basename(mapping)
+            for col in mf.columns.values:
+                fname = join(output, '%s.%s.%s.%d.pickle' % (
+                    bfp, mfp, col, permutations))
+                if not exists(fname):
+                    yield (bf, mf[col].dropna(), fname, method)
 
 
 def _generate_alphas(alphas, mappings, output, overwrite):
@@ -108,7 +108,7 @@ def _generate_alphas(alphas, mappings, output, overwrite):
                             mf[col].dropna(), fname)
 
 
-def _process_column(data, cseries, fname, alphas, betas):
+def _process_column(data, cseries, fname, alphas, betas, permutations):
     """calculate significant comparisons and return them as a list/rows
 
     Parameters
