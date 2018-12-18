@@ -51,7 +51,7 @@ def effect_size(mappings, alphas, betas, output, jobs, permutations,
 
         for af, c, fname in _generate_alphas(alphas, mappings,
                                              output, overwrite):
-            _process_column(af, c, fname, alphas, betas)
+            _process_column(af, c, fname, alphas, betas, permutations)
 
 
 def _beta(permutations, data, xvalues, yvalues):
