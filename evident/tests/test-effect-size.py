@@ -23,9 +23,12 @@ class TestEffectSize(TestCase):
         mapping_age = join(self.filepath, 'mapping_age.txt')
         mapping_gender = join(self.filepath, 'mapping_gender.txt')
         mapping_country = join(self.filepath, 'mapping_country.txt')
+        mapping_race = join(self.filepath, 'mapping_race.txt')
+        mapping_site = join(self.filepath, 'mapping_site.txt')
 
-        self.mappings = [mapping, mapping_age, mapping_gender,
-                         mapping_country]
+        self.mappings_alphas = [mapping, mapping_age, mapping_gender,
+                                mapping_country]
+        self.mappings_betas = [mapping_site, mapping_race]
 
     def tearDown(self):
         for fp in self._clean_up_files:
@@ -41,16 +44,28 @@ class TestEffectSize(TestCase):
         alpha_sn = join(self.filepath, 'alpha_sn.txt')
         alpha_otu = join(self.filepath, 'alpha_otu.txt')
 
+        beta_site = join(self.filepath, 'dist_site.txt')
+        beta_race = join(self.filepath, 'dist_race.txt')
+
         alphas = [alpha, alpha_pd, alpha_sn, alpha_otu]
+        betas = [beta_site, beta_race]
         na_values = ['nan', 'Not applicable', 'Missing: Not provided',
                      'None']
 
         output = mkdtemp()
         self._clean_up_files.append(output)
 
-        _effect_size.effect_size(mappings=self.mappings, alphas=alphas,
+        # effect size for alpha diversities
+        _effect_size.effect_size(mappings=self.mappings_alphas, alphas=alphas,
                                  output=output, betas=None, jobs=None,
                                  permutations=None,
+                                 na_values=na_values,
+                                 overwrite=True)
+
+        # effect size for beta diversities
+        _effect_size.effect_size(mappings=self.mappings_betas, alphas=None,
+                                 output=output, betas=betas, jobs=2,
+                                 permutations=100,
                                  na_values=na_values,
                                  overwrite=True)
 
@@ -165,7 +180,7 @@ class TestEffectSize(TestCase):
                     results_country_otu['pooled_pval'],
                     results_country_pd['pooled_pval'])
 
-        # check effect size calculation for age (continous)
+        # check effect size calculation for age (continous, alpha div)
         age_results = [
             ('alpha_pd.txt.Faith_PD.mapping_age.txt.Age.pickle',
              'alpha_pd.txt.Faith_PD.mappings.txt.Age.pickle',
@@ -219,6 +234,44 @@ class TestEffectSize(TestCase):
                 np.testing.assert_array_less(
                     results_age_otu['pooled_pval'],
                     results_age_pd['pooled_pval'])
+
+        # check effect size calculation for beta diversities
+        biv_results = [
+            ('dist_site.txt.mapping_site.txt.Site.100.pickle',
+             'dist_race.txt.mapping_site.txt.Site.100.pickle',
+             'dist_race.txt.mapping_race.txt.Race.100.pickle',
+             'dist_site.txt.mapping_race.txt.Race.100.pickle')]
+
+        for biv_files in biv_results:
+            (site_site, race_site, race_race, site_race) = biv_files
+
+            with open(pfp(site_site), "rb") as biv_site_site, \
+                    open(pfp(race_site), "rb") as biv_race_site, \
+                    open(pfp(race_race), "rb") as biv_race_race, \
+                    open(pfp(site_race), "rb") as biv_site_race:
+
+                results_site_site = pickle.load(biv_site_site)
+                results_race_site = pickle.load(biv_race_site)
+                results_race_race = pickle.load(biv_race_race)
+                results_site_race = pickle.load(biv_site_race)
+
+                np.testing.assert_equal(
+                    len(results_site_site['pairwise_comparisons']),
+                    len(results_race_site['pairwise_comparisons']))
+                np.testing.assert_equal(
+                    results_site_site['pooled_pval'],
+                    results_race_site['pooled_pval'])
+
+                np.testing.assert_array_less(
+                    len(results_site_race['pairwise_comparisons']),
+                    len(results_race_race['pairwise_comparisons']))
+
+                np.testing.assert_array_less(
+                    results_site_race['pooled_pval'],
+                    results_race_race['pooled_pval'])
+                np.testing.assert_array_less(
+                    results_site_site['pooled_pval'],
+                    results_race_race['pooled_pval'])
 
 
 if __name__ == "__main__":
