@@ -1,0 +1,121 @@
+#SampleID	Site
+1	US
+2	US
+3	US
+4	US
+5	US
+6	US
+7	US
+8	US
+9	US
+10	US
+11	US
+12	US
+13	US
+14	US
+15	US
+16	US
+17	US
+18	US
+19	US
+20	US
+21	US
+22	US
+23	US
+24	US
+25	US
+26	US
+27	US
+28	US
+29	US
+30	US
+31	US
+32	US
+33	US
+34	US
+35	US
+36	US
+37	US
+38	US
+39	US
+40	US
+41	US
+42	US
+43	US
+44	US
+45	US
+46	US
+47	US
+48	US
+49	US
+50	US
+51	UK
+52	UK
+53	UK
+54	UK
+55	UK
+56	UK
+57	UK
+58	UK
+59	UK
+60	UK
+61	UK
+62	UK
+63	UK
+64	UK
+65	UK
+66	UK
+67	UK
+68	UK
+69	UK
+70	UK
+71	UK
+72	UK
+73	UK
+74	UK
+75	UK
+76	UK
+77	UK
+78	UK
+79	UK
+80	UK
+81	UK
+82	UK
+83	UK
+84	UK
+85	UK
+86	UK
+87	UK
+88	UK
+89	UK
+90	UK
+91	UK
+92	UK
+93	UK
+94	UK
+95	UK
+96	UK
+97	UK
+98	UK
+99	UK
+100	UK
+101	Not applicable
+102	Not applicable
+103	Not applicable
+104	Not applicable
+105	Not applicable
+106	Not applicable
+107	Not applicable
+108	Not applicable
+109	Not applicable
+110	Not applicable
+111	Not applicable
+112	Not applicable
+113	Not applicable
+114	Not applicable
+115	Not applicable
+116	Not applicable
+117	Not applicable
+118	Not applicable
+119	Not applicable
+120	Not applicable

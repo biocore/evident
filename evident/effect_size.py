@@ -33,16 +33,12 @@ def effect_size(mappings, alphas, betas, output, jobs, permutations,
         mappings[m].set_index('#SampleID', inplace=True)
     if betas:
         betas = {f: DistanceMatrix.read(f) for f in betas}
-        print(
-            'maps: %d, betas: %d, cols: %s' % (
-                len(mappings), len(betas), [
-                    len(m.columns.values) for _, m in mappings.items()]))
 
         with joblib.parallel.Parallel(n_jobs=jobs, verbose=100) as par:
             par(joblib.delayed(
-                _process_column)(bf, c, fname, method)
-                for bf, c, fname, method in _generate_betas(
-                betas, mappings, permutations, output))
+                _process_column)(bf, c, fname, alphas, betas, permutations)
+                for bf, c, fname in _generate_betas(
+                betas, mappings, permutations, output, overwrite))
     else:
         alphas = {f: pd.read_csv(f, sep='\t', dtype=str, na_values=na_values)
                   for f in alphas}
@@ -80,8 +76,8 @@ def _alpha(data, xvalues, yvalues):
     return pval, stat, x_data, y_data
 
 
-def _generate_betas(betas, mappings, permutations, output):
-    method = partial(_beta, permutations)
+def _generate_betas(betas, mappings, permutations, output, overwrite):
+    # method = partial(_beta, permutations)
     for beta, bf in betas.items():
         bfp = basename(beta)
         for mapping, mf in mappings.items():
@@ -89,8 +85,8 @@ def _generate_betas(betas, mappings, permutations, output):
             for col in mf.columns.values:
                 fname = join(output, '%s.%s.%s.%d.pickle' % (
                     bfp, mfp, col, permutations))
-                if not exists(fname):
-                    yield (bf, mf[col].dropna(), fname, method)
+                if not exists(fname) or overwrite:
+                    yield (bf, mf[col].dropna(), fname)
 
 
 def _generate_alphas(alphas, mappings, output, overwrite):

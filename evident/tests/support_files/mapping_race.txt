@@ -1,0 +1,121 @@
+#SampleID	Race
+1	White
+2	White
+3	White
+4	White
+5	White
+6	White
+7	White
+8	White
+9	White
+10	White
+11	White
+12	White
+13	White
+14	White
+15	White
+16	White
+17	White
+18	White
+19	White
+20	White
+21	White
+22	White
+23	White
+24	White
+25	White
+26	Hispanics
+27	Hispanics
+28	Hispanics
+29	Hispanics
+30	Hispanics
+31	Hispanics
+32	Hispanics
+33	Hispanics
+34	Hispanics
+35	Hispanics
+36	Hispanics
+37	Hispanics
+38	Hispanics
+39	Hispanics
+40	Hispanics
+41	Hispanics
+42	Hispanics
+43	Hispanics
+44	Hispanics
+45	Hispanics
+46	Hispanics
+47	Hispanics
+48	Hispanics
+49	Hispanics
+50	Hispanics
+51	Asian
+52	Asian
+53	Asian
+54	Asian
+55	Asian
+56	Asian
+57	Asian
+58	Asian
+59	Asian
+60	Asian
+61	Asian
+62	Asian
+63	Asian
+64	Asian
+65	Asian
+66	Asian
+67	Asian
+68	Asian
+69	Asian
+70	Asian
+71	Asian
+72	Asian
+73	Asian
+74	Asian
+75	Asian
+76	Others
+77	Others
+78	Others
+79	Others
+80	Others
+81	Others
+82	Others
+83	Others
+84	Others
+85	Others
+86	Others
+87	Others
+88	Others
+89	Others
+90	Others
+91	Others
+92	Others
+93	Others
+94	Others
+95	Others
+96	Others
+97	Others
+98	Others
+99	Others
+100	Others
+101	Missing: Not provided
+102	Missing: Not provided
+103	Missing: Not provided
+104	Missing: Not provided
+105	Missing: Not provided
+106	Missing: Not provided
+107	Missing: Not provided
+108	Missing: Not provided
+109	Missing: Not provided
+110	Missing: Not provided
+111	Missing: Not provided
+112	Missing: Not provided
+113	Missing: Not provided
+114	Missing: Not provided
+115	Missing: Not provided
+116	Missing: Not provided
+117	Missing: Not provided
+118	Missing: Not provided
+119	Missing: Not provided
+120	Missing: Not provided

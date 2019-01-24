@@ -10,10 +10,10 @@ before_install:
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda3/bin:$PATH
 install:
-  - wget https://data.qiime2.org/distro/core/qiime2-2018.6-py35-linux-conda.yml
-  - travis_retry conda env create -n qiime2-2018.6 -q --file qiime2-2018.6-py35-linux-conda.yml
-  - rm qiime2-2018.6-py35-linux-conda.yml
-  - source activate qiime2-2018.6
+  - wget https://data.qiime2.org/distro/core/qiime2-2018.11-py35-linux-conda.yml
+  - travis_retry conda env create -n qiime2-2018.11 -q --file qiime2-2018.11-py35-linux-conda.yml
+  - rm qiime2-2018.11-py35-linux-conda.yml
+  - source activate qiime2-2018.11
   - pip install flake8
   - pip install joblib
 script:
