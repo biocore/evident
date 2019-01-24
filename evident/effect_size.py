@@ -33,10 +33,6 @@ def effect_size(mappings, alphas, betas, output, jobs, permutations,
         mappings[m].set_index('#SampleID', inplace=True)
     if betas:
         betas = {f: DistanceMatrix.read(f) for f in betas}
-        print(
-            'maps: %d, betas: %d, cols: %s' % (
-                len(mappings), len(betas), [
-                    len(m.columns.values) for _, m in mappings.items()]))
 
         with joblib.parallel.Parallel(n_jobs=jobs, verbose=100) as par:
             par(joblib.delayed(
