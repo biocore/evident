@@ -20,4 +20,5 @@ script:
   - nosetests
   - flake8 evident/* setup.py scripts/qiita*
 after_success:
+  - evident --help
   - if [ ${TEST_ADD_STUDIES} == "False" ]; then codecov ; fi
