@@ -14,9 +14,11 @@ from os.path import isdir
 
 from evident.effect_size import effect_size as _effect_size
 
+
 @click.group()
 def effect_size_group():
     pass
+
 
 @click.option('--mappings', multiple=True, type=click.Path(exists=True),
               help='mapping directory filepath')
@@ -35,7 +37,7 @@ def effect_size_group():
               'output file will be overwritten')
 @effect_size_group.command()
 def effect_size(mappings, alphas, betas, output, jobs, permutations,
-                    overwrite, na_values):
+                overwrite, na_values):
     if not mappings:
         raise ValueError("You need to pass a mappings")
     if not alphas and not betas:
@@ -68,7 +70,33 @@ def summarize(check_pval, input_folder, output_folder):
     pass
 
 
-commands = click.CommandCollection(sources=[effect_size_group, summarize_group])
+@click.group()
+def beta_group():
+    pass
+
+
+@click.option('--metadata-fp', type=click.Path(exists=True),
+              help='metadata filepath')
+@click.option('--subject-column', type=str, help='the metadata column that '
+              'has the subject information')
+@click.option('--input_biom', type=click.Path(exists=True),
+              help='the biom file to process')
+@click.option('--rarefaction-level', type=click.Path(exists=True),
+              help='the biom file to process')
+@click.option('--samples-per-subject', type=click.IntRange(1, 1000), default=3,
+              help='how many samples per subject we should use')
+@click.option('--iterations', type=click.IntRange(1, 1000), default=10,
+              help='how many iterations we should run')
+@click.option('--output_folder', type=click.Path(exists=False),
+              help='output folder')
+@beta_group.command()
+def beta(metadata_fp, subject_column, input_biom, rarefaction_level,
+         samples_per_subject, iterations, output_folder):
+    pass
+
+
+commands = click.CommandCollection(sources=[
+    effect_size_group, summarize_group, beta_group])
 
 if __name__ == '__main__':
     commands()
