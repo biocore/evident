@@ -14,6 +14,7 @@ from os.path import isdir
 
 from evident.effect_size import effect_size as _effect_size
 
+
 @click.option('--mappings', multiple=True, type=click.Path(exists=True),
               help='mapping directory filepath')
 @click.option('--alphas', multiple=True, type=click.Path(exists=True),
@@ -27,7 +28,7 @@ from evident.effect_size import effect_size as _effect_size
 @click.option('--permutations', type=click.IntRange(10, 10000), default=10,
               help='jobs to start')
 @click.option('--na', multiple=True, type=str, default='NA')
-@click.option('--overwrite', type=bool, default=False, help='if true then the ' 
+@click.option('--overwrite', type=bool, default=False, help='if true then the '
               'output file will be overwritten')
 @click.command()
 def effect_size(mappings, alphas, betas, output, jobs, permutations,
@@ -46,6 +47,7 @@ def effect_size(mappings, alphas, betas, output, jobs, permutations,
 
     _effect_size(mappings, alphas, betas, output, jobs, permutations,
                  overwrite, na_values)
+
 
 if __name__ == '__main__':
     effect_size()
