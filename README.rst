@@ -19,7 +19,6 @@ barcode with sample name or a numeric column that has been binned
 3. run the effect_size.py using your clean metadata file and your alphas and betas file that you want to use; 
 note that you need to define which none values the effect size should ignore (e.g. 'NA', ' ', 'None', 'Not Applicable')
 4. run the effect size summaries (summarize_mdfdr.py)
- 
 .. |Build Status| image:: https://travis-ci.org/biocore/evident.svg
    :target: https://travis-ci.org/biocore/evident
 .. |Coverage Status| image:: https://coveralls.io/repos/biocore/evident/badge.svg
