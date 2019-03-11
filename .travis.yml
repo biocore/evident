@@ -16,8 +16,10 @@ install:
   - source activate qiime2-2018.11
   - pip install flake8
   - pip install joblib
+  - pip install .
 script:
   - nosetests
-  - flake8 evident/* setup.py scripts/qiita*
+  - flake8 evident/* setup.py scripts/*
 after_success:
-  - if [ ${TEST_ADD_STUDIES} == "False" ]; then codecov ; fi
+  - evident --help
+  - coveralls
