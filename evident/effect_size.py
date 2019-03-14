@@ -84,8 +84,8 @@ def _generate_betas(betas, mappings, permutations, output, overwrite):
         for mapping, mf in mappings.items():
             mfp = basename(mapping)
             for col in mf.columns.values:
-                finfo = '%s.%s.%s.%d' % (bfp, mfp, col, permutations)
-                name = hashlib.md5(finfo.encode()).hexdigest()
+                finfo = [bfp, mfp, col, str(permutations)]
+                name = hashlib.md5('.'.join(finfo).encode()).hexdigest()
                 fname = join(output, '%s.pickle' % name)
                 if not exists(fname) or overwrite:
                     yield (bf, mf[col].dropna(), fname, finfo)
@@ -98,8 +98,8 @@ def _generate_alphas(alphas, mappings, output, overwrite):
             for mapping, mf in mappings.items():
                 mfp = basename(mapping)
                 for col in mf.columns.values:
-                    finfo = '%s.%s.%s.%s' % (afp, ac, mfp, col)
-                    name = hashlib.md5(finfo.encode()).hexdigest()
+                    finfo = [afp, ac, mfp, col]
+                    name = hashlib.md5('.'.join(finfo).encode()).hexdigest()
                     fname = join(output, '%s.pickle' % name)
                     if not exists(fname) or overwrite:
                         yield (
@@ -136,19 +136,18 @@ def _process_column(data, cseries, fname, finfo, alphas, betas, permutations):
     else:
         pooled_pval = None
 
-    info = finfo.split('.')
     if alphas:
-        results = {'div_file': info[0],
-                   'alpha_metric': info[2],
-                   'mapping_file:': info[3],
-                   'mapping_col': info[5],
+        results = {'div_file': finfo[0],
+                   'alpha_metric': finfo[1],
+                   'mapping_file:': finfo[2],
+                   'mapping_col': finfo[3],
                    'pairwise_comparisons': pairwise_comparisons,
                    'pooled_pval': pooled_pval}
     else:
-        results = {'div_file': info[0],
-                   'mapping_file': info[2],
-                   'mapping_col': info[4],
-                   'permuations': info[5],
+        results = {'div_file': finfo[0],
+                   'mapping_file': finfo[1],
+                   'mapping_col': finfo[2],
+                   'permuations': finfo[3],
                    'pairwise_comparisons': pairwise_comparisons,
                    'pooled_pval': pooled_pval}
 

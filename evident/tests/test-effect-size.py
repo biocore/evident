@@ -75,22 +75,22 @@ class TestEffectSize(TestCase):
         pfp = partial(join, output)
         gender_results = [
             (join('%s.pickle' % hashlib.md5(
-                 'alphas.txt.Faith_PD.mapping_gender.txt.Gender'.
+                 'alphas.Faith_PD.mapping_gender.Gender'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_pd.txt.Faith_PD.mappings.txt.Gender'.
+                 'alpha_pd.Faith_PD.mappings.Gender'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_sn.txt.Shannon.mapping_gender.txt.Gender'.
+                 'alpha_sn.Shannon.mapping_gender.Gender'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_sn.txt.Shannon.mappings.txt.Gender'.
+                 'alpha_sn.Shannon.mappings.Gender'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_otu.txt.Observed_OTUs.mapping_gender.txt.Gender'.
+                 'alpha_otu.Observed_OTUs.mapping_gender.Gender'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_otu.txt.Observed_OTUs.mappings.txt.Gender'.
+                 'alpha_otu.Observed_OTUs.mappings.Gender'.
                  encode()).hexdigest()))]
 
         for gen_files in gender_results:
@@ -142,22 +142,22 @@ class TestEffectSize(TestCase):
         # check effect size calculation for country (four-group categorical)
         country_results = [
             (join('%s.pickle' % hashlib.md5(
-                 'alpha_pd.txt.Faith_PD.mapping_country.txt.Country'.
+                 'alpha_pd.Faith_PD.mapping_country.Country'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_pd.txt.Faith_PD.mappings.txt.Country'.
+                 'alpha_pd.Faith_PD.mappings.Country'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_sn.txt.Shannon.mapping_country.txt.Country'.
+                 'alpha_sn.Shannon.mapping_country.Country'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_sn.txt.Shannon.mappings.txt.Country'.
+                 'alpha_sn.Shannon.mappings.Country'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_otu.txt.Observed_OTUs.mapping_country.txt.Country'.
+                 'alpha_otu.Observed_OTUs.mapping_country.Country'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_otu.txt.Observed_OTUs.mappings.txt.Country'.
+                 'alpha_otu.Observed_OTUs.mappings.Country'.
                  encode()).hexdigest()))]
 
         for country_files in country_results:
@@ -209,22 +209,22 @@ class TestEffectSize(TestCase):
         # check effect size calculation for age (continous, alpha div)
         age_results = [
             (join('%s.pickle' % hashlib.md5(
-                 'alpha_pd.txt.Faith_PD.mapping_age.txt.Age'.
+                 'alpha_pd.Faith_PD.mapping_age.Age'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_pd.txt.Faith_PD.mappings.txt.Age'.
+                 'alpha_pd.Faith_PD.mappings.Age'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_sn.txt.Shannon.mapping_age.txt.Age'.
+                 'alpha_sn.Shannon.mapping_age.Age'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_sn.txt.Shannon.mappings.txt.Age'.
+                 'alpha_sn.Shannon.mappings.Age'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_otu.txt.Observed_OTUs.mapping_age.txt.Age'.
+                 'alpha_otu.Observed_OTUs.mapping_age.Age'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'alpha_otu.txt.Observed_OTUs.mappings.txt.Age'.
+                 'alpha_otu.Observed_OTUs.mappings.Age'.
                  encode()).hexdigest()))]
 
         for age_files in age_results:
@@ -276,16 +276,16 @@ class TestEffectSize(TestCase):
         # check effect size calculation for beta diversities
         biv_results = [
             (join('%s.pickle' % hashlib.md5(
-                 'dist_site.txt.mapping_site.txt.Site.100'.
+                 'dist_site.mapping_site.Site.100'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'dist_race.txt.mapping_site.txt.Site.100'.
+                 'dist_race.mapping_site.Site.100'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'dist_race.txt.mapping_race.txt.Race.100'.
+                 'dist_race.mapping_race.Race.100'.
                  encode()).hexdigest()),
              join('%s.pickle' % hashlib.md5(
-                 'dist_site.txt.mapping_race.txt.Race.100'.
+                 'dist_site.mapping_race.Race.100'.
                  encode()).hexdigest()))]
 
         for biv_files in biv_results:
