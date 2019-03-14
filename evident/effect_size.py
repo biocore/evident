@@ -9,6 +9,7 @@
 
 import joblib
 import pickle
+import hashlib
 
 import pandas as pd
 import numpy as np
@@ -36,8 +37,9 @@ def effect_size(mappings, alphas, betas, output, jobs, permutations,
 
         with joblib.parallel.Parallel(n_jobs=jobs, verbose=100) as par:
             par(joblib.delayed(
-                _process_column)(bf, c, fname, alphas, betas, permutations)
-                for bf, c, fname in _generate_betas(
+                _process_column)(bf, c, fname, finfo, alphas, betas,
+                                 permutations)
+                for bf, c, fname, finfo in _generate_betas(
                 betas, mappings, permutations, output, overwrite))
     else:
         alphas = {f: pd.read_csv(f, sep='\t', dtype=str, na_values=na_values)
@@ -45,9 +47,9 @@ def effect_size(mappings, alphas, betas, output, jobs, permutations,
         for a, af in alphas.items():
             alphas[a].set_index('#SampleID', inplace=True)
 
-        for af, c, fname in _generate_alphas(alphas, mappings,
-                                             output, overwrite):
-            _process_column(af, c, fname, alphas, betas, permutations)
+        for af, c, fname, finfo in _generate_alphas(alphas, mappings,
+                                                    output, overwrite):
+            _process_column(af, c, fname, finfo, alphas, betas, permutations)
 
 
 def _beta(permutations, data, xvalues, yvalues):
@@ -77,16 +79,16 @@ def _alpha(data, xvalues, yvalues):
 
 
 def _generate_betas(betas, mappings, permutations, output, overwrite):
-    # method = partial(_beta, permutations)
     for beta, bf in betas.items():
         bfp = basename(beta)
         for mapping, mf in mappings.items():
             mfp = basename(mapping)
             for col in mf.columns.values:
-                fname = join(output, '%s.%s.%s.%d.pickle' % (
-                    bfp, mfp, col, permutations))
+                finfo = [bfp, mfp, col, str(permutations)]
+                name = hashlib.md5('.'.join(finfo).encode()).hexdigest()
+                fname = join(output, '%s.pickle' % name)
                 if not exists(fname) or overwrite:
-                    yield (bf, mf[col].dropna(), fname)
+                    yield (bf, mf[col].dropna(), fname, finfo)
 
 
 def _generate_alphas(alphas, mappings, output, overwrite):
@@ -96,15 +98,16 @@ def _generate_alphas(alphas, mappings, output, overwrite):
             for mapping, mf in mappings.items():
                 mfp = basename(mapping)
                 for col in mf.columns.values:
-                    fname = join(output, '%s.%s.%s.%s.pickle' % (
-                        afp, ac, mfp, col))
+                    finfo = [afp, ac, mfp, col]
+                    name = hashlib.md5('.'.join(finfo).encode()).hexdigest()
+                    fname = join(output, '%s.pickle' % name)
                     if not exists(fname) or overwrite:
                         yield (
                             pd.to_numeric(af[ac], errors='coerce'),
-                            mf[col].dropna(), fname)
+                            mf[col].dropna(), fname, finfo)
 
 
-def _process_column(data, cseries, fname, alphas, betas, permutations):
+def _process_column(data, cseries, fname, finfo, alphas, betas, permutations):
     """calculate significant comparisons and return them as a list/rows
 
     Parameters
@@ -132,9 +135,21 @@ def _process_column(data, cseries, fname, alphas, betas, permutations):
         pooled_pval = len(qip) * np.min(qip)
     else:
         pooled_pval = None
-    results = {'cseries': cseries.name,
-               'pairwise_comparisons': pairwise_comparisons,
-               'pooled_pval': pooled_pval}
+
+    if alphas:
+        results = {'div_file': finfo[0],
+                   'alpha_metric': finfo[1],
+                   'mapping_file:': finfo[2],
+                   'mapping_col': finfo[3],
+                   'pairwise_comparisons': pairwise_comparisons,
+                   'pooled_pval': pooled_pval}
+    else:
+        results = {'div_file': finfo[0],
+                   'mapping_file': finfo[1],
+                   'mapping_col': finfo[2],
+                   'permuations': finfo[3],
+                   'pairwise_comparisons': pairwise_comparisons,
+                   'pooled_pval': pooled_pval}
 
     with open(fname, 'wb') as f:
         pickle.dump(results, f)
