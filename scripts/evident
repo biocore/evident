@@ -59,15 +59,16 @@ def effect_size(mappings, alphas, betas, output, jobs, permutations,
 def summarize_group():
     pass
 
-    
+
 @click.option('--input-fp', type=click.Path(exists=True),
-          help='input filepath')
+              help='input filepath')
 @click.option('--output-fp', type=click.Path(exists=False),
-        help='output filepath')
+              help='output filepath')
 @click.option('--check-pval/--no-pval-check', default=True)
 @summarize_group.command()
 def summarize(input_fp, output_fp, alpha_files, check_pval):
     pass
+    _summarize(input_fp, output_fp, alpha_files, check_pval)
 
 
 @click.group()
