@@ -11,6 +11,7 @@ from unittest import TestCase, main
 from functools import partial
 
 from evident import effect_size as _effect_size
+from evident import summarize_mdfdr as _mdfdr
 
 
 class TestEffectSize(TestCase):
@@ -70,6 +71,9 @@ class TestEffectSize(TestCase):
                                  permutations=100,
                                  na_values=na_values,
                                  overwrite=True)
+
+        # adjusted p-values
+        _mdfdr.summarize(input_fp=output, output_fp=output, check_pval=True)
 
         # check effect size calculation for gender (two-group categorical)
         pfp = partial(join, output)
