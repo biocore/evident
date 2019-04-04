@@ -1,5 +1,6 @@
 import pickle
 import numpy as np
+import pandas as pd
 import hashlib
 
 from os import remove
@@ -322,6 +323,19 @@ class TestEffectSize(TestCase):
                 np.testing.assert_array_less(
                     results_site_site['pooled_pval'],
                     results_race_race['pooled_pval'])
+
+        # check summary results
+        sn = pd.read_csv(join(output, 'alpha_sn.txt.tsv'),
+                         sep='\t', index_col=0)
+        otu = pd.read_csv(join(output, 'alpha_otu.txt.tsv'),
+                          sep='\t', index_col=0)
+        np.testing.assert_array_less(otu.effect_size, sn.effect_size)
+        beta_site = pd.read_csv(join(output, 'dist_site.txt.tsv'),
+                                sep='\t', index_col=0)
+        beta_race = pd.read_csv(join(output, 'dist_race.txt.tsv'),
+                                sep='\t', index_col=0)
+        np.testing.assert_array_less(beta_race.pval_corrected,
+                                     beta_site.pval_corrected)
 
 
 if __name__ == "__main__":
