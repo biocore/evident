@@ -324,34 +324,21 @@ class TestEffectSize(TestCase):
                     results_site_site['pooled_pval'],
                     results_race_race['pooled_pval'])
 
-        # check summary results
-        # based on simulation settings, Shannon always has greater effect size
-        # then Observed OTUs, regardless of which metadata column
+        # check whether corrected p-values are as expected in summary results
+        # alpha diversity example: shannon
         sn = pd.read_csv(join(output, 'alpha_sn.txt.mappings.txt.tsv'),
-                         sep='\t', index_col=0)
-        otu = pd.read_csv(join(output, 'alpha_otu.txt.mappings.txt.tsv'),
-                          sep='\t', index_col=0)
-        np.testing.assert_array_less(otu.effect_size, sn.effect_size)
+                         sep='\t', index_col=1)
+        np.testing.assert_equal(np.around(sn.loc['Age', 'pval_corrected'],
+                                          2), 0.01)
 
-        # based on simulation settings, distance between race is smaller than
-        # between sites, thus dist_race_site < dist_site_site < dist_site_race,
-        # where two distances is assigned to different metadata columns
+        # beta diversity example
         dist_race_site = pd.read_csv(
             join(output,
                  'dist_race.txt.mapping_site.txt.tsv'),
-            sep='\t', index_col=0)
-        dist_site_site = pd.read_csv(
-            join(output,
-                 'dist_site.txt.mapping_site.txt.tsv'),
-            sep='\t', index_col=0)
-        dist_site_race = pd.read_csv(
-            join(output,
-                 'dist_site.txt.mapping_race.txt.tsv'),
-            sep='\t', index_col=0)
-        np.testing.assert_array_less(dist_race_site.effect_size,
-                                     dist_site_site.effect_size)
-        np.testing.assert_array_less(dist_site_site.effect_size,
-                                     dist_site_race.effect_size)
+            sep='\t', index_col=1)
+        np.testing.assert_equal(dist_race_site.loc['Site',
+                                                   'pval_corrected'],
+                                0.05)
 
 
 if __name__ == "__main__":
