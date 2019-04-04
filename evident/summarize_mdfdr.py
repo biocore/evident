@@ -22,17 +22,18 @@ def summarize(input_fp, output_fp, check_pval):
     pickles = [f for f in listdir(input_fp) if f.endswith('.pickle')]
 
     rows = []
-    for p in pickles:
+    for idx, p in enumerate(pickles):
         with open(join(input_fp, p), 'rb') as f:
             results = pickle.load(f)
-            rows.append((1, (results['div_file'], results['mapping_col'],
-                             results['pooled_pval'],
-                             results['pairwise_comparisons'])))
+            rows.append((idx, (results['div_file'], results['mapping_file'],
+                               results['mapping_col'], results['pooled_pval'],
+                               results['pairwise_comparisons'])))
     results_df = pd.DataFrame.from_items(rows, orient='index', columns=[
-            'fname', 'column_name', 'pooled_pval', 'pairwise_comparisons'])
+            'fname', 'mapping_file', 'column_name',
+            'pooled_pval', 'pairwise_comparisons'])
 
     alpha = 0.05
-    for name, df in results_df.groupby('fname'):
+    for name, df in results_df.groupby(['fname', 'mapping_file']):
         rejects, pvals, _, _ = multipletests(df.pooled_pval.values,
                                              alpha=alpha, method='fdr_bh',
                                              returnsorted=False)
@@ -71,11 +72,11 @@ def summarize(input_fp, output_fp, check_pval):
             effect_sizes = pd.DataFrame.from_items(
                 all_effect_sizes, orient='index', columns=[
                     'column_name', 'effect_size', 'effect_size_square',
-                    'effect_size_values', 'pval_corrected', 'pval'])
+                    'max_effect_size_categories', 'pval_corrected', 'pval'])
             if not effect_sizes.empty:
                 effect_sizes.sort_values('effect_size',
                                          ascending=False).to_csv(
-                    join(output_fp, '%s.tsv') % name, sep='\t')
+                    join(output_fp, '%s.tsv') % '.'.join(name), sep='\t')
                 with sns.color_palette("PuBuGn_d"):
                     sns.set_style("ticks")
                     img = sns.barplot(y="column_name", x="effect_size",
@@ -84,8 +85,8 @@ def summarize(input_fp, output_fp, check_pval):
                                         n=20))
                     sns.despine()
                 fig = img.get_figure()
-                fig.savefig(join(output_fp, "%s-effect_size.pdf" % name),
-                            bbox_inches='tight')
+                fig.savefig(join(output_fp, "%s-effect_size.pdf" %
+                                 '.'.join(name)), bbox_inches='tight')
                 fig.clf()
 
                 with sns.color_palette("PuBuGn_d"):
@@ -97,7 +98,7 @@ def summarize(input_fp, output_fp, check_pval):
                     sns.despine()
                 fig = img.get_figure()
                 fig.savefig(join(output_fp,
-                            "%s-effect_size_square.pdf" % name),
+                            "%s-effect_size_square.pdf" % '.'.join(name)),
                             bbox_inches='tight')
                 fig.clf()
 

@@ -325,17 +325,33 @@ class TestEffectSize(TestCase):
                     results_race_race['pooled_pval'])
 
         # check summary results
-        sn = pd.read_csv(join(output, 'alpha_sn.txt.tsv'),
+        # based on simulation settings, Shannon always has greater effect size
+        # then Observed OTUs, regardless of which metadata column
+        sn = pd.read_csv(join(output, 'alpha_sn.txt.mappings.txt.tsv'),
                          sep='\t', index_col=0)
-        otu = pd.read_csv(join(output, 'alpha_otu.txt.tsv'),
+        otu = pd.read_csv(join(output, 'alpha_otu.txt.mappings.txt.tsv'),
                           sep='\t', index_col=0)
         np.testing.assert_array_less(otu.effect_size, sn.effect_size)
-        beta_site = pd.read_csv(join(output, 'dist_site.txt.tsv'),
-                                sep='\t', index_col=0)
-        beta_race = pd.read_csv(join(output, 'dist_race.txt.tsv'),
-                                sep='\t', index_col=0)
-        np.testing.assert_array_less(beta_race.pval_corrected,
-                                     beta_site.pval_corrected)
+
+        # based on simulation settings, distance between race is smaller than
+        # between sites, thus dist_race_site < dist_site_site < dist_site_race,
+        # where two distances is assigned to different metadata columns
+        dist_race_site = pd.read_csv(
+            join(output,
+                 'dist_race.txt.mapping_site.txt.tsv'),
+            sep='\t', index_col=0)
+        dist_site_site = pd.read_csv(
+            join(output,
+                 'dist_site.txt.mapping_site.txt.tsv'),
+            sep='\t', index_col=0)
+        dist_site_race = pd.read_csv(
+            join(output,
+                 'dist_site.txt.mapping_race.txt.tsv'),
+            sep='\t', index_col=0)
+        np.testing.assert_array_less(dist_race_site.effect_size,
+                                     dist_site_site.effect_size)
+        np.testing.assert_array_less(dist_site_site.effect_size,
+                                     dist_site_race.effect_size)
 
 
 if __name__ == "__main__":
