@@ -13,6 +13,7 @@ from os import mkdir
 from os.path import isdir
 
 from evident.effect_size import effect_size as _effect_size
+from evident.summarize_mdfdr import summarize as _summarize
 
 
 @click.group()
@@ -59,15 +60,15 @@ def summarize_group():
     pass
 
 
-@click.option('--check-pval', type=bool, default=True, help='if we should '
-              'check that the p-vals are significant')
-@click.option('--input_folder', type=click.Path(exists=True),
-              help='input folder')
-@click.option('--output_folder', type=click.Path(exists=False),
-              help='output folder')
+@click.option('--input-fp', type=click.Path(exists=True),
+              help='input filepath')
+@click.option('--output-fp', type=click.Path(exists=False),
+              help='output filepath')
+@click.option('--check-pval/--no-pval-check', default=True)
 @summarize_group.command()
-def summarize(check_pval, input_folder, output_folder):
+def summarize(input_fp, output_fp, alpha_files, check_pval):
     pass
+    _summarize(input_fp, output_fp, alpha_files, check_pval)
 
 
 @click.group()

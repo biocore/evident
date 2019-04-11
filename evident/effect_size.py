@@ -139,7 +139,7 @@ def _process_column(data, cseries, fname, finfo, alphas, betas, permutations):
     if alphas:
         results = {'div_file': finfo[0],
                    'alpha_metric': finfo[1],
-                   'mapping_file:': finfo[2],
+                   'mapping_file': finfo[2],
                    'mapping_col': finfo[3],
                    'pairwise_comparisons': pairwise_comparisons,
                    'pooled_pval': pooled_pval}

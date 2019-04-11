@@ -1,5 +1,6 @@
 import pickle
 import numpy as np
+import pandas as pd
 import hashlib
 
 from os import remove
@@ -11,6 +12,7 @@ from unittest import TestCase, main
 from functools import partial
 
 from evident import effect_size as _effect_size
+from evident import summarize_mdfdr as _mdfdr
 
 
 class TestEffectSize(TestCase):
@@ -70,6 +72,9 @@ class TestEffectSize(TestCase):
                                  permutations=100,
                                  na_values=na_values,
                                  overwrite=True)
+
+        # adjusted p-values
+        _mdfdr.summarize(input_fp=output, output_fp=output, check_pval=True)
 
         # check effect size calculation for gender (two-group categorical)
         pfp = partial(join, output)
@@ -318,6 +323,22 @@ class TestEffectSize(TestCase):
                 np.testing.assert_array_less(
                     results_site_site['pooled_pval'],
                     results_race_race['pooled_pval'])
+
+        # check whether corrected p-values are as expected in summary results
+        # alpha diversity example: shannon
+        sn = pd.read_csv(join(output, 'alpha_sn.txt.mappings.txt.tsv'),
+                         sep='\t', index_col=1)
+        np.testing.assert_equal(np.around(sn.loc['Age', 'pval_corrected'],
+                                          2), 0.01)
+
+        # beta diversity example
+        dist_race_site = pd.read_csv(
+            join(output,
+                 'dist_race.txt.mapping_site.txt.tsv'),
+            sep='\t', index_col=1)
+        np.testing.assert_equal(dist_race_site.loc['Site',
+                                                   'pval_corrected'],
+                                0.05)
 
 
 if __name__ == "__main__":

@@ -51,6 +51,7 @@ setup(name='evident',
       scripts=glob('scripts/*'),
       extras_require={'test': ["nose >= 0.10.1", "pep8"],
                       'doc': ["Sphinx >= 1.2.2", "sphinx-bootstrap-theme"]},
-      install_requires=['click', 'numpy', 'scikit-bio', 'scipy', 'joblib'],
+      install_requires=['click', 'numpy', 'scikit-bio', 'scipy', 'joblib',
+                        'seaborn', 'statsmodels'],
       classifiers=classifiers
       )
