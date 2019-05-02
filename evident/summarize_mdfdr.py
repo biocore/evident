@@ -66,7 +66,7 @@ def summarize(input_fp, output_fp, check_pval):
                 all_effect_sizes.append((1, (
                     row.column_name, max_effect_size[0],
                     np.square(max_effect_size[0]), max_effect_size[1],
-                    pval_corrected, max_effect_size[2])))
+                    pval_corrected, pval)))
 
         if bool(all_effect_sizes):
             effect_sizes = pd.DataFrame.from_items(
@@ -101,6 +101,10 @@ def summarize(input_fp, output_fp, check_pval):
                             "%s-effect_size_square.pdf" % '.'.join(name)),
                             bbox_inches='tight')
                 fig.clf()
+        else:
+            raise ValueError("Nothing was found significant. The corrected "
+                             "pvalue should be under %f. For more details "
+                             "try --no-pval-check" % pval_corrected)
 
 
 if __name__ == '__main__':

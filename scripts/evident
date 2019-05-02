@@ -66,38 +66,13 @@ def summarize_group():
               help='output filepath')
 @click.option('--check-pval/--no-pval-check', default=True)
 @summarize_group.command()
-def summarize(input_fp, output_fp, alpha_files, check_pval):
-    pass
-    _summarize(input_fp, output_fp, alpha_files, check_pval)
-
-
-@click.group()
-def beta_group():
-    pass
-
-
-@click.option('--metadata-fp', type=click.Path(exists=True),
-              help='metadata filepath')
-@click.option('--subject-column', type=str, help='the metadata column that '
-              'has the subject information')
-@click.option('--input_biom', type=click.Path(exists=True),
-              help='the biom file to process')
-@click.option('--rarefaction-level', type=click.Path(exists=True),
-              help='the biom file to process')
-@click.option('--samples-per-subject', type=click.IntRange(1, 1000), default=3,
-              help='how many samples per subject we should use')
-@click.option('--iterations', type=click.IntRange(1, 1000), default=10,
-              help='how many iterations we should run')
-@click.option('--output_folder', type=click.Path(exists=False),
-              help='output folder')
-@beta_group.command()
-def beta(metadata_fp, subject_column, input_biom, rarefaction_level,
-         samples_per_subject, iterations, output_folder):
-    pass
+def summarize(input_fp, output_fp, check_pval):
+    _summarize(input_fp, output_fp, check_pval)
 
 
 commands = click.CommandCollection(sources=[
-    effect_size_group, summarize_group, beta_group])
+    effect_size_group, summarize_group])
+
 
 if __name__ == '__main__':
     commands()
