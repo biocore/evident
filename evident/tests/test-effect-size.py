@@ -73,8 +73,15 @@ class TestEffectSize(TestCase):
                                  na_values=na_values,
                                  overwrite=True)
 
+        # this should raise a value error
+        with self.assertRaisesRegex(ValueError, 'Nothing was found '
+                                    'significant. The corrected pvalue should '
+                                    'be under '):
+            _mdfdr.summarize(
+                input_fp=output, output_fp=output, check_pval=True)
+
         # adjusted p-values
-        _mdfdr.summarize(input_fp=output, output_fp=output, check_pval=True)
+        _mdfdr.summarize(input_fp=output, output_fp=output, check_pval=False)
 
         # check effect size calculation for gender (two-group categorical)
         pfp = partial(join, output)
