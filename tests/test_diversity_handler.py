@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from evident.diversity_handler import AlphaDiversityHandler
+import evident.exceptions as exc
 
 
 @pytest.fixture
@@ -65,3 +66,31 @@ class TestPower:
         )
         exp_alpha = 0.05
         np.testing.assert_almost_equal(calc_alpha, exp_alpha, decimal=2)
+
+    def test_alpha_power_err_all_args(self, alpha_mock):
+        with pytest.raises(exc.WrongPowerArguments) as exc_info:
+            alpha_mock.power_analysis(
+                "classification",
+                total_observations=40,
+                alpha=0.05,
+                power=0.8
+            )
+        exp_err_msg = (
+            "All arguments were provided. Exactly one of alpha, power, "
+            "or total_observations must be None. Arguments: "
+            "alpha = 0.05, power = 0.8, total_observations = 40."
+        )
+        assert str(exc_info.value) == exp_err_msg
+
+    def test_alpha_power_err_more_args(self, alpha_mock):
+        with pytest.raises(exc.WrongPowerArguments) as exc_info:
+            alpha_mock.power_analysis(
+                "classification",
+                power=0.8
+            )
+        exp_err_msg = (
+            "More than 1 argument was provided. Exactly one of alpha, power, "
+            "or total_observations must be None. Arguments: "
+            "alpha = None, power = 0.8, total_observations = None."
+        )
+        assert str(exc_info.value) == exp_err_msg

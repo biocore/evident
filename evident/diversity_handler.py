@@ -42,7 +42,7 @@ class BaseDiversityHandler(ABC):
         args = [alpha, power, total_observations]
         num_nones = args.count(None)
         if num_nones != 1:
-            raise exc.MisspecifiedPowerArguments(*args)
+            raise exc.WrongPowerArguments(*args)
 
         power_func = self._incept_power_solve_function(
             column=column,

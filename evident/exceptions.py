@@ -1,4 +1,4 @@
-class MisspecificedPowerArguments(Exception):
+class WrongPowerArguments(Exception):
     def __init__(
         self,
         alpha: float,
@@ -27,6 +27,7 @@ class MisspecificedPowerArguments(Exception):
         super().__init__(message)
 
     def _list_args_msg(
+        self,
         alpha: float,
         power: float,
         total_observations: int,
