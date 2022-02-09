@@ -8,7 +8,8 @@ from skbio import DistanceMatrix
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
 from . import exceptions as exc
-from ._utils import calculate_cohens_d, calculate_cohens_f
+from ._utils import (calculate_cohens_d, calculate_cohens_f,
+                     calculate_pooled_stdev)
 
 
 class BaseDiversityHandler(ABC):
@@ -20,24 +21,67 @@ class BaseDiversityHandler(ABC):
     def samples(self):
         return self.metadata.index.to_list()
 
+    def calculate_effect_size(
+        self,
+        column: str,
+        difference: float = None
+    ) -> float:
+        """Get effect size of diversity differences given column.
+
+        If two categories, return Cohen's d from t-test. If more than two
+        categories, return Cohen's f from ANOVA.
+
+        :param column: Column containing categories
+        :type column: str
+
+        :returns: Effect size
+        :rtype: float
+        """
+        if self.metadata[column].dtype != np.dtype("object"):
+            raise exc.NonCategoricalColumnError(self.metadata[column])
+
+        column_choices = self.metadata[column].unique()
+        num_choices = len(column_choices)
+
+        arrays = []
+        if num_choices == 1:
+            raise exc.OnlyOneCategoryError(self.metadata[column])
+        elif num_choices == 2:
+            c1, c2 = column_choices
+            ids1 = self.metadata[self.metadata[column] == c1].index
+            ids2 = self.metadata[self.metadata[column] == c2].index
+            values_1 = self.subset_values(ids1)
+            values_2 = self.subset_values(ids2)
+            arrays = [values_1, values_2]
+
+            effect_size_func = calculate_cohens_d
+        else:
+            for choice in column_choices:
+                ids = self.metadata[self.metadata[column] == choice].index
+                values = self.subset_values(ids)
+                arrays.append(values)
+
+            effect_size_func = calculate_cohens_f
+
+        if difference is None:
+            return effect_size_func(*arrays)
+        else:
+            pooled_stdev = calculate_pooled_stdev(*arrays)
+            return difference / pooled_stdev
+
     def power_analysis(
         self,
         column: str,
         total_observations: int = None,
+        difference = None,
         alpha: float = None,
         power: float = None
     ) -> float:
         """Perform power analysis using this diversity dataset.
 
-        Exactly one of total_observations, alpha, or power must be None.
+        Exactly one of total_observations, difference, alpha, or power
+        must be None.
 
-        NOTE: Only really makes sense when *not* specifying effect size.
-              Use diversity for effect size calculation depending on groups.
-              Maybe allow specificying difference?
-
-        Observations calculated in _incept_power_solve_function and is
-            included in power_function. Need to determine whether to
-            use t-test or ANOVA as that determines argument to be used.
         """
         # Check to make sure exactly one argument is None
         args = [alpha, power, total_observations]
@@ -45,8 +89,12 @@ class BaseDiversityHandler(ABC):
         if num_nones != 1:
             raise exc.WrongPowerArguments(*args)
 
+        # Observations arg calculated in _incept_power_solve_function and is
+        #     included in power_func. Need to determine whether to use
+        #     t-test or ANOVA as that determines argument to be used.
         power_func = self._incept_power_solve_function(
             column=column,
+            difference=difference,
             total_observations=total_observations
         )
 
@@ -55,17 +103,11 @@ class BaseDiversityHandler(ABC):
         # If calculating total_observations, check to see if doing t-test
         # If so, multiply by two as tt_ind_solve_power returns number of
         #     observations of sample 1.
-        power_func_name = power_func.func.__qualname__
         if total_observations is None:
+            power_func_name = power_func.func.__qualname__
             print("Calculating total number of observations")
             if power_func_name == "TTestIndPower.solve_power":
                 val_to_solve = np.ceil(val_to_solve) * 2
-
-        if alpha is None:
-            print("Calculating alpha")
-
-        if power is None:
-            print("Calculating power")
 
         return val_to_solve
 
@@ -76,12 +118,19 @@ class BaseDiversityHandler(ABC):
     def _incept_power_solve_function(
         self,
         column: str,
+        difference: float = None,
         total_observations: int = None
     ) -> Callable:
         """Create basic function to solve for power.
 
         :param column: Name of column in metadata to consider
         :type column: str
+
+        :param difference: Difference between groups to consider, defaults to
+            None. If provided, uses the pooled standard deviation as the
+            denominator to calculate the effect size with the difference as the
+            numerator.
+        :type difference: float
 
         :param total_observations: Total number of observations for power
             calculation, defaults to None
@@ -103,40 +152,24 @@ class BaseDiversityHandler(ABC):
             if total_observations is not None:
                 total_observations = total_observations / 2
 
-            c1, c2 = column_choices
-            ids1 = self.metadata[self.metadata[column] == c1].index
-            ids2 = self.metadata[self.metadata[column] == c2].index
-            values_1 = self.subset_values(ids1)
-            values_2 = self.subset_values(ids2)
-
-            effect_size = calculate_cohens_d(values_1, values_2)
-            print(f"Cohen's d = {effect_size}")
-
             power_func = partial(
                 tt_ind_solve_power,
                 nobs1=total_observations,
                 ratio=1.0,
-                effect_size=effect_size
             )
         else:
             # FTestAnovaPower uses *total* observations
-            arrays = []
-            for choice in column_choices:
-                ids = self.metadata[self.metadata[column] == choice].index
-                values = self.subset_values(ids)
-                arrays.append(values)
-
-            effect_size = calculate_cohens_f(*arrays)
-            print(f"Cohen's f = {effect_size}")
-
             power_func = partial(
                 FTestAnovaPower().solve_power,
                 k_groups=num_choices,
                 nobs=total_observations,
-                effect_size=effect_size
             )
 
-        return power_func
+        effect_size = self.calculate_effect_size(
+            column,
+            difference=difference
+        )
+        return partial(power_func, effect_size=effect_size)
 
 
 class AlphaDiversityHandler(BaseDiversityHandler):
