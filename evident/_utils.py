@@ -27,7 +27,18 @@ def calculate_pooled_stdev(*arrays) -> float:
     return np.sqrt(pooled_variance)
 
 
-def calculate_cohens_d(values_1, values_2):
+def calculate_cohens_d(values_1: np.ndarray, values_2: np.ndarray) -> float:
+    """Calculate Cohen's d using pooled standard deviation.
+
+    :param values_1: First array of values
+    :type values_1: np.ndarray
+
+    :param values_2: Second array of values
+    :type values_2: np.ndarray
+
+    :returns: Cohen's d effect size
+    :rtype: float
+    """
     pooled_std = calculate_pooled_stdev(values_1, values_2)
     mu_1 = np.mean(values_1)
     mu_2 = np.mean(values_2)
