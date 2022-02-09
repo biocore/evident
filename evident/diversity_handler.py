@@ -4,6 +4,7 @@ from typing import Callable
 
 import numpy as np
 import pandas as pd
+from skbio import DistanceMatrix
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
 from . import exceptions as exc
@@ -155,3 +156,22 @@ class AlphaDiversityHandler(BaseDiversityHandler):
 
     def subset_values(self, ids: list):
         return self.data.loc[ids]
+
+
+class BetaDiversityHandler(BaseDiversityHandler):
+    def __init__(
+        self,
+        data: DistanceMatrix,
+        metadata: pd.DataFrame
+    ):
+        md_samps = set(metadata.index)
+        data_samps = set(data.ids)
+        samps_in_common = list(md_samps.intersection(data_samps))
+
+        super().__init__(
+            data=data.filter(samps_in_common),
+            metadata=metadata.loc[samps_in_common]
+        )
+
+    def subset_values(self, ids: list):
+        return self.data.filter(ids).to_series().values

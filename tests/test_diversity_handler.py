@@ -3,8 +3,10 @@ import os
 import numpy as np
 import pandas as pd
 import pytest
+from skbio import DistanceMatrix
 
-from evident.diversity_handler import AlphaDiversityHandler
+from evident.diversity_handler import (AlphaDiversityHandler,
+                                       BetaDiversityHandler)
 import evident.exceptions as exc
 
 
@@ -14,6 +16,16 @@ def alpha_mock():
     df = pd.read_table(fname, sep="\t", index_col=0)
     adh = AlphaDiversityHandler(df["faith_pd"], df)
     return adh
+
+
+def beta_mock():
+    fname = os.path.join(os.path.dirname(__file__), "data/metadata.tsv")
+    df = pd.read_table(fname, sep="\t", index_col=0)
+    dm_file = os.path.join(os.path.dirname(__file__),
+                           "data/distance_matrix.lsmat.gz")
+    dm = DistanceMatrix.read(dm_file)
+    bdh = BetaDiversityHandler(dm, df)
+    return bdh
 
 
 class TestAlphaDiv:
@@ -35,6 +47,18 @@ class TestAlphaDiv:
     def test_alpha_samples(self, alpha_mock):
         md = alpha_mock.metadata
         assert (md.index == alpha_mock.samples).all()
+
+
+class TestBetaDiv:
+    def test_init_beta_div_handler(self):
+        fname = os.path.join(os.path.dirname(__file__), "data/metadata.tsv")
+        df = pd.read_table(fname, sep="\t", index_col=0)
+        dm_file = os.path.join(os.path.dirname(__file__),
+                               "data/distance_matrix.lsmat.gz")
+        dm = DistanceMatrix.read(dm_file)
+        b = BetaDiversityHandler(dm, df)
+        assert b.metadata.shape == (220, 40)
+        assert b.data.shape == (220, 220)
 
 
 class TestPower:

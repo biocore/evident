@@ -20,7 +20,8 @@ setup(
     install_requires=[
         "pandas",
         "statsmodels",
-        "numpy"
+        "numpy",
+        "scikit-bio"
     ],
     extras_require={"dev": ["pytest", "pytest-cov", "flake8"]}
 )
