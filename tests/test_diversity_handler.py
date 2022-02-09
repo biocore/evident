@@ -80,7 +80,7 @@ class TestPower:
             "classification",
             total_observations=40,
             alpha=0.05
-        )
+        ).power
         exp_power = 0.888241
         np.testing.assert_almost_equal(calc_power, exp_power, decimal=6)
 
@@ -90,7 +90,7 @@ class TestPower:
             "classification",
             alpha=0.05,
             power=power
-        )
+        ).total_observations
         assert calc_nobs == 40
 
     def test_alpha_power_alpha_t(self, alpha_mock):
@@ -100,7 +100,7 @@ class TestPower:
             "classification",
             total_observations=total_observations,
             power=power
-        )
+        ).alpha
         exp_alpha = 0.05
         np.testing.assert_almost_equal(calc_alpha, exp_alpha, decimal=2)
 
@@ -160,7 +160,7 @@ class TestPower:
     def test_alpha_power_f(self, alpha_mock, monkeypatch):
         # Monkey patch Cohen's f calculation directly in diversity_handler
         #     instead of in _utils. Doesn't really make sense that it has
-        #     to be done this what but whatever.
+        #     to be done this way but whatever.
         # https://stackoverflow.com/a/45466846
         def mock_cohens_f(*args):
             return 0.4
@@ -173,7 +173,7 @@ class TestPower:
             "cd_behavior",  # 3 groups
             total_observations=60,
             alpha=0.05
-        )
+        ).power
         exp_power = 0.775732
         np.testing.assert_almost_equal(calc_power, exp_power, decimal=6)
 
@@ -182,7 +182,7 @@ class TestPower:
             "classification",
             total_observations=40,
             alpha=0.05
-        )
+        ).power
         exp_power = 0.404539
         np.testing.assert_almost_equal(calc_power, exp_power, decimal=6)
 

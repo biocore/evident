@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from functools import partial
 from typing import Callable
 
@@ -10,6 +11,14 @@ from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 from . import exceptions as exc
 from ._utils import (calculate_cohens_d, calculate_cohens_f,
                      calculate_pooled_stdev)
+
+
+@dataclass
+class PowerAnalysisResults:
+    alpha: float
+    total_observations: int
+    power: float
+    effect_size: float
 
 
 class BaseDiversityHandler(ABC):
@@ -79,9 +88,7 @@ class BaseDiversityHandler(ABC):
     ) -> float:
         """Perform power analysis using this diversity dataset.
 
-        Exactly one of total_observations, difference, alpha, or power
-        must be None.
-
+        Exactly one of total_observations, alpha, or power must be None.
         """
         # Check to make sure exactly one argument is None
         args = [alpha, power, total_observations]
@@ -105,11 +112,25 @@ class BaseDiversityHandler(ABC):
         #     observations of sample 1.
         if total_observations is None:
             power_func_name = power_func.func.__qualname__
-            print("Calculating total number of observations")
             if power_func_name == "TTestIndPower.solve_power":
                 val_to_solve = np.ceil(val_to_solve) * 2
 
-        return val_to_solve
+        idx = args.index(None)
+        if idx == 0:
+            alpha = val_to_solve
+        elif idx == 1:
+            power = val_to_solve
+        else:
+            total_observations = val_to_solve
+
+        results = PowerAnalysisResults(
+            alpha=alpha,
+            total_observations=total_observations,
+            power=power,
+            effect_size=power_func.keywords["effect_size"]
+        )
+
+        return results
 
     @abstractmethod
     def subset_values(self, ids: list):
