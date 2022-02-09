@@ -18,6 +18,7 @@ def alpha_mock():
     return adh
 
 
+@pytest.fixture
 def beta_mock():
     fname = os.path.join(os.path.dirname(__file__), "data/metadata.tsv")
     df = pd.read_table(fname, sep="\t", index_col=0)
@@ -59,6 +60,18 @@ class TestBetaDiv:
         b = BetaDiversityHandler(dm, df)
         assert b.metadata.shape == (220, 40)
         assert b.data.shape == (220, 220)
+
+    def test_subset_beta_values(self, beta_mock):
+        md = beta_mock.metadata
+        b1_indices = md.query("classification == 'B1'").index
+        b1_subset = beta_mock.subset_values(b1_indices)
+
+        # 99 B1 samples -> (99*98)/2 = 4851
+        assert b1_subset.shape == (4851, )
+
+    def test_beta_samples(self, beta_mock):
+        md = beta_mock.metadata
+        assert (md.index == beta_mock.samples).all()
 
 
 class TestPower:

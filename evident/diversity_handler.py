@@ -174,4 +174,4 @@ class BetaDiversityHandler(BaseDiversityHandler):
         )
 
     def subset_values(self, ids: list):
-        return self.data.filter(ids).to_series().values
+        return np.array(self.data.filter(ids).to_series().values)
