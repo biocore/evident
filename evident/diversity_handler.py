@@ -7,7 +7,7 @@ import pandas as pd
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
 # from .exceptions import NoCommonSamplesError
-from ._utils import pooled_stdev
+from ._utils import calculate_pooled_stdev, calculate_cohens_d
 
 
 class BaseDiversityHandler(ABC):
@@ -84,10 +84,10 @@ class BaseDiversityHandler(ABC):
             c1, c2 = column_choices
             ids1 = self.metadata[self.metadata[column == c1]].index
             ids2 = self.metadata[self.metadata[column == c2]].index
-            mu1 = self.subset_values(ids1)
-            mu2 = self.subset_values(ids2)
+            values_1 = self.subset_values(ids1).values
+            values_2 = self.subset_values(ids2).values
 
-            effect_size_numerator = np.abs(mu1 - mu2)
+            effect_size = calculate_cohens_d(values_1, values_2)
         else:
             # FTestAnovaPower uses *total* observations
             power_func = partial(
@@ -117,9 +117,6 @@ class BaseDiversityHandler(ABC):
             indices = option_df.index
             values.append(self.subset_values(indices))
 
-        std_p = pooled_stdev(*values)
-        effect_size = effect_size_numerator / std_p
-
         return partial(power_func, effect_size)
 
 
@@ -139,7 +136,7 @@ class AlphaDiversityHandler(BaseDiversityHandler):
         )
 
     def subset_values(self, ids: list):
-        return self.metadata.loc[ids]
+        return self.data.loc[ids]
 
     def power_analysis(
         self,
