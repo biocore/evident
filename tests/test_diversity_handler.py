@@ -11,31 +11,34 @@ from evident.diversity_handler import AlphaDiversityHandler
 def alpha_mock():
     fname = os.path.join(os.path.dirname(__file__), "data/metadata.tsv")
     df = pd.read_table(fname, sep="\t", index_col=0)
-    return df, df["faith_pd"]
+    adh = AlphaDiversityHandler(df["faith_pd"], df)
+    return adh
 
 
-def test_alpha_div_handler(alpha_mock):
-    md, faith_pd = alpha_mock
-    a = AlphaDiversityHandler(faith_pd, md)
-    assert a.metadata.shape == (220, 40)
-    assert a.data.shape == (220, )
+class TestAlphaDiv:
+    def test_init_alpha_div_handler(self):
+        fname = os.path.join(os.path.dirname(__file__), "data/metadata.tsv")
+        df = pd.read_table(fname, sep="\t", index_col=0)
+        a = AlphaDiversityHandler(df["faith_pd"], df)
+        assert a.metadata.shape == (220, 40)
+        assert a.data.shape == (220, )
 
+    def test_subset_alpha_values(self, alpha_mock):
+        md = alpha_mock.metadata
+        b1_indices = md.query("classification == 'B1'").index
+        b1_subset = alpha_mock.subset_values(b1_indices)
+        assert b1_subset.shape == (99, )
+        np.testing.assert_almost_equal(b1_subset.mean(), 13.566,
+                                       decimal=3)
 
-def test_subset_alpha_values(alpha_mock):
-    md, faith_pd = alpha_mock
-    a = AlphaDiversityHandler(faith_pd, md)
-    b1_indices = md.query("classification == 'B1'").index
-    b1_subset = a.subset_values(b1_indices)
-    assert b1_subset.shape == (99, )
-    np.testing.assert_almost_equal(b1_subset.mean(), 13.566,
-                                   decimal=3)
+    def test_alpha_samples(self, alpha_mock):
+        md = alpha_mock.metadata
+        assert (md.index == alpha_mock.samples).all()
 
 
 class TestPower:
     def test_alpha_power_power_t(self, alpha_mock):
-        md, faith_pd = alpha_mock
-        a = AlphaDiversityHandler(faith_pd, md)
-        calc_power = a.power_analysis(
+        calc_power = alpha_mock.power_analysis(
             "classification",
             total_observations=40,
             alpha=0.05
@@ -44,10 +47,8 @@ class TestPower:
         np.testing.assert_almost_equal(calc_power, exp_power, decimal=6)
 
     def test_alpha_power_obs_t(self, alpha_mock):
-        md, faith_pd = alpha_mock
-        a = AlphaDiversityHandler(faith_pd, md)
         power = 0.888241
-        calc_nobs = a.power_analysis(
+        calc_nobs = alpha_mock.power_analysis(
             "classification",
             alpha=0.05,
             power=power
@@ -55,11 +56,9 @@ class TestPower:
         assert calc_nobs == 40
 
     def test_alpha_power_alpha_t(self, alpha_mock):
-        md, faith_pd = alpha_mock
-        a = AlphaDiversityHandler(faith_pd, md)
         power = 0.888241
         total_observations = 40
-        calc_alpha = a.power_analysis(
+        calc_alpha = alpha_mock.power_analysis(
             "classification",
             total_observations=total_observations,
             power=power
