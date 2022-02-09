@@ -1,17 +1,17 @@
 from abc import ABC, abstractmethod
 from functools import partial
-from typing import Callable, Union
+from typing import Callable
 
 import numpy as np
 import pandas as pd
-from skbio import DistanceMatrix
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
-from .exceptions import NoSamplesError
+# from .exceptions import NoCommonSamplesError
+from ._utils import pooled_stdev
 
 
 class BaseDiversityHandler(ABC):
-    def __init__(self, data = None, metadata: pd.DataFrame = None):
+    def __init__(self, data=None, metadata: pd.DataFrame = None):
         self.data = data
         self.metadata = metadata
 
@@ -23,7 +23,6 @@ class BaseDiversityHandler(ABC):
     def power_analysis(
         self,
         power_function: Callable,
-        effect_size: float,
         alpha: float = None,
         power: float = None
     ):
@@ -37,11 +36,15 @@ class BaseDiversityHandler(ABC):
             included in power_function
         """
         val_to_solve = power_function(
-            effect_size=effect_size,
             power=power,
             alpha=alpha
         )
         return val_to_solve
+
+    @abstractmethod
+    def subset_values(self, ids: list):
+        """Get subset of data given list of indices"""
+        return
 
     def _incept_power_solve_function(
         self,
@@ -72,11 +75,19 @@ class BaseDiversityHandler(ABC):
             # tt_ind_solve_power uses observations per group
             if total_observations is not None:
                 total_observations = total_observations / 2
+
             power_func = partial(
-                tt_ind_solve_power
+                tt_ind_solve_power,
                 nobs1=total_observations,
                 ratio=1.0
             )
+            c1, c2 = column_choices
+            ids1 = self.metadata[self.metadata[column == c1]].index
+            ids2 = self.metadata[self.metadata[column == c2]].index
+            mu1 = self.subset_values(ids1)
+            mu2 = self.subset_values(ids2)
+
+            effect_size_numerator = np.abs(mu1 - mu2)
         else:
             # FTestAnovaPower uses *total* observations
             power_func = partial(
@@ -85,7 +96,32 @@ class BaseDiversityHandler(ABC):
                 nobs=total_observations
             )
 
-        return power_func
+            all_ids = self.metadata.index
+            total_mu = self._subset_values(all_ids).mean()
+
+            # tinyurl.com/4p47ffem
+            # sigma_m^2 = sum_{i=1}^G (n_i/N)(mu_i - mu_w)^2
+            effect_size_numerator = 0
+            for choice in column_choices:
+                ids = self.metadata[self.metadata[column == choice]].index
+                choice_mu = self._subset_values(ids).mean()
+                effect_size_numerator += (
+                    len(ids) / len(all_ids)
+                    * np.power(choice_mu - total_mu, 2)
+                )
+            effect_size_numerator = np.sqrt(effect_size_numerator)
+
+        # NOTE: Inefficient w/ above
+        values = []
+        for option, option_df in self.metadata.groupby(column):
+            indices = option_df.index
+            values.append(self.subset_values(indices))
+
+        std_p = pooled_stdev(*values)
+        effect_size = effect_size_numerator / std_p
+
+        return partial(power_func, effect_size)
+
 
 class AlphaDiversityHandler(BaseDiversityHandler):
     def __init__(
@@ -95,18 +131,21 @@ class AlphaDiversityHandler(BaseDiversityHandler):
     ):
         md_samps = set(metadata.index)
         data_samps = set(data.index)
-        samps_in_common = md_samps.intersection(data_samps)
+        samps_in_common = list(md_samps.intersection(data_samps))
 
         super().__init__(
             data=data.loc[samps_in_common],
             metadata=metadata.loc[samps_in_common]
         )
 
+    def subset_values(self, ids: list):
+        return self.metadata.loc[ids]
+
     def power_analysis(
         self,
         column: str,
         total_observations: int = None,
-        difference: float = None
+        difference: float = None,
         alpha: float = None,
         power: float = None
     ):
@@ -115,20 +154,10 @@ class AlphaDiversityHandler(BaseDiversityHandler):
             total_observation=total_observations
         )
 
-        return
+        val = super().power_analysis(
+            power_function=power_func,
+            alpha=alpha,
+            power=power
+        )
 
-
-# class BetaDiversityHandler(BaseDiversityHandler):
-#     def __init__(
-#         self,
-#         data: DistanceMatrix,
-#         metadata: pd.DataFrame
-#     ):
-#         md_samps = set(metadata.index)
-#         data_samps = set(data.ids)
-#         samps_in_common = md_samps.intersection(data_samps)
-# 
-#         super().__init__(
-#             data=data.filter(samps_in_common),
-#             metadata=metadata.loc[samps_in_common]
-#         )
+        return val
