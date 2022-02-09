@@ -77,8 +77,8 @@ class BaseDiversityHandler(ABC):
                 total_observations = total_observations / 2
 
             c1, c2 = column_choices
-            ids1 = self.metadata[self.metadata[column == c1]].index
-            ids2 = self.metadata[self.metadata[column == c2]].index
+            ids1 = self.metadata[self.metadata[column] == c1].index
+            ids2 = self.metadata[self.metadata[column] == c2].index
             values_1 = self.subset_values(ids1).values
             values_2 = self.subset_values(ids2).values
 
@@ -137,7 +137,7 @@ class AlphaDiversityHandler(BaseDiversityHandler):
     ):
         power_func = self._incept_power_solve_function(
             column=column,
-            total_observation=total_observations
+            total_observations=total_observations
         )
 
         val = super().power_analysis(

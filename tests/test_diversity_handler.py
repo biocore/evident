@@ -29,3 +29,15 @@ def test_subset_alpha_values(alpha_mock):
     assert b1_subset.shape == (99, )
     np.testing.assert_almost_equal(b1_subset.mean(), 13.566,
                                    decimal=3)
+
+
+def test_alpha_power(alpha_mock):
+    md, faith_pd = alpha_mock
+    a = AlphaDiversityHandler(faith_pd, md)
+    calc_power = a.power_analysis(
+        "classification",
+        total_observations=40,
+        alpha=0.05
+    )
+    exp_power = 0.888241
+    np.testing.assert_almost_equal(calc_power, exp_power, decimal=6)
