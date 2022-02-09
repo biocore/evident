@@ -71,7 +71,6 @@ class BaseDiversityHandler(ABC):
     @abstractmethod
     def subset_values(self, ids: list):
         """Get subset of data given list of indices"""
-        return
 
     def _incept_power_solve_function(
         self,
@@ -91,7 +90,7 @@ class BaseDiversityHandler(ABC):
         :rtype: partial function
         """
         if self.metadata[column].dtype != np.dtype("object"):
-            raise ValueError("Column must be of dtype object!")
+            raise exc.NonCategoricalColumnError(self.metadata[column])
 
         column_choices = self.metadata[column].unique()
         num_choices = len(column_choices)

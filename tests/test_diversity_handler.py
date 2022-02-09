@@ -94,3 +94,16 @@ class TestPower:
             "alpha = None, power = 0.8, total_observations = None."
         )
         assert str(exc_info.value) == exp_err_msg
+
+    def test_alpha_power_non_categorical(self, alpha_mock):
+        with pytest.raises(exc.NonCategoricalColumnError) as exc_info:
+            alpha_mock.power_analysis(
+                "year_diagnosed",
+                alpha=0.05,
+                power=0.8
+            )
+        exp_err_msg = (
+            "Column must be categorical (dtype object). year_diagnosed "
+            "is of type int64."
+        )
+        assert str(exc_info.value) == exp_err_msg

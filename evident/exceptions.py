@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 class WrongPowerArguments(Exception):
     def __init__(
         self,
@@ -37,3 +40,15 @@ class WrongPowerArguments(Exception):
             f"total_observations = {total_observations}."
         )
         return msg
+
+class NonCategoricalColumnError(Exception):
+    def __init__(
+        self,
+        column: pd.Series
+    ):
+        column_dtype = str(column.dtype)
+        message = (
+            f"Column must be categorical (dtype object). {column.name} "
+            f"is of type {column_dtype}."
+        )
+        super().__init__(message)
