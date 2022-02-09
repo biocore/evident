@@ -96,7 +96,7 @@ class BaseDiversityHandler(ABC):
         num_choices = len(column_choices)
 
         if num_choices == 1:
-            raise ValueError("Only one column value!")
+            raise exc.OnlyOneCategoryError(self.metadata[column])
         elif num_choices == 2:
             # tt_ind_solve_power uses observations per group
             if total_observations is not None:

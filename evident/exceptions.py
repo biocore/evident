@@ -42,13 +42,19 @@ class WrongPowerArguments(Exception):
         return msg
 
 class NonCategoricalColumnError(Exception):
-    def __init__(
-        self,
-        column: pd.Series
-    ):
+    def __init__(self, column: pd.Series):
         column_dtype = str(column.dtype)
         message = (
-            f"Column must be categorical (dtype object). {column.name} "
+            f"Column must be categorical (dtype object). '{column.name}' "
             f"is of type {column_dtype}."
+        )
+        super().__init__(message)
+
+
+class OnlyOneCategoryError(Exception):
+    def __init__(self, column: pd.Series):
+        value = column.unique().item()
+        message = (
+            f"Column {column.name} has only one value: '{value}'."
         )
         super().__init__(message)

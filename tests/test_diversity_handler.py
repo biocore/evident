@@ -103,7 +103,19 @@ class TestPower:
                 power=0.8
             )
         exp_err_msg = (
-            "Column must be categorical (dtype object). year_diagnosed "
+            "Column must be categorical (dtype object). 'year_diagnosed' "
             "is of type int64."
+        )
+        assert str(exc_info.value) == exp_err_msg
+
+    def test_alpha_power_only_one_cat(self, alpha_mock):
+        with pytest.raises(exc.OnlyOneCategoryError) as exc_info:
+            alpha_mock.power_analysis(
+                "env_biome",
+                alpha=0.05,
+                power=0.8
+            )
+        exp_err_msg = (
+            "Column env_biome has only one value: 'urban biome'."
         )
         assert str(exc_info.value) == exp_err_msg
