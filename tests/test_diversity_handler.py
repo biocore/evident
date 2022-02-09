@@ -31,13 +31,38 @@ def test_subset_alpha_values(alpha_mock):
                                    decimal=3)
 
 
-def test_alpha_power(alpha_mock):
-    md, faith_pd = alpha_mock
-    a = AlphaDiversityHandler(faith_pd, md)
-    calc_power = a.power_analysis(
-        "classification",
-        total_observations=40,
-        alpha=0.05
-    )
-    exp_power = 0.888241
-    np.testing.assert_almost_equal(calc_power, exp_power, decimal=6)
+class TestPower:
+    def test_alpha_power_power_t(self, alpha_mock):
+        md, faith_pd = alpha_mock
+        a = AlphaDiversityHandler(faith_pd, md)
+        calc_power = a.power_analysis(
+            "classification",
+            total_observations=40,
+            alpha=0.05
+        )
+        exp_power = 0.888241
+        np.testing.assert_almost_equal(calc_power, exp_power, decimal=6)
+
+    def test_alpha_power_obs_t(self, alpha_mock):
+        md, faith_pd = alpha_mock
+        a = AlphaDiversityHandler(faith_pd, md)
+        power = 0.888241
+        calc_nobs = a.power_analysis(
+            "classification",
+            alpha=0.05,
+            power=power
+        )
+        assert calc_nobs == 40
+
+    def test_alpha_power_alpha_t(self, alpha_mock):
+        md, faith_pd = alpha_mock
+        a = AlphaDiversityHandler(faith_pd, md)
+        power = 0.888241
+        total_observations = 40
+        calc_alpha = a.power_analysis(
+            "classification",
+            total_observations=total_observations,
+            power=power
+        )
+        exp_alpha = 0.05
+        np.testing.assert_almost_equal(calc_alpha, exp_alpha, decimal=2)

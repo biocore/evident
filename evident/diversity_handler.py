@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
-# from .exceptions import NoCommonSamplesError
+from . import exceptions as exc
 from ._utils import calculate_cohens_d, calculate_cohens_f
 
 
@@ -19,26 +19,53 @@ class BaseDiversityHandler(ABC):
     def samples(self):
         return self.metadata.index.to_list()
 
-    @abstractmethod
     def power_analysis(
         self,
-        power_function: Callable,
+        column: str,
+        total_observations: int = None,
         alpha: float = None,
         power: float = None
-    ):
-        """Perform power analysis using this dataset
+    ) -> float:
+        """Perform power analysis using this diversity dataset.
+
+        Exactly one of total_observations, alpha, or power must be None.
 
         NOTE: Only really makes sense when *not* specifying effect size.
               Use diversity for effect size calculation depending on groups.
               Maybe allow specificying difference?
 
         Observations calculated in _incept_power_solve_function and is
-            included in power_function
+            included in power_function. Need to determine whether to
+            use t-test or ANOVA as that determines argument to be used.
         """
-        val_to_solve = power_function(
-            power=power,
-            alpha=alpha
+        # Check to make sure exactly one argument is None
+        args = [alpha, power, total_observations]
+        num_nones = args.count(None)
+        if num_nones != 1:
+            raise exc.MisspecifiedPowerArguments(*args)
+
+        power_func = self._incept_power_solve_function(
+            column=column,
+            total_observations=total_observations
         )
+
+        val_to_solve = power_func(power=power, alpha=alpha)
+
+        # If calculating total_observations, check to see if doing t-test
+        # If so, multiply by two as tt_ind_solve_power returns number of
+        #     observations of sample 1.
+        power_func_name = power_func.func.__qualname__
+        if total_observations is None:
+            print("Calculating total number of observations")
+            if power_func_name == "TTestIndPower.solve_power":
+                val_to_solve = np.ceil(val_to_solve) * 2
+
+        if alpha is None:
+            print("Calculating alpha")
+
+        if power is None:
+            print("Calculating power")
+
         return val_to_solve
 
     @abstractmethod
@@ -83,6 +110,7 @@ class BaseDiversityHandler(ABC):
             values_2 = self.subset_values(ids2).values
 
             effect_size = calculate_cohens_d(values_1, values_2)
+            print(f"Cohen's d = {effect_size}")
 
             power_func = partial(
                 tt_ind_solve_power,
@@ -99,6 +127,7 @@ class BaseDiversityHandler(ABC):
                 arrays.append(values)
 
             effect_size = calculate_cohens_f(*arrays)
+            print(f"Cohen's f = {effect_size}")
 
             power_func = partial(
                 FTestAnovaPower().solve_power,
@@ -127,23 +156,3 @@ class AlphaDiversityHandler(BaseDiversityHandler):
 
     def subset_values(self, ids: list):
         return self.data.loc[ids]
-
-    def power_analysis(
-        self,
-        column: str,
-        total_observations: int = None,
-        alpha: float = None,
-        power: float = None
-    ):
-        power_func = self._incept_power_solve_function(
-            column=column,
-            total_observations=total_observations
-        )
-
-        val = super().power_analysis(
-            power_function=power_func,
-            alpha=alpha,
-            power=power
-        )
-
-        return val
