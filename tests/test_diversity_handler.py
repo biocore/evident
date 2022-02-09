@@ -20,6 +20,7 @@ def test_alpha_div_handler(alpha_mock):
     assert a.metadata.shape == (220, 40)
     assert a.data.shape == (220, )
 
+
 def test_subset_alpha_values(alpha_mock):
     md, faith_pd = alpha_mock
     a = AlphaDiversityHandler(faith_pd, md)

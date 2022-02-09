@@ -7,7 +7,7 @@ import pandas as pd
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
 # from .exceptions import NoCommonSamplesError
-from ._utils import calculate_pooled_stdev, calculate_cohens_d
+from ._utils import calculate_cohens_d, calculate_cohens_f
 
 
 class BaseDiversityHandler(ABC):
@@ -76,11 +76,6 @@ class BaseDiversityHandler(ABC):
             if total_observations is not None:
                 total_observations = total_observations / 2
 
-            power_func = partial(
-                tt_ind_solve_power,
-                nobs1=total_observations,
-                ratio=1.0
-            )
             c1, c2 = column_choices
             ids1 = self.metadata[self.metadata[column == c1]].index
             ids2 = self.metadata[self.metadata[column == c2]].index
@@ -88,36 +83,31 @@ class BaseDiversityHandler(ABC):
             values_2 = self.subset_values(ids2).values
 
             effect_size = calculate_cohens_d(values_1, values_2)
+
+            power_func = partial(
+                tt_ind_solve_power,
+                nobs1=total_observations,
+                ratio=1.0,
+                effect_size=effect_size
+            )
         else:
             # FTestAnovaPower uses *total* observations
+            arrays = []
+            for choice in column_choices:
+                ids = self.metadata[self.metadata[column == choice]].index
+                values = self.subset_values(ids)
+                arrays.append(values)
+
+            effect_size = calculate_cohens_f(*arrays)
+
             power_func = partial(
                 FTestAnovaPower().solve_power,
                 k_groups=num_choices,
-                nobs=total_observations
+                nobs=total_observations,
+                effect_size=effect_size
             )
 
-            all_ids = self.metadata.index
-            total_mu = self._subset_values(all_ids).mean()
-
-            # tinyurl.com/4p47ffem
-            # sigma_m^2 = sum_{i=1}^G (n_i/N)(mu_i - mu_w)^2
-            effect_size_numerator = 0
-            for choice in column_choices:
-                ids = self.metadata[self.metadata[column == choice]].index
-                choice_mu = self._subset_values(ids).mean()
-                effect_size_numerator += (
-                    len(ids) / len(all_ids)
-                    * np.power(choice_mu - total_mu, 2)
-                )
-            effect_size_numerator = np.sqrt(effect_size_numerator)
-
-        # NOTE: Inefficient w/ above
-        values = []
-        for option, option_df in self.metadata.groupby(column):
-            indices = option_df.index
-            values.append(self.subset_values(indices))
-
-        return partial(power_func, effect_size)
+        return power_func
 
 
 class AlphaDiversityHandler(BaseDiversityHandler):
@@ -142,7 +132,6 @@ class AlphaDiversityHandler(BaseDiversityHandler):
         self,
         column: str,
         total_observations: int = None,
-        difference: float = None,
         alpha: float = None,
         power: float = None
     ):
