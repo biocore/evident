@@ -185,3 +185,31 @@ class TestPower:
         )
         exp_power = 0.404539
         np.testing.assert_almost_equal(calc_power, exp_power, decimal=6)
+
+
+class TestEffectSize:
+    def test_non_categorical(self, alpha_mock):
+        with pytest.raises(exc.NonCategoricalColumnError) as exc_info:
+            alpha_mock.calculate_effect_size("year_diagnosed")
+        exp_err_msg = (
+            "Column must be categorical (dtype object). 'year_diagnosed' "
+            "is of type int64."
+        )
+        assert str(exc_info.value) == exp_err_msg
+
+    def test_only_one_category(self, alpha_mock):
+        with pytest.raises(exc.OnlyOneCategoryError) as exc_info:
+            alpha_mock.calculate_effect_size("env_biome")
+        exp_err_msg = (
+            "Column env_biome has only one value: 'urban biome'."
+        )
+        assert str(exc_info.value) == exp_err_msg
+
+    def test_difference(self, alpha_mock):
+        calc_effect_size = alpha_mock.calculate_effect_size(
+            "classification",
+            difference=3
+        )
+        exp_effect_size = 0.812497
+        np.testing.assert_almost_equal(calc_effect_size, exp_effect_size,
+                                       decimal=6)

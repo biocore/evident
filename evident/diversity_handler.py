@@ -73,7 +73,7 @@ class BaseDiversityHandler(ABC):
         self,
         column: str,
         total_observations: int = None,
-        difference = None,
+        difference: float = None,
         alpha: float = None,
         power: float = None
     ) -> float:
