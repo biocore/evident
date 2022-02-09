@@ -106,8 +106,8 @@ class BaseDiversityHandler(ABC):
             c1, c2 = column_choices
             ids1 = self.metadata[self.metadata[column] == c1].index
             ids2 = self.metadata[self.metadata[column] == c2].index
-            values_1 = self.subset_values(ids1).values
-            values_2 = self.subset_values(ids2).values
+            values_1 = self.subset_values(ids1)
+            values_2 = self.subset_values(ids2)
 
             effect_size = calculate_cohens_d(values_1, values_2)
             print(f"Cohen's d = {effect_size}")
