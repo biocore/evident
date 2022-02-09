@@ -121,7 +121,7 @@ class BaseDiversityHandler(ABC):
             # FTestAnovaPower uses *total* observations
             arrays = []
             for choice in column_choices:
-                ids = self.metadata[self.metadata[column == choice]].index
+                ids = self.metadata[self.metadata[column] == choice].index
                 values = self.subset_values(ids)
                 arrays.append(values)
 

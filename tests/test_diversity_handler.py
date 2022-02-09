@@ -119,3 +119,23 @@ class TestPower:
             "Column env_biome has only one value: 'urban biome'."
         )
         assert str(exc_info.value) == exp_err_msg
+
+    def test_alpha_power_f(self, alpha_mock, monkeypatch):
+        # Monkey patch Cohen's f calculation directly in diversity_handler
+        #     instead of in _utils. Doesn't really make sense that it has
+        #     to be done this what but whatever.
+        # https://stackoverflow.com/a/45466846
+        def mock_cohens_f(*args):
+            return 0.4
+
+        monkeypatch.setattr(
+            "evident.diversity_handler.calculate_cohens_f",
+            mock_cohens_f
+        )
+        calc_power = alpha_mock.power_analysis(
+            "cd_behavior",  # 3 groups
+            total_observations=60,
+            alpha=0.05
+        )
+        exp_power = 0.775732
+        np.testing.assert_almost_equal(calc_power, exp_power, decimal=6)

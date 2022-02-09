@@ -41,6 +41,7 @@ class WrongPowerArguments(Exception):
         )
         return msg
 
+
 class NonCategoricalColumnError(Exception):
     def __init__(self, column: pd.Series):
         column_dtype = str(column.dtype)

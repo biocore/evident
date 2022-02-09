@@ -31,7 +31,7 @@ def test_calc_cohens_d():
     np.testing.assert_almost_equal(exp_cohen_d, calc_cohen_d, decimal=6)
 
 
-def test_calc_cohens_f():
+def test_calc_cohens_f_two_groups():
     # Cohen's f = 0.5 * Cohen's d
     a = [1, 2, 3, 4, 5, 6]
     b = [2, 5, 3, 6, 8, 9]
