@@ -31,7 +31,7 @@ class BaseDiversityHandler(ABC):
         return self.metadata.index.to_list()
 
     # Memoize this function for repeated calls
-    @lru_cache
+    @lru_cache()
     def calculate_effect_size(
         self,
         column: str,
