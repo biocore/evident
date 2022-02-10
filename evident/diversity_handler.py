@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from functools import partial
+from functools import lru_cache, partial
 from typing import Callable
 
 import numpy as np
@@ -30,6 +30,8 @@ class BaseDiversityHandler(ABC):
     def samples(self):
         return self.metadata.index.to_list()
 
+    # Memoize this function for repeated calls
+    @lru_cache
     def calculate_effect_size(
         self,
         column: str,
