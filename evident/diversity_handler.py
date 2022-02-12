@@ -210,7 +210,7 @@ class BaseDiversityHandler(ABC):
         alpha: float = None,
         power: float = None
     ):
-        """Compute the power analysis for a single value.
+        """Compute the power analysis for a multiple values.
 
         :param column: Name of column in metadata to consider
         :type column: str
@@ -317,6 +317,7 @@ class BaseDiversityHandler(ABC):
 
 
 class AlphaDiversityHandler(BaseDiversityHandler):
+    """Handler for alpha diversity data."""
     def __init__(
         self,
         data: pd.Series,
@@ -336,6 +337,7 @@ class AlphaDiversityHandler(BaseDiversityHandler):
 
 
 class BetaDiversityHandler(BaseDiversityHandler):
+    """Handler for beta diversity data."""
     def __init__(
         self,
         data: DistanceMatrix,
