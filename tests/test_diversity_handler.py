@@ -213,3 +213,21 @@ class TestEffectSize:
         exp_effect_size = 0.812497
         np.testing.assert_almost_equal(calc_effect_size, exp_effect_size,
                                        decimal=6)
+
+
+class TestVectorArgsPowerAnalysis:
+    def test_range(self, alpha_mock):
+        obs_values = range(20, 50, 5)
+        power_res = alpha_mock.power_analysis(
+            column="classification",
+            total_observations=obs_values,
+            alpha=0.05
+        )
+
+        for vector_res, obs in zip(power_res, obs_values):
+            single_res = alpha_mock.power_analysis(
+                column="classification",
+                total_observations=obs,
+                alpha=0.05
+            )
+            assert single_res.power == vector_res.power
