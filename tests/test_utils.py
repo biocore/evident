@@ -1,41 +1,40 @@
 import numpy as np
+import pandas as pd
+import pytest
 
-from evident import _utils as utils
-
-
-def test_calc_pooled_std_two_groups():
-    a = [1, 2, 3, 4, 5, 6]
-    b = [2, 5, 3, 6, 8, 9]
-
-    calc_pooled_std = utils.calculate_pooled_stdev(a, b)
-    exp_pooled_std = 2.345208
-    np.testing.assert_almost_equal(exp_pooled_std, calc_pooled_std, decimal=6)
+from evident import utils
+from evident.diversity_handler import AlphaDiversityHandler
 
 
-def test_calc_pooled_std_three_groups():
-    a = [1, 2, 3, 4, 5, 6]
-    b = [2, 5, 3, 6, 8, 9]
-    c = [0, 2, 2, 5, 1, 4]
+def test_listify():
+    a = np.array([1, 2, 3])
+    np.testing.assert_equal(utils.listify(a), a)
 
-    calc_pooled_std = utils.calculate_pooled_stdev(a, b, c)
-    exp_pooled_std = 2.195955
-    np.testing.assert_almost_equal(exp_pooled_std, calc_pooled_std, decimal=6)
+    b = range(10)
+    assert utils.listify(b) == range(10)
 
+    c = 5
+    assert utils.listify(c) == [5]
 
-def test_calc_cohens_d():
-    a = [1, 2, 3, 4, 5, 6]
-    b = [2, 5, 3, 6, 8, 9]
-
-    calc_cohen_d = utils.calculate_cohens_d(a, b)
-    exp_cohen_d = 0.852803
-    np.testing.assert_almost_equal(exp_cohen_d, calc_cohen_d, decimal=6)
+    d = [1, 2, 3]
+    assert utils.listify(d) == d
 
 
-def test_calc_cohens_f_two_groups():
-    # Cohen's f = 0.5 * Cohen's d
-    a = [1, 2, 3, 4, 5, 6]
-    b = [2, 5, 3, 6, 8, 9]
+def test_check_sample_overlap():
+    md = pd.DataFrame.from_dict({
+        "a": [1, 2, 3, 4, 5],
+        "b": ["A", "B", "C", "D", "E"]
+    })
+    md.index = [f"S{i+1}" for i in range(5)]
 
-    exp_cohen_f = 0.852803 / 2
-    calc_cohen_f = utils.calculate_cohens_f(a, b)
-    np.testing.assert_almost_equal(exp_cohen_f, calc_cohen_f, decimal=6)
+    alpha_div = pd.Series(
+        [6, 7, 8, 9, 10],
+        index=[f"S{i+2}" for i in range(5)]
+    )
+    with pytest.warns(UserWarning) as warn_info:
+        AlphaDiversityHandler(alpha_div, md)
+    exp_msg = (
+        "Data and metadata do not have the same sample IDs. Using 4 samples "
+        "common to both."
+    )
+    assert warn_info[0].message.args[0] == exp_msg
