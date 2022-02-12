@@ -9,8 +9,8 @@ from skbio import DistanceMatrix
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
 from . import exceptions as exc
-from ._utils import (calculate_cohens_d, calculate_cohens_f,
-                     calculate_pooled_stdev)
+from .stats import (calculate_cohens_d, calculate_cohens_f,
+                    calculate_pooled_stdev)
 
 
 @dataclass
