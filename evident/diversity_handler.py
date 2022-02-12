@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import lru_cache, partial
-from typing import Callable
+from itertools import product
+from typing import Callable, Iterable
 
 import numpy as np
 import pandas as pd
@@ -11,6 +12,7 @@ from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 from . import exceptions as exc
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev)
+from .utils import listify
 
 
 @dataclass
@@ -94,13 +96,42 @@ class BaseDiversityHandler(ABC):
         """
         # Check to make sure exactly one argument is None
         args = [alpha, power, total_observations]
+        idx = args.index(None)
         num_nones = args.count(None)
         if num_nones != 1:
             raise exc.WrongPowerArguments(*args)
 
-        # Observations arg calculated in _incept_power_solve_function and is
-        #     included in power_func. Need to determine whether to use
-        #     t-test or ANOVA as that determines argument to be used.
+        vector_args = map(lambda x: isinstance(x, Iterable), args)
+        if any(vector_args):
+            result = self._bulk_power_analysis(
+                column,
+                total_observations,
+                difference,
+                alpha,
+                power
+            )
+        else:
+            result = self._single_power_analysis(
+                column,
+                total_observations,
+                difference,
+                alpha,
+                power
+            )
+
+        return result
+
+    def _single_power_analysis(
+        self,
+        column: str,
+        total_observations: int = None,
+        difference: float = None,
+        alpha: float = None,
+        power: float = None
+    ):
+        args = [alpha, power, total_observations]
+        idx = args.index(None)
+
         power_func = self._incept_power_solve_function(
             column=column,
             difference=difference,
@@ -117,7 +148,6 @@ class BaseDiversityHandler(ABC):
             if power_func_name == "TTestIndPower.solve_power":
                 val_to_solve = np.ceil(val_to_solve) * 2
 
-        idx = args.index(None)
         if idx == 0:
             alpha = val_to_solve
         elif idx == 1:
@@ -134,10 +164,34 @@ class BaseDiversityHandler(ABC):
 
         return results
 
+    def _bulk_power_analysis(
+        self,
+        column: str,
+        total_observations: int = None,
+        difference: float = None,
+        alpha: float = None,
+        power: float = None
+    ):
+        # Convert all to list so we can use product chaining
+        difference = listify(difference)
+        total_observations = listify(total_observations)
+        alpha = listify(alpha)
+        power = listify(power)
+        power_args = [difference, total_observations, alpha, power]
+
+        power_arg_products = product(*power_args)
+        results_list = []
+        for _diff, _obs, _alpha, _power in power_arg_products:
+            results_list.append(self._single_power_analysis(
+                column, _obs, _diff, _alpha, _power
+            ))
+        return results_list
+
     @abstractmethod
     def subset_values(self, ids: list):
         """Get subset of data given list of indices"""
 
+    @lru_cache()
     def _incept_power_solve_function(
         self,
         column: str,
@@ -145,6 +199,10 @@ class BaseDiversityHandler(ABC):
         total_observations: int = None
     ) -> Callable:
         """Create basic function to solve for power.
+
+        Observations arg calculated in _incept_power_solve_function and is
+            included in power_func. Need to determine whether to use
+            t-test or ANOVA as that determines argument to be used.
 
         :param column: Name of column in metadata to consider
         :type column: str
