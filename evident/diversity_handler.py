@@ -12,7 +12,7 @@ from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 from . import exceptions as exc
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev)
-from .utils import listify
+from .utils import listify, _check_sample_overlap
 
 
 @dataclass
@@ -325,7 +325,7 @@ class AlphaDiversityHandler(BaseDiversityHandler):
     ):
         md_samps = set(metadata.index)
         data_samps = set(data.index)
-        samps_in_common = list(md_samps.intersection(data_samps))
+        samps_in_common = _check_sample_overlap(md_samps, data_samps)
 
         super().__init__(
             data=data.loc[samps_in_common],
@@ -345,7 +345,7 @@ class BetaDiversityHandler(BaseDiversityHandler):
     ):
         md_samps = set(metadata.index)
         data_samps = set(data.ids)
-        samps_in_common = list(md_samps.intersection(data_samps))
+        samps_in_common = _check_sample_overlap(md_samps, data_samps)
 
         super().__init__(
             data=data.filter(samps_in_common),
