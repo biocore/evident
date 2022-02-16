@@ -231,3 +231,12 @@ class TestVectorArgsPowerAnalysis:
                 alpha=0.05
             )
             assert single_res.power == vector_res.power
+
+    def test_np_array(self, alpha_mock):
+        obs_values = np.linspace(10, 50, 5)
+        power_res = alpha_mock.power_analysis(
+            column="classification",
+            total_observations=obs_values,
+            alpha=0.05
+        )
+        assert len(power_res) == 5

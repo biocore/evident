@@ -116,8 +116,8 @@ class BaseDiversityHandler(ABC):
         :type power: float or np.array[float]
         """
         args = [alpha, power, total_observations]
-        num_nones = args.count(None)
-        if num_nones != 1:  # Check to make sure exactly one arg is None
+        none_args = [x is None for x in args]
+        if sum(none_args) != 1:  # Check to make sure exactly one arg is None
             raise exc.WrongPowerArguments(*args)
 
         # If any of the arguments are iterable, perform power analysis on
@@ -185,7 +185,8 @@ class BaseDiversityHandler(ABC):
                 val_to_solve = np.ceil(val_to_solve) * 2
 
         args = [alpha, power, total_observations]
-        idx = args.index(None)
+        none_args = [x is None for x in args]
+        idx = none_args.index(True)
 
         if idx == 0:
             alpha = val_to_solve
