@@ -16,7 +16,7 @@ from .utils import _listify, _check_sample_overlap
 
 
 @dataclass
-class PowerAnalysisResults:
+class PowerAnalysisResult:
     alpha: float
     total_observations: int
     power: float
@@ -167,7 +167,7 @@ class _BaseDiversityHandler(ABC):
         :type power: float
 
         :returns: Collection of values from power analysis
-        :rtype: PowerAnalysisResults
+        :rtype: PowerAnalysisResult
         """
         power_func = self._create_partial_power_func(
             column=column,
@@ -196,7 +196,7 @@ class _BaseDiversityHandler(ABC):
         else:
             total_observations = val_to_solve
 
-        results = PowerAnalysisResults(
+        results = PowerAnalysisResult(
             alpha=alpha,
             total_observations=total_observations,
             power=power,
@@ -233,7 +233,7 @@ class _BaseDiversityHandler(ABC):
         :type power: sequence of floats
 
         :returns: Collection of values from power analyses
-        :rtype: list[PowerAnalysisResults]
+        :rtype: list[PowerAnalysisResult]
         """
         # Convert all to list so we can use Cartesian product
         difference = _listify(difference)
@@ -362,15 +362,16 @@ class BetaDiversityHandler(_BaseDiversityHandler):
 
 
 def create_power_res_dataframe(
-    results: List[PowerAnalysisResults]
+    results: List[PowerAnalysisResult]
 ) -> pd.DataFrame:
-    """Create a DataFrame from a list of PowerAnalysisResults."""
+    """Create a DataFrame from a list of PowerAnalysisResult."""
     records = [
         (x.alpha, x.total_observations, x.power, x.effect_size, x.difference)
         for x in results
     ]
     df = pd.DataFrame.from_records(
         records,
-        columns=["alpha", "total_observations", "power", "effect_size"]
+        columns=["alpha", "total_observations", "power", "effect_size",
+                 "difference"]
     )
     return df

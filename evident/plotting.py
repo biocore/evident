@@ -9,15 +9,15 @@ def plot_power_curve(
     style: str = "alpha",
     **kwargs
 ):
-    fig, ax = plt.subplots(1, 1)
+    fig, ax = plt.subplots(1, 1, dpi=300, facecolor="white")
     sns.lineplot(
         data=power_df,
         x="total_observations",
         y="power",
-        markers=True,
+        style=style,
         **kwargs
     )
-    ax.hline(target_power, zorder=0)
+    ax.axhline(target_power, zorder=0, color="black")
     ax.grid(linewidth=0.2)
     ax.set_axisbelow(True)
     ax.set_ylabel(r"Power (1 - $\beta$)", fontsize="large")
