@@ -8,16 +8,16 @@ from evident.diversity_handler import AlphaDiversityHandler
 
 def test_listify():
     a = np.array([1, 2, 3])
-    np.testing.assert_equal(utils.listify(a), a)
+    np.testing.assert_equal(utils._listify(a), a)
 
     b = range(10)
-    assert utils.listify(b) == range(10)
+    assert utils._listify(b) == range(10)
 
     c = 5
-    assert utils.listify(c) == [5]
+    assert utils._listify(c) == [5]
 
     d = [1, 2, 3]
-    assert utils.listify(d) == d
+    assert utils._listify(d) == d
 
 
 def test_check_sample_overlap():

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import lru_cache, partial
 from itertools import product
-from typing import Callable, Iterable
+from typing import Callable, Iterable, List
 
 import numpy as np
 import pandas as pd
@@ -12,7 +12,7 @@ from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 from . import exceptions as exc
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev)
-from .utils import listify, _check_sample_overlap
+from .utils import _listify, _check_sample_overlap
 
 
 @dataclass
@@ -236,10 +236,10 @@ class _BaseDiversityHandler(ABC):
         :rtype: list[PowerAnalysisResults]
         """
         # Convert all to list so we can use Cartesian product
-        difference = listify(difference)
-        total_observations = listify(total_observations)
-        alpha = listify(alpha)
-        power = listify(power)
+        difference = _listify(difference)
+        total_observations = _listify(total_observations)
+        alpha = _listify(alpha)
+        power = _listify(power)
         power_args = [difference, total_observations, alpha, power]
 
         power_arg_products = product(*power_args)
@@ -359,3 +359,18 @@ class BetaDiversityHandler(_BaseDiversityHandler):
     def subset_values(self, ids: list) -> np.array:
         """Get beta-diversity differences among provided samples."""
         return np.array(self.data.filter(ids).to_series().values)
+
+
+def create_power_res_dataframe(
+    results: List[PowerAnalysisResults]
+) -> pd.DataFrame:
+    """Create a DataFrame from a list of PowerAnalysisResults."""
+    records = [
+        (x.alpha, x.total_observations, x.power, x.effect_size, x.difference)
+        for x in results
+    ]
+    df = pd.DataFrame.from_records(
+        records,
+        columns=["alpha", "total_observations", "power", "effect_size"]
+    )
+    return df
