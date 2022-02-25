@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from functools import lru_cache, partial
 from itertools import product
 from typing import Callable, Iterable, List
@@ -10,18 +9,11 @@ from skbio import DistanceMatrix
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
 from . import exceptions as exc
+from .power import PowerAnalysisResult, PowerAnalysisResults
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev)
 from .utils import _listify, _check_sample_overlap
 
-
-@dataclass
-class PowerAnalysisResult:
-    alpha: float
-    total_observations: int
-    power: float
-    effect_size: float
-    difference: float
 
 
 class _BaseDiversityHandler(ABC):
@@ -167,7 +159,7 @@ class _BaseDiversityHandler(ABC):
         :type power: float
 
         :returns: Collection of values from power analysis
-        :rtype: PowerAnalysisResult
+        :rtype: evident.power.PowerAnalysisResult
         """
         power_func = self._create_partial_power_func(
             column=column,
@@ -233,7 +225,7 @@ class _BaseDiversityHandler(ABC):
         :type power: sequence of floats
 
         :returns: Collection of values from power analyses
-        :rtype: list[PowerAnalysisResult]
+        :rtype: evident.power.PowerAnalysisResults
         """
         # Convert all to list so we can use Cartesian product
         difference = _listify(difference)
@@ -248,7 +240,7 @@ class _BaseDiversityHandler(ABC):
             results_list.append(self._single_power_analysis(
                 column, _obs, _diff, _alpha, _power
             ))
-        return results_list
+        return PowerAnalysisResults(results_list)
 
     @abstractmethod
     def subset_values(self, ids: list):
@@ -359,19 +351,3 @@ class BetaDiversityHandler(_BaseDiversityHandler):
     def subset_values(self, ids: list) -> np.array:
         """Get beta-diversity differences among provided samples."""
         return np.array(self.data.filter(ids).to_series().values)
-
-
-def create_power_res_dataframe(
-    results: List[PowerAnalysisResult]
-) -> pd.DataFrame:
-    """Create a DataFrame from a list of PowerAnalysisResult."""
-    records = [
-        (x.alpha, x.total_observations, x.power, x.effect_size, x.difference)
-        for x in results
-    ]
-    df = pd.DataFrame.from_records(
-        records,
-        columns=["alpha", "total_observations", "power", "effect_size",
-                 "difference"]
-    )
-    return df

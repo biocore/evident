@@ -2,13 +2,33 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
+from evident.power import PowerAnalysisResults
+
 
 def plot_power_curve(
-    power_df: pd.DataFrame,
+    results: PowerAnalysisResults,
     target_power: float = 0.8,
     style: str = "alpha",
     **kwargs
 ):
+    """Plot power curve from multiple power analyses.
+
+    x-axis is total_observations and y-axis is power
+
+    :param results: Results from power analyses
+    :type results: evident.power.PowerAnalysisResults
+
+    :param target_power: Where to draw line denoting target power, defaults to
+        0.8
+    :type target_power: float
+
+    :param style: Value to use as style, must be one of 'alpha' (default),
+        'effect_size', or 'difference'
+    :type style: str
+
+    :param kwargs: Any additional arguments to pass into sns.lineplot
+    """
+    power_df = PowerAnalysisResults.to_dataframe()
     fig, ax = plt.subplots(1, 1, dpi=300, facecolor="white")
     sns.lineplot(
         data=power_df,
