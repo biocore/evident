@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from functools import lru_cache, partial
 from itertools import product
 from typing import Callable, Iterable
@@ -10,20 +9,13 @@ from skbio import DistanceMatrix
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
 from . import exceptions as exc
+from .power import PowerAnalysisResult, PowerAnalysisResults
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev)
-from .utils import listify, _check_sample_overlap
+from .utils import _listify, _check_sample_overlap
 
 
-@dataclass
-class PowerAnalysisResults:
-    alpha: float
-    total_observations: int
-    power: float
-    effect_size: float
-
-
-class BaseDiversityHandler(ABC):
+class _BaseDiversityHandler(ABC):
     """Abstract class for handling diversity data and metadata."""
     def __init__(self, data=None, metadata: pd.DataFrame = None):
         self.data = data
@@ -166,9 +158,9 @@ class BaseDiversityHandler(ABC):
         :type power: float
 
         :returns: Collection of values from power analysis
-        :rtype: PowerAnalysisResults
+        :rtype: evident.power.PowerAnalysisResult
         """
-        power_func = self._incept_power_solve_function(
+        power_func = self._create_partial_power_func(
             column=column,
             difference=difference,
             total_observations=total_observations
@@ -195,11 +187,12 @@ class BaseDiversityHandler(ABC):
         else:
             total_observations = val_to_solve
 
-        results = PowerAnalysisResults(
+        results = PowerAnalysisResult(
             alpha=alpha,
             total_observations=total_observations,
             power=power,
-            effect_size=power_func.keywords["effect_size"]
+            effect_size=power_func.keywords["effect_size"],
+            difference=difference
         )
         return results
 
@@ -231,13 +224,13 @@ class BaseDiversityHandler(ABC):
         :type power: sequence of floats
 
         :returns: Collection of values from power analyses
-        :rtype: list[PowerAnalysisResults]
+        :rtype: evident.power.PowerAnalysisResults
         """
         # Convert all to list so we can use Cartesian product
-        difference = listify(difference)
-        total_observations = listify(total_observations)
-        alpha = listify(alpha)
-        power = listify(power)
+        difference = _listify(difference)
+        total_observations = _listify(total_observations)
+        alpha = _listify(alpha)
+        power = _listify(power)
         power_args = [difference, total_observations, alpha, power]
 
         power_arg_products = product(*power_args)
@@ -246,14 +239,14 @@ class BaseDiversityHandler(ABC):
             results_list.append(self._single_power_analysis(
                 column, _obs, _diff, _alpha, _power
             ))
-        return results_list
+        return PowerAnalysisResults(results_list)
 
     @abstractmethod
     def subset_values(self, ids: list):
         """Get subset of data given list of indices"""
 
     @lru_cache()
-    def _incept_power_solve_function(
+    def _create_partial_power_func(
         self,
         column: str,
         difference: float = None,
@@ -261,7 +254,7 @@ class BaseDiversityHandler(ABC):
     ) -> Callable:
         """Create basic function to solve for power.
 
-        Observations arg calculated in _incept_power_solve_function and is
+        Observations arg calculated in _create_partial_power_func and is
             included in power_func. Need to determine whether to use
             t-test or ANOVA as that determines argument to be used.
 
@@ -317,7 +310,7 @@ class BaseDiversityHandler(ABC):
         return partial(power_func, effect_size=effect_size)
 
 
-class AlphaDiversityHandler(BaseDiversityHandler):
+class AlphaDiversityHandler(_BaseDiversityHandler):
     """Handler for alpha diversity data."""
     def __init__(
         self,
@@ -333,11 +326,12 @@ class AlphaDiversityHandler(BaseDiversityHandler):
             metadata=metadata.loc[samps_in_common]
         )
 
-    def subset_values(self, ids: list):
-        return self.data.loc[ids]
+    def subset_values(self, ids: list) -> np.array:
+        """Get alpha-diversity differences among provided samples."""
+        return self.data.loc[ids].values
 
 
-class BetaDiversityHandler(BaseDiversityHandler):
+class BetaDiversityHandler(_BaseDiversityHandler):
     """Handler for beta diversity data."""
     def __init__(
         self,
@@ -353,5 +347,6 @@ class BetaDiversityHandler(BaseDiversityHandler):
             metadata=metadata.loc[samps_in_common]
         )
 
-    def subset_values(self, ids: list):
+    def subset_values(self, ids: list) -> np.array:
+        """Get beta-diversity differences among provided samples."""
         return np.array(self.data.filter(ids).to_series().values)
