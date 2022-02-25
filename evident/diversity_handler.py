@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from functools import lru_cache, partial
 from itertools import product
-from typing import Callable, Iterable, List
+from typing import Callable, Iterable
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,6 @@ from .power import PowerAnalysisResult, PowerAnalysisResults
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev)
 from .utils import _listify, _check_sample_overlap
-
 
 
 class _BaseDiversityHandler(ABC):

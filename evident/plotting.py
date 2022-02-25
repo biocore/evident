@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
 
 from evident.power import PowerAnalysisResults
@@ -28,7 +27,7 @@ def plot_power_curve(
 
     :param kwargs: Any additional arguments to pass into sns.lineplot
     """
-    power_df = PowerAnalysisResults.to_dataframe()
+    power_df = results.to_dataframe()
     fig, ax = plt.subplots(1, 1, dpi=300, facecolor="white")
     sns.lineplot(
         data=power_df,

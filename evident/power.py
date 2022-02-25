@@ -40,9 +40,6 @@ class PowerAnalysisResults:
         self._n = 0
         return self
 
-    def __str__(self):
-        return self.results
-
     def __len__(self):
         return len(self.results)
 
