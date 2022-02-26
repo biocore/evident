@@ -21,6 +21,14 @@ class PowerAnalysisResult:
             "difference": self.difference
         }
 
+    def to_series(self) -> pd.Series:
+        vals = [self.alpha, self.total_observations, self.power,
+                self.effect_size]
+        index = ["alpha", "total_observations", "power", "effect_size"]
+        p = pd.Series(vals, index=index, name="results")
+        p.index.name = "value"
+        return p
+
 
 class PowerAnalysisResults:
     def __init__(self, results: List[PowerAnalysisResult]):

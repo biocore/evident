@@ -1,11 +1,14 @@
+from typing import Union
+
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
 
 from evident.power import PowerAnalysisResults
 
 
 def plot_power_curve(
-    results: PowerAnalysisResults,
+    results: Union[PowerAnalysisResults, pd.DataFrame],
     target_power: float = 0.8,
     style: str = "alpha",
     **kwargs
@@ -27,7 +30,11 @@ def plot_power_curve(
 
     :param kwargs: Any additional arguments to pass into sns.lineplot
     """
-    power_df = results.to_dataframe()
+    if isinstance(results, PowerAnalysisResults):
+        power_df = results.to_dataframe()
+    else:
+        power_df = results
+
     fig, ax = plt.subplots(1, 1, dpi=300, facecolor="white")
     sns.lineplot(
         data=power_df,
