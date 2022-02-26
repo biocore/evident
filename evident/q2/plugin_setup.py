@@ -1,7 +1,6 @@
 import importlib
 
-from qiime2.plugin import (Plugin, MetadataColumn, Categorical, Int, Float,
-                           Metadata)
+from qiime2.plugin import (Plugin, MetadataColumn, Categorical, Int, Float)
 from q2_types.sample_data import SampleData, AlphaDiversity
 
 from evident import __version__

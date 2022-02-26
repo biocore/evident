@@ -1,5 +1,4 @@
 import pandas as pd
-from qiime2.plugin import Metadata
 from qiime2 import CategoricalMetadataColumn
 
 from evident import AlphaDiversityHandler
