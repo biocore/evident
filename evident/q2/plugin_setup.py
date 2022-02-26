@@ -3,6 +3,7 @@ import importlib
 from qiime2.plugin import (Plugin, MetadataColumn, Categorical, Int, Float,
                            List, Range)
 from q2_types.sample_data import SampleData, AlphaDiversity
+from q2_types.distance_matrix import DistanceMatrix
 
 from evident import __version__
 from ._wrappers import (alpha_power_analysis, beta_power_analysis)
@@ -11,6 +12,19 @@ from ._type import PowerAnalysisResults
 
 
 Probability = Float % Range(0, 1, inclusive_end=False)
+
+param_descs = {
+    "sample_metadata": "Categorical sample metadata column.",
+    "alpha": "Significance level",
+    "power": (
+        "Probability of rejecting the null hypothesis given that the "
+        "alternative is true."
+    ),
+    "total_observations": (
+        "Total number of observations to consider. Groups are assumed to "
+        "be all the same size."
+    )
+}
 
 
 plugin = Plugin(
@@ -32,31 +46,41 @@ plugin.methods.register_function(
     inputs={
         "alpha_diversity": SampleData[AlphaDiversity],
     },
+    input_descriptions={"alpha_diversity": "Alpha diversity vector"},
     parameters={
         "sample_metadata": MetadataColumn[Categorical],
         "alpha": List[Probability],
         "power": List[Probability],
         "total_observations": List[Int]
     },
+    parameter_descriptions=param_descs,
     outputs=[("power_analysis_results", PowerAnalysisResults)],
-    name="bruh_fam",
-    description="bruh_fam2",
+    name="Alpha diversity power analysis.",
+    description=(
+        "Use sample alpha diversity data to perform power calculations "
+        "for desired significance level, power, or sample size."
+    )
 )
 
 plugin.methods.register_function(
     function=beta_power_analysis,
     inputs={
-        "beta_diversity": SampleData[AlphaDiversity],
+        "beta_diversity": DistanceMatrix,
     },
+    input_descriptions={"beta_diversity": "Beta diversity distance matrix"},
     parameters={
         "sample_metadata": MetadataColumn[Categorical],
         "alpha": List[Probability],
         "power": List[Probability],
         "total_observations": List[Int]
     },
+    parameter_descriptions=param_descs,
     outputs=[("power_analysis_results", PowerAnalysisResults)],
-    name="bruh_fam",
-    description="bruh_fam2",
+    name="Beta diversity power analysis.",
+    description=(
+        "Use sample beta diversity data to perform power calculations "
+        "for desired significance level, power, or sample size."
+    )
 )
 
 plugin.register_semantic_types(PowerAnalysisResults)
