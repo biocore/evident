@@ -1,7 +1,7 @@
 import importlib
 
 from qiime2.plugin import (Plugin, MetadataColumn, Categorical, Int, Float,
-                           List, Range, Choices, Str)
+                           List, Range, Choices, Str, Citations)
 from q2_types.sample_data import SampleData, AlphaDiversity
 from q2_types.distance_matrix import DistanceMatrix
 
@@ -27,11 +27,13 @@ param_descs = {
     )
 }
 
+citations = Citations.load("citations.bib", package="evident")
 
 plugin = Plugin(
     name="evident",
     version=__version__,
     website="https://github.com/gibsramen/evident",
+    citations=[citations["Casals-Pascual2020"]],
     short_description="Plugin for diversity effect size calculations",
     description=(
         "Perform power analysis on microbiome diversity data. Supports "
@@ -89,12 +91,22 @@ plugin.visualizers.register_function(
     inputs={
         "power_analysis_results": PowerAnalysisResults,
     },
+    input_descriptions={
+        "power_analysis_results": "Results from power analysis calculations"
+    },
     parameters={
         "target_power": Probability,
         "style": Str % Choices({"alpha", "effect_size"})
     },
+    parameter_descriptions={
+        "target_power": "Value at which to draw horizontal power line.",
+        "style": "Whether to use 'alpha' or 'effect_size' as style."
+    },
     name="Plot power curve.",
-    description="Bruh"
+    description=(
+        "Plot power curve based on power analysis results. x-axis is total "
+        "number of observations and y-axis is power."
+    )
 )
 
 plugin.register_semantic_types(PowerAnalysisResults)
