@@ -15,6 +15,9 @@ def test_effect_size_by_cat():
         adh, columns=["perianal_disease", "sex", "classification",
                       "cd_behavior"]
     )
+
+    assert ~df.isna().any().any()
+
     exp_index = {"perianal_disease", "sex", "classification",
                  "cd_behavior"}
     assert set(df.index) == exp_index
@@ -37,6 +40,8 @@ def test_pairwise_effect_size_by_cat():
         adh, columns=["perianal_disease", "sex", "classification",
                       "cd_behavior"]
     )
+
+    assert ~df.isna().any().any()
 
     exp_cols = ["column", "group_1", "group_2", "cohens_d"]
     assert (df.columns == exp_cols).all()
