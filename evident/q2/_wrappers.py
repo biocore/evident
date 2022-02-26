@@ -1,5 +1,6 @@
 import pandas as pd
 from qiime2 import CategoricalMetadataColumn
+from skbio import DistanceMatrix
 
 from evident import AlphaDiversityHandler, BetaDiversityHandler
 
@@ -18,7 +19,7 @@ def alpha_power_analysis(
 
 
 def beta_power_analysis(
-    beta_diversity: pd.Series,
+    beta_diversity: DistanceMatrix,
     sample_metadata: CategoricalMetadataColumn,
     alpha: list = None,
     power: list = None,
