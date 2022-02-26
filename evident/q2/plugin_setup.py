@@ -1,12 +1,13 @@
 import importlib
 
 from qiime2.plugin import (Plugin, MetadataColumn, Categorical, Int, Float,
-                           List, Range)
+                           List, Range, Choices, Str)
 from q2_types.sample_data import SampleData, AlphaDiversity
 from q2_types.distance_matrix import DistanceMatrix
 
 from evident import __version__
-from ._wrappers import (alpha_power_analysis, beta_power_analysis)
+from ._wrappers import (alpha_power_analysis, beta_power_analysis,
+                        plot_power_curve)
 from ._format import PowerAnalysisResultsDirectoryFormat as PARsDirFmt
 from ._type import PowerAnalysisResults
 
@@ -81,6 +82,19 @@ plugin.methods.register_function(
         "Use sample beta diversity data to perform power calculations "
         "for desired significance level, power, or sample size."
     )
+)
+
+plugin.visualizers.register_function(
+    function=plot_power_curve,
+    inputs={
+        "power_analysis_results": PowerAnalysisResults,
+    },
+    parameters={
+        "target_power": Probability,
+        "style": Str % Choices({"alpha", "effect_size"})
+    },
+    name="Plot power curve.",
+    description="Bruh"
 )
 
 plugin.register_semantic_types(PowerAnalysisResults)
