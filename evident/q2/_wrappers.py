@@ -50,4 +50,8 @@ def plot_power_curve(
     style: str = "alpha"
 ) -> None:
     ax = ppc(power_analysis_results, target_power, style, markers=True)
-    plt.savefig(os.path.join(output_dir, "power_curve.pdf"))
+    plt.savefig(os.path.join(output_dir, "power_curve.svg"))
+    index_fp = os.path.join(output_dir, "index.html")
+    with open(index_fp, "w") as f:
+        f.write("<html><body>\n")
+        f.write("<img src='power_curve.svg' alt='Power curve'>")
