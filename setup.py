@@ -10,6 +10,8 @@ with open("evident/__init__.py", "rb") as f:
     hit = _version_re.search(f.read().decode("utf-8")).group(1)
     version = str(ast.literal_eval(hit))
 
+q2_cmds = ["q2-evident=evident.q2.plugin_setup:plugin"]
+
 setup(
     name="evident",
     author="Gibraan Rahman",
@@ -23,5 +25,6 @@ setup(
         "numpy",
         "scikit-bio"
     ],
-    extras_require={"dev": ["pytest", "pytest-cov", "flake8"]}
+    extras_require={"dev": ["pytest", "pytest-cov", "flake8"]},
+    entry_points={"qiime2.plugins": q2_cmds}
 )
