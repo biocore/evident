@@ -2,7 +2,7 @@ import qiime2.plugin.model as model
 
 
 class PowerAnalysisResultFormat(model.TextFileFormat):
-    def _validate(self):
+    def validate(self, *args):
         pass
 
 

@@ -1,3 +1,5 @@
+import importlib
+
 from qiime2.plugin import (Plugin, MetadataColumn, Categorical, Int, Float,
                            Metadata)
 from q2_types.sample_data import SampleData, AlphaDiversity
@@ -28,8 +30,7 @@ plugin.methods.register_function(
         "alpha_diversity": SampleData[AlphaDiversity],
     },
     parameters={
-        "sample_metadata": Metadata,
-        "column": MetadataColumn[Categorical],
+        "sample_metadata": MetadataColumn[Categorical],
         "alpha": Float,
         "power": Float,
         "total_observations": Int
@@ -38,3 +39,11 @@ plugin.methods.register_function(
     name="bruh",
     description="bruh2",
 )
+
+plugin.register_semantic_types(PowerAnalysisResult)
+plugin.register_semantic_type_to_format(
+    PowerAnalysisResult,
+    artifact_format=PARDirFmt
+)
+plugin.register_formats(PARDirFmt)
+importlib.import_module("evident.q2._transformer")

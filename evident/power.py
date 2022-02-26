@@ -25,7 +25,9 @@ class PowerAnalysisResult:
         vals = [self.alpha, self.total_observations, self.power,
                 self.effect_size]
         index = ["alpha", "total_observations", "power", "effect_size"]
-        return pd.Series(vals, index=index)
+        p = pd.Series(vals, index=index, name="results")
+        p.index.name = "value"
+        return p
 
 
 class PowerAnalysisResults:
