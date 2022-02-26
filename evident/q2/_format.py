@@ -6,8 +6,19 @@ class PowerAnalysisResultFormat(model.TextFileFormat):
         pass
 
 
+class PowerAnalysisResultsFormat(model.TextFileFormat):
+    def validate(self, *args):
+        pass
+
+
 PowerAnalysisResultDirectoryFormat = model.SingleFileDirectoryFormat(
     "PowerAnalysisResultFormat",
     "result.tsv",
     PowerAnalysisResultFormat
+)
+
+PowerAnalysisResultsDirectoryFormat = model.SingleFileDirectoryFormat(
+    "PowerAnalysisResultsFormat",
+    "results.tsv",
+    PowerAnalysisResultsFormat
 )

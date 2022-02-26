@@ -21,3 +21,22 @@ def alpha_power_analysis_single(
         power=power
     )
     return res.to_series()
+
+
+def alpha_power_analysis_multiple(
+    alpha_diversity: pd.Series,
+    sample_metadata: CategoricalMetadataColumn,
+    alpha: list = None,
+    power: list = None,
+    total_observations: list = None
+) -> pd.DataFrame:
+    md = sample_metadata.to_series()
+    column = md.name
+    adh = AlphaDiversityHandler(alpha_diversity, md.to_frame())
+    res = adh.power_analysis(
+        column=column,
+        total_observations=total_observations,
+        alpha=alpha,
+        power=power
+    )
+    return res.to_dataframe()
