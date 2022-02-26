@@ -27,6 +27,7 @@ def effect_size_by_category(
     :returns: DataFrame of effect size per category
     :rtype: pd.DataFrame
     """
+    _check_columns(columns)
     dh = diversity_handler
     effect_size_dict = dict()
 
@@ -68,6 +69,7 @@ def pairwise_effect_size_by_category(
     :returns: DataFrame of effect size per pairwise comparison
     :rtype: pd.DataFrame
     """
+    _check_columns(columns)
     dh = diversity_handler
     effect_size_records = []
 
@@ -89,3 +91,9 @@ def pairwise_effect_size_by_category(
     effect_size_df.columns = ["column", "group_1", "group_2", "cohens_d"]
 
     return effect_size_df.sort_values(by="cohens_d", ascending=False)
+
+
+def _check_columns(columns) -> None:
+    """Check to make sure a list of columns has been passed."""
+    if columns is None:
+        raise ValueError("Must provide list of columns!")
