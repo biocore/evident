@@ -1,15 +1,16 @@
 import importlib
 
 from qiime2.plugin import (Plugin, MetadataColumn, Categorical, Int, Float,
-                           List)
+                           List, Range)
 from q2_types.sample_data import SampleData, AlphaDiversity
 
 from evident import __version__
-from ._wrappers import (alpha_power_analysis_single,
-                        alpha_power_analysis_multiple)
-from ._format import PowerAnalysisResultDirectoryFormat as PARDirFmt
+from ._wrappers import (alpha_power_analysis, beta_power_analysis)
 from ._format import PowerAnalysisResultsDirectoryFormat as PARsDirFmt
-from ._type import PowerAnalysisResult, PowerAnalysisResults
+from ._type import PowerAnalysisResults
+
+
+Probability = Float % Range(0, 1, inclusive_end=False)
 
 
 plugin = Plugin(
@@ -27,30 +28,14 @@ plugin = Plugin(
 
 
 plugin.methods.register_function(
-    function=alpha_power_analysis_single,
+    function=alpha_power_analysis,
     inputs={
         "alpha_diversity": SampleData[AlphaDiversity],
     },
     parameters={
         "sample_metadata": MetadataColumn[Categorical],
-        "alpha": Float,
-        "power": Float,
-        "total_observations": Int
-    },
-    outputs=[("power_analysis_result", PowerAnalysisResult)],
-    name="bruh",
-    description="bruh2",
-)
-
-plugin.methods.register_function(
-    function=alpha_power_analysis_multiple,
-    inputs={
-        "alpha_diversity": SampleData[AlphaDiversity],
-    },
-    parameters={
-        "sample_metadata": MetadataColumn[Categorical],
-        "alpha": List[Float],
-        "power": List[Float],
+        "alpha": List[Probability],
+        "power": List[Probability],
         "total_observations": List[Int]
     },
     outputs=[("power_analysis_results", PowerAnalysisResults)],
@@ -58,12 +43,21 @@ plugin.methods.register_function(
     description="bruh_fam2",
 )
 
-plugin.register_semantic_types(PowerAnalysisResult)
-plugin.register_semantic_type_to_format(
-    PowerAnalysisResult,
-    artifact_format=PARDirFmt
+plugin.methods.register_function(
+    function=beta_power_analysis,
+    inputs={
+        "beta_diversity": SampleData[AlphaDiversity],
+    },
+    parameters={
+        "sample_metadata": MetadataColumn[Categorical],
+        "alpha": List[Probability],
+        "power": List[Probability],
+        "total_observations": List[Int]
+    },
+    outputs=[("power_analysis_results", PowerAnalysisResults)],
+    name="bruh_fam",
+    description="bruh_fam2",
 )
-plugin.register_formats(PARDirFmt)
 
 plugin.register_semantic_types(PowerAnalysisResults)
 plugin.register_semantic_type_to_format(

@@ -1,42 +1,38 @@
 import pandas as pd
 from qiime2 import CategoricalMetadataColumn
 
-from evident import AlphaDiversityHandler
+from evident import AlphaDiversityHandler, BetaDiversityHandler
 
 
-def alpha_power_analysis_single(
-    alpha_diversity: pd.Series,
-    sample_metadata: CategoricalMetadataColumn,
-    alpha: float = None,
-    power: float = None,
-    total_observations: int = None
-) -> pd.Series:
-    md = sample_metadata.to_series()
-    column = md.name
-    adh = AlphaDiversityHandler(alpha_diversity, md.to_frame())
-    res = adh.power_analysis(
-        column=column,
-        total_observations=total_observations,
-        alpha=alpha,
-        power=power
-    )
-    return res.to_series()
-
-
-def alpha_power_analysis_multiple(
+def alpha_power_analysis(
     alpha_diversity: pd.Series,
     sample_metadata: CategoricalMetadataColumn,
     alpha: list = None,
     power: list = None,
     total_observations: list = None
 ) -> pd.DataFrame:
-    md = sample_metadata.to_series()
+    res = _power_analysis(alpha_diversity, sample_metadata,
+                          AlphaDiversityHandler, alpha=alpha, power=power,
+                          total_observations=total_observations)
+    return res
+
+
+def beta_power_analysis(
+    beta_diversity: pd.Series,
+    sample_metadata: CategoricalMetadataColumn,
+    alpha: list = None,
+    power: list = None,
+    total_observations: list = None
+) -> pd.DataFrame:
+    res = _power_analysis(beta_diversity, sample_metadata,
+                          BetaDiversityHandler, alpha=alpha, power=power,
+                          total_observations=total_observations)
+    return res
+
+
+def _power_analysis(data, metadata, handler, **kwargs):
+    md = metadata.to_series()
     column = md.name
-    adh = AlphaDiversityHandler(alpha_diversity, md.to_frame())
-    res = adh.power_analysis(
-        column=column,
-        total_observations=total_observations,
-        alpha=alpha,
-        power=power
-    )
+    dh = handler(data, md.to_frame())
+    res = dh.power_analysis(column, **kwargs)
     return res.to_dataframe()
