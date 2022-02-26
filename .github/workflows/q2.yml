@@ -1,4 +1,4 @@
-name: QIIME2 CI
+name: "QIIME 2 CI"
 
 on:
   pull_request:
@@ -11,10 +11,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        python-version: ["3.7", "3.8", "3.9"]
 
     steps:
       - uses: actions/checkout@v2
@@ -38,10 +34,14 @@ jobs:
         shell: bash -l {0}
         run: pip install -e .[dev]
 
+      - name: Refresh QIIME 2 cache
+        shell: bash -l {0}
+        run: qiime dev refresh-cache
+
       - name: Check style
         shell: bash -l {0}
         run: make stylecheck
 
       - name: Run tests
         shell: bash -l {0}
-        run: make test
+        run: make q2_test
