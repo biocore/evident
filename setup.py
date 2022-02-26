@@ -23,7 +23,9 @@ setup(
         "pandas",
         "statsmodels",
         "numpy",
-        "scikit-bio"
+        "scikit-bio",
+        "matplotlib",
+        "seaborn"
     ],
     extras_require={"dev": ["pytest", "pytest-cov", "flake8"]},
     entry_points={"qiime2.plugins": q2_cmds},

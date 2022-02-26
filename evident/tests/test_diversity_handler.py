@@ -7,7 +7,7 @@ from skbio import DistanceMatrix
 
 from evident.diversity_handler import (AlphaDiversityHandler,
                                        BetaDiversityHandler)
-import evident.exceptions as exc
+import evident._exceptions as exc
 
 
 class TestAlphaDiv:
