@@ -94,16 +94,9 @@ def plot_power_curve(
         f.write("<img src='power_curve.svg' alt='Power curve'>")
 
 
-def visualize_power_analysis_results(
+def visualize_results(
     output_dir: str,
-    power_analysis_results: pd.DataFrame,
-) -> None:
-    return
-
-
-def visualize_effect_size_results(
-    output_dir: str,
-    effect_size_results: pd.DataFrame,
+    results: pd.DataFrame,
 ) -> None:
     index_fp = os.path.join(output_dir, "index.html")
     copy(TBL_CSS, output_dir)
@@ -112,8 +105,9 @@ def visualize_effect_size_results(
         f.write("<link rel='stylesheet' href='dataframe.css'>")
         f.write("<font face='Arial'>\n")
         f.write(
-            effect_size_results
+            results
             .reset_index(drop=True)
+            .dropna(axis=1, how="all")
             .to_html(index_names=False, index=False)
         )
         f.write("</font>")

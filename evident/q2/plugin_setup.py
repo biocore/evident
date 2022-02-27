@@ -13,7 +13,7 @@ from ._type import PowerAnalysisResults, EffectSizeResults
 from ._wrappers import (alpha_power_analysis, beta_power_analysis,
                         plot_power_curve, alpha_effect_size_by_category,
                         beta_effect_size_by_category,
-                        visualize_effect_size_results)
+                        visualize_results)
 
 
 Probability = Float % Range(0, 1, inclusive_end=False)
@@ -163,17 +163,18 @@ plugin.visualizers.register_function(
 )
 
 plugin.visualizers.register_function(
-    function=visualize_effect_size_results,
+    function=visualize_results,
     inputs={
-        "effect_size_results": EffectSizeResults,
+        "results": PowerAnalysisResults | EffectSizeResults,
     },
     parameters={},
     input_descriptions={
-        "effect_size_results": "Results from effect size calculations."
+        "results": "Either power analysis or effect size results."
     },
-    name="Tabulate effect size results",
+    name="Tabulate evident results.",
     description=(
-        "breh"
+        "Create a tabular visualization of either power analysis  or effect "
+        "size results."
     )
 )
 

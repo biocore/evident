@@ -42,8 +42,11 @@ def effect_size_by_category(
 
     # Sort by metric first (d -> f) then value in descending order
     effect_size_df = pd.DataFrame.from_dict(effect_size_dict, orient="index")
+    effect_size_df.index.name = "column"
     effect_size_df = effect_size_df.sort_values(by=["metric", "value"],
                                                 ascending=[True, False])
+    effect_size_df = effect_size_df.reset_index(drop=False)
+
     return effect_size_df
 
 
