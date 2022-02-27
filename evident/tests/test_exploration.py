@@ -15,15 +15,21 @@ def test_effect_size_by_cat(mock, request):
 
     exp_index = {"perianal_disease", "sex", "classification",
                  "cd_behavior"}
-    assert set(df.index) == exp_index
+    assert set(df["column"]) == exp_index
 
-    exp_cols = ["metric", "value"]
+    exp_cols = ["column", "metric", "value"]
     assert (df.columns == exp_cols).all()
 
-    assert df.loc["perianal_disease"]["metric"] == "cohens_d"
-    assert df.loc["sex"]["metric"] == "cohens_d"
-    assert df.loc["classification"]["metric"] == "cohens_d"
-    assert df.loc["cd_behavior"]["metric"] == "cohens_f"
+    exp_metrics = {
+        "perianal_disease": "cohens_d",
+        "sex": "cohens_d",
+        "classification": "cohens_d",
+        "cd_behavror": "cohens_f"
+    }
+
+    def check_column_metric(column, metric):
+        val = df[df["column"] == column]["metric"]
+        assert val == exp_metrics[column]
 
 
 @pytest.mark.parametrize("mock", ["alpha_mock", "beta_mock"])
