@@ -8,7 +8,7 @@ import pandas as pd
 from skbio import DistanceMatrix
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
-from . import exceptions as exc
+from . import _exceptions as exc
 from .power import PowerAnalysisResult, PowerAnalysisResults
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev)

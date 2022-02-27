@@ -6,10 +6,10 @@ from q2_types.sample_data import SampleData, AlphaDiversity
 from q2_types.distance_matrix import DistanceMatrix
 
 from evident import __version__
-from ._wrappers import (alpha_power_analysis, beta_power_analysis,
-                        plot_power_curve)
 from ._format import PowerAnalysisResultsDirectoryFormat as PARsDirFmt
 from ._type import PowerAnalysisResults
+from ._wrappers import (alpha_power_analysis, beta_power_analysis,
+                        plot_power_curve)
 
 
 Probability = Float % Range(0, 1, inclusive_end=False)
