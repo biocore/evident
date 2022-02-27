@@ -48,5 +48,7 @@ setup(
     classifiers=classifiers,
     extras_require={"dev": ["pytest", "pytest-cov", "flake8"]},
     entry_points={"qiime2.plugins": q2_cmds},
-    package_data={"evident": ["citations.bib"]}
+    package_data={
+        "evident": ["citations.bib", "q2/dataframe.css"]
+    }
 )

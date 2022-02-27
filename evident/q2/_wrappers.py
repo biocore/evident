@@ -1,4 +1,5 @@
 import os
+from shutil import copy
 from typing import List
 
 import matplotlib.pyplot as plt
@@ -10,6 +11,8 @@ from evident import AlphaDiversityHandler, BetaDiversityHandler
 from evident.exploration import (effect_size_by_category,
                                  pairwise_effect_size_by_category)
 from evident.plotting import plot_power_curve as ppc
+
+TBL_CSS = os.path.join(os.path.dirname(__file__), "dataframe.css")
 
 
 def alpha_power_analysis(
@@ -89,3 +92,28 @@ def plot_power_curve(
     with open(index_fp, "w") as f:
         f.write("<html><body>\n")
         f.write("<img src='power_curve.svg' alt='Power curve'>")
+
+
+def visualize_power_analysis_results(
+    output_dir: str,
+    power_analysis_results: pd.DataFrame,
+) -> None:
+    return
+
+
+def visualize_effect_size_results(
+    output_dir: str,
+    effect_size_results: pd.DataFrame,
+) -> None:
+    index_fp = os.path.join(output_dir, "index.html")
+    copy(TBL_CSS, output_dir)
+    with open(index_fp, "w") as f:
+        f.write("<html><body>\n")
+        f.write("<link rel='stylesheet' href='dataframe.css'>")
+        f.write("<font face='Arial'>\n")
+        f.write(
+            effect_size_results
+            .reset_index(drop=True)
+            .to_html(index_names=False, index=False)
+        )
+        f.write("</font>")

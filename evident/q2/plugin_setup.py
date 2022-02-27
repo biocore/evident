@@ -12,7 +12,8 @@ from ._format import EffectSizeResultsDirectoryFormat as ERsDirFmt
 from ._type import PowerAnalysisResults, EffectSizeResults
 from ._wrappers import (alpha_power_analysis, beta_power_analysis,
                         plot_power_curve, alpha_effect_size_by_category,
-                        beta_effect_size_by_category)
+                        beta_effect_size_by_category,
+                        visualize_effect_size_results)
 
 
 Probability = Float % Range(0, 1, inclusive_end=False)
@@ -158,6 +159,21 @@ plugin.visualizers.register_function(
     description=(
         "Plot power curve based on power analysis results. x-axis is total "
         "number of observations and y-axis is power."
+    )
+)
+
+plugin.visualizers.register_function(
+    function=visualize_effect_size_results,
+    inputs={
+        "effect_size_results": EffectSizeResults,
+    },
+    parameters={},
+    input_descriptions={
+        "effect_size_results": "Results from effect size calculations."
+    },
+    name="Tabulate effect size results",
+    description=(
+        "breh"
     )
 )
 
