@@ -66,7 +66,7 @@ import evident
 
 Next, load your diversity file and sample metadata.
 For alpha diversity, this should be a pandas Series.
-For beta diversity, this should be and scikit-bio DistanceMatrix.
+For beta diversity, this should be an scikit-bio DistanceMatrix.
 Sample metadata should be a pandas DataFrame.
 We'll be using an alpha diversity vector for this tutorial but the commands are nearly the same for beta diversity distance matrices.
 
@@ -119,6 +119,7 @@ evident allows you to easily specify arguments for alpha, power, or total observ
 We can then plot these results as a power curve to summarize the data.
 
 ```python
+from evident.plotting import plot_power_curve
 import numpy as np
 
 alpha_vals = [0.01, 0.05, 0.1]
@@ -128,7 +129,7 @@ results = adh.power_analysis(
     alpha=alpha_vals,
     total_observations=obs_vals
 )
-evident.plotting.plot_power_curve(results, target_power=0.8, style="alpha")
+plot_power_curve(results, target_power=0.8, style="alpha", markers=True)
 ```
 
 When we inspect this plot, we can see how many samples we would need to collect to observe the same effect size at different levels of significance and power.
