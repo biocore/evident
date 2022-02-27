@@ -10,17 +10,17 @@ from evident import __version__
 from ._format import PowerAnalysisResultsDirectoryFormat as PARsDirFmt
 from ._format import EffectSizeResultsDirectoryFormat as ERsDirFmt
 from ._type import PowerAnalysisResults, EffectSizeResults
-from ._wrappers import (alpha_power_analysis, beta_power_analysis,
-                        plot_power_curve, alpha_effect_size_by_category,
-                        beta_effect_size_by_category,
-                        visualize_results)
+from ._methods import (alpha_power_analysis, beta_power_analysis,
+                       alpha_effect_size_by_category,
+                       beta_effect_size_by_category)
+from ._visualizers import plot_power_curve, visualize_results
 
 
 Probability = Float % Range(0, 1, inclusive_end=False)
 
 PA_PARAM_DESCS = {
     "sample_metadata": "Categorical sample metadata column.",
-    "alpha": "Significance level",
+    "alpha": "Significance level.",
     "power": (
         "Probability of rejecting the null hypothesis given that the "
         "alternative is true."
@@ -116,7 +116,8 @@ plugin.methods.register_function(
     outputs=[("effect_size_results", EffectSizeResults)],
     name="Alpha diversity effect size by category.",
     description=(
-        "brehhhh"
+        "Calculate alpha diversity difference effect size of multiple "
+        "categories."
     )
 )
 
@@ -135,7 +136,8 @@ plugin.methods.register_function(
     outputs=[("effect_size_results", EffectSizeResults)],
     name="Beta diversity effect size by category.",
     description=(
-        "brehhhh"
+        "Calculate beta diversity difference effect size of multiple "
+        "categories."
     )
 )
 
@@ -173,7 +175,7 @@ plugin.visualizers.register_function(
     },
     name="Tabulate evident results.",
     description=(
-        "Create a tabular visualization of either power analysis  or effect "
+        "Create a tabular visualization of either power analysis or effect "
         "size results."
     )
 )
