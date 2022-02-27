@@ -1,7 +1,5 @@
-import os
 from typing import List
 
-import matplotlib.pyplot as plt
 import pandas as pd
 from qiime2 import CategoricalMetadataColumn, Metadata
 from skbio import DistanceMatrix
@@ -9,8 +7,6 @@ from skbio import DistanceMatrix
 from evident import AlphaDiversityHandler, BetaDiversityHandler
 from evident.exploration import (effect_size_by_category,
                                  pairwise_effect_size_by_category)
-
-TBL_CSS = os.path.join(os.path.dirname(__file__), "dataframe.css")
 
 
 def alpha_power_analysis(
@@ -76,5 +72,3 @@ def _effect_size_by_category(data, metadata, handler, columns, pairwise):
     else:
         df = effect_size_by_category(dh, columns)
     return df
-
-

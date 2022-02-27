@@ -6,6 +6,8 @@ import pandas as pd
 
 from evident.plotting import plot_power_curve as ppc
 
+TBL_CSS = os.path.join(os.path.dirname(__file__), "dataframe.css")
+
 
 def plot_power_curve(
     output_dir: str,
