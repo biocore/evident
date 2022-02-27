@@ -46,9 +46,12 @@ Options:
   --help               Show this message and exit.
 
 Commands:
-  alpha-power-analysis  Alpha diversity power analysis.
-  beta-power-analysis   Beta diversity power analysis.
-  plot-power-curve      Plot power curve.
+  alpha-effect-size-by-category  Alpha diversity effect size by category.
+  alpha-power-analysis           Alpha diversity power analysis.
+  beta-effect-size-by-category   Beta diversity effect size by category.
+  beta-power-analysis            Beta diversity power analysis.
+  plot-power-curve               Plot power curve.
+  visualize-results              Tabulate evident results.
 ```
 
 ## Usage
