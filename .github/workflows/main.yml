@@ -37,7 +37,7 @@ jobs:
 
       - name: Check style
         shell: bash -l {0}
-        run: make stylecheck
+        run: make standalone_stylecheck
 
       - name: Run tests
         shell: bash -l {0}
