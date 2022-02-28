@@ -1,3 +1,4 @@
+# Much of this page is taken from the gemelli setup file
 import ast
 import re
 from setuptools import find_packages, setup
@@ -9,6 +10,9 @@ _version_re = re.compile(r"__version__\s+=\s+(.*)")
 with open("evident/__init__.py", "rb") as f:
     hit = _version_re.search(f.read().decode("utf-8")).group(1)
     version = str(ast.literal_eval(hit))
+
+with open("README.md") as f:
+    long_description = f.read()
 
 q2_cmds = ["q2-evident=evident.q2.plugin_setup:plugin"]
 
@@ -33,6 +37,8 @@ setup(
     author="Gibraan Rahman",
     author_email="grahman@eng.ucsd.edu",
     description=description,
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url="https://github.com/gibsramen/evident",
     version=version,
     license="BSD-3-Clause",
