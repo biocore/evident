@@ -1,1 +1,3 @@
 include evident/q2/dataframe.css
+include evident/q2/curve.css
+graft imgs
