@@ -6,7 +6,8 @@ import pandas as pd
 
 from evident.plotting import plot_power_curve as ppc
 
-TBL_CSS = os.path.join(os.path.dirname(__file__), "dataframe.css")
+PATH_LOC = os.path.dirname(__file__)
+TBL_CSS = os.path.join(PATH_LOC, "dataframe.css")
 
 
 def plot_power_curve(
@@ -29,10 +30,14 @@ def visualize_results(
 ) -> None:
     index_fp = os.path.join(output_dir, "index.html")
     copy(TBL_CSS, output_dir)
+    results_loc = os.path.join(output_dir, "results.tsv")
+    results.to_csv(results_loc, sep="\t", index=False)
+
     with open(index_fp, "w") as f:
         f.write("<html><body>\n")
         f.write("<link rel='stylesheet' href='dataframe.css'>")
         f.write("<font face='Arial'>\n")
+        f.write("<a href='results.tsv'>Download table as TSV</a>\n")
         f.write(
             results
             .reset_index(drop=True)
