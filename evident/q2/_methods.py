@@ -14,11 +14,13 @@ def alpha_power_analysis(
     sample_metadata: CategoricalMetadataColumn,
     alpha: list = None,
     power: list = None,
-    total_observations: list = None
+    total_observations: list = None,
+    difference: list = None
 ) -> pd.DataFrame:
     res = _power_analysis(alpha_diversity, sample_metadata,
                           AlphaDiversityHandler, alpha=alpha, power=power,
-                          total_observations=total_observations)
+                          total_observations=total_observations,
+                          difference=difference)
     return res
 
 
@@ -27,11 +29,13 @@ def beta_power_analysis(
     sample_metadata: CategoricalMetadataColumn,
     alpha: list = None,
     power: list = None,
-    total_observations: list = None
+    total_observations: list = None,
+    difference: list = None
 ) -> pd.DataFrame:
     res = _power_analysis(beta_diversity, sample_metadata,
                           BetaDiversityHandler, alpha=alpha, power=power,
-                          total_observations=total_observations)
+                          total_observations=total_observations,
+                          difference=difference)
     return res
 
 

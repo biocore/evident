@@ -28,6 +28,13 @@ PA_PARAM_DESCS = {
     "total_observations": (
         "Total number of observations to consider. Groups are assumed to "
         "be all the same size."
+    ),
+    "difference": (
+        "Difference between groups to consider. If this argument is provided, "
+        "evident will use this value instead of calculating the mean "
+        "difference. The pooled standard deviation of the groups will still "
+        "be used. If not provided, evident will calculate the difference in "
+        "means automatically."
     )
 }
 
@@ -61,36 +68,35 @@ plugin = Plugin(
 
 plugin.methods.register_function(
     function=alpha_power_analysis,
-    inputs={
-        "alpha_diversity": SampleData[AlphaDiversity],
-    },
+    inputs={"alpha_diversity": SampleData[AlphaDiversity]},
     input_descriptions={"alpha_diversity": "Alpha diversity vector"},
     parameters={
         "sample_metadata": MetadataColumn[Categorical],
         "alpha": List[Probability],
         "power": List[Probability],
-        "total_observations": List[Int]
+        "total_observations": List[Int],
+        "difference": List[Float]
     },
     parameter_descriptions=PA_PARAM_DESCS,
     outputs=[("power_analysis_results", PowerAnalysisResults)],
     name="Alpha diversity power analysis.",
     description=(
         "Use sample alpha diversity data to perform power calculations "
-        "for desired significance level, power, or sample size."
+        "for desired significance level, power, or sample size. Exactly one "
+        "of alpha, power, or sample size must be excluded."
     )
 )
 
 plugin.methods.register_function(
     function=beta_power_analysis,
-    inputs={
-        "beta_diversity": DistanceMatrix,
-    },
+    inputs={"beta_diversity": DistanceMatrix},
     input_descriptions={"beta_diversity": "Beta diversity distance matrix"},
     parameters={
         "sample_metadata": MetadataColumn[Categorical],
         "alpha": List[Probability],
         "power": List[Probability],
-        "total_observations": List[Int]
+        "total_observations": List[Int],
+        "difference": List[Float]
     },
     parameter_descriptions=PA_PARAM_DESCS,
     outputs=[("power_analysis_results", PowerAnalysisResults)],
@@ -103,9 +109,7 @@ plugin.methods.register_function(
 
 plugin.methods.register_function(
     function=alpha_effect_size_by_category,
-    inputs={
-        "alpha_diversity": SampleData[AlphaDiversity],
-    },
+    inputs={"alpha_diversity": SampleData[AlphaDiversity]},
     input_descriptions={"alpha_diversity": "Alpha diversity vector"},
     parameters={
         "sample_metadata": Metadata,
@@ -123,9 +127,7 @@ plugin.methods.register_function(
 
 plugin.methods.register_function(
     function=beta_effect_size_by_category,
-    inputs={
-        "beta_diversity": DistanceMatrix,
-    },
+    inputs={"beta_diversity": DistanceMatrix},
     input_descriptions={"beta_diversity": "Beta diversity distance matrix"},
     parameters={
         "sample_metadata": Metadata,
@@ -143,19 +145,18 @@ plugin.methods.register_function(
 
 plugin.visualizers.register_function(
     function=plot_power_curve,
-    inputs={
-        "power_analysis_results": PowerAnalysisResults,
-    },
+    inputs={"power_analysis_results": PowerAnalysisResults},
     input_descriptions={
         "power_analysis_results": "Results from power analysis calculations"
     },
     parameters={
         "target_power": Probability,
-        "style": Str % Choices({"alpha", "effect_size"})
+        "style": Str % Choices({"alpha", "effect_size", "difference"})
     },
     parameter_descriptions={
         "target_power": "Value at which to draw horizontal power line.",
-        "style": "Whether to use 'alpha' or 'effect_size' as style."
+        "style": "Whether to use 'alpha', 'effect_size', or 'difference' "
+        "as style."
     },
     name="Plot power curve.",
     description=(
