@@ -1,12 +1,12 @@
-import os
+from typing import List
 
-import matplotlib.pyplot as plt
 import pandas as pd
-from qiime2 import CategoricalMetadataColumn
+from qiime2 import CategoricalMetadataColumn, Metadata
 from skbio import DistanceMatrix
 
 from evident import AlphaDiversityHandler, BetaDiversityHandler
-from evident.plotting import plot_power_curve as ppc
+from evident.exploration import (effect_size_by_category,
+                                 pairwise_effect_size_by_category)
 
 
 def alpha_power_analysis(
@@ -43,15 +43,32 @@ def _power_analysis(data, metadata, handler, **kwargs):
     return res.to_dataframe()
 
 
-def plot_power_curve(
-    output_dir: str,
-    power_analysis_results: pd.DataFrame,
-    target_power: float = 0.8,
-    style: str = "alpha"
-) -> None:
-    ppc(power_analysis_results, target_power, style, markers=True)
-    plt.savefig(os.path.join(output_dir, "power_curve.svg"))
-    index_fp = os.path.join(output_dir, "index.html")
-    with open(index_fp, "w") as f:
-        f.write("<html><body>\n")
-        f.write("<img src='power_curve.svg' alt='Power curve'>")
+def alpha_effect_size_by_category(
+    alpha_diversity: pd.Series,
+    sample_metadata: Metadata,
+    columns: List[str],
+    pairwise: bool = False
+) -> pd.DataFrame:
+    res = _effect_size_by_category(alpha_diversity, sample_metadata,
+                                   AlphaDiversityHandler, columns, pairwise)
+    return res
+
+
+def beta_effect_size_by_category(
+    beta_diversity: DistanceMatrix,
+    sample_metadata: Metadata,
+    columns: List[str],
+    pairwise: bool = False
+) -> pd.DataFrame:
+    res = _effect_size_by_category(beta_diversity, sample_metadata,
+                                   BetaDiversityHandler, columns, pairwise)
+    return res
+
+
+def _effect_size_by_category(data, metadata, handler, columns, pairwise):
+    dh = handler(data, metadata.to_dataframe())
+    if pairwise:
+        df = pairwise_effect_size_by_category(dh, columns)
+    else:
+        df = effect_size_by_category(dh, columns)
+    return df
