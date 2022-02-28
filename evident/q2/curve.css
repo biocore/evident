@@ -1,0 +1,9 @@
+.curve {
+    text-align: justify;
+    width: 100em;
+}
+.curve img {
+    display: block;
+    margin: 0 auto;
+    width: 200em;
+}
