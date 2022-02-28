@@ -137,4 +137,4 @@ plot_power_curve(results, target_power=0.8, style="alpha", markers=True)
 
 When we inspect this plot, we can see how many samples we would need to collect to observe the same effect size at different levels of significance and power.
 
-![Power Curve](imgs/power_curve.png)
+![Power Curve](https://raw.githubusercontent.com/gibsramen/evident/main/imgs/power_curve.png)
