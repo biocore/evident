@@ -1,5 +1,8 @@
+import numpy as np
+import pandas as pd
 import pytest
 
+from evident import AlphaDiversityHandler
 from evident import exploration as expl
 
 
@@ -78,3 +81,17 @@ def test_no_cols(mock, request):
 
     exp_err_msg = "Must provide list of columns!"
     assert str(exc_info_1.value) == str(exc_info_2.value) == exp_err_msg
+
+
+def test_nan_in_cols():
+    col1 = ["a", "a", np.nan, "b", "b", "b"]
+    col2 = ["c", "c", "d", "d", np.nan, "c"]
+
+    df = pd.DataFrame({"col1": col1, "col2": col2})
+    df.index = [f"S{x}" for x in range(len(col1))]
+
+    faith_vals = pd.Series([1, 3, 4, 5, 6, 6])
+    faith_vals.index = df.index
+    adh = AlphaDiversityHandler(faith_vals, df)
+    assert not np.isnan(adh.calculate_effect_size("col1"))
+    assert not np.isnan(adh.calculate_effect_size("col2"))
