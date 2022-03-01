@@ -9,7 +9,8 @@ from skbio import DistanceMatrix
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
 from . import _exceptions as exc
-from .power import PowerAnalysisResult, PowerAnalysisResults
+from .results import (PowerAnalysisResult, PowerAnalysisResults,
+                      EffectSizeResult)
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev)
 from .utils import _listify, _check_sample_overlap
@@ -57,8 +58,10 @@ class _BaseDiversityHandler(ABC):
             raise exc.OnlyOneCategoryError(self.metadata[column])
         elif num_choices == 2:
             effect_size_func = calculate_cohens_d
+            metric = "cohens_d"
         else:
             effect_size_func = calculate_cohens_f
+            metric = "cohens_f"
 
         # Create list of arrays for effect size calculation
         arrays = []
@@ -68,10 +71,13 @@ class _BaseDiversityHandler(ABC):
             arrays.append(values)
 
         if difference is None:
-            return effect_size_func(*arrays)
+            result = effect_size_func(*arrays)
         else:
             pooled_stdev = calculate_pooled_stdev(*arrays)
-            return difference / pooled_stdev
+            result = difference / pooled_stdev
+
+        return EffectSizeResult(value=result, metric=metric,
+                                column=column)
 
     def power_analysis(
         self,
@@ -306,7 +312,7 @@ class _BaseDiversityHandler(ABC):
         effect_size = self.calculate_effect_size(
             column,
             difference=difference
-        )
+        ).value
         return partial(power_func, effect_size=effect_size)
 
 

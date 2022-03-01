@@ -4,6 +4,7 @@ import pandas as pd
 
 from evident.diversity_handler import _BaseDiversityHandler
 from evident.stats import calculate_cohens_d
+from evident.results import EffectSizeResult, EffectSizeResults
 
 
 def effect_size_by_category(
@@ -88,6 +89,7 @@ def pairwise_effect_size_by_category(
             vals1 = values_dict[grp1]
             vals2 = values_dict[grp2]
             effect_size = calculate_cohens_d(vals1, vals2)
+            res = EffectSizeResult(effect_size, "cohens_d")
             effect_size_records.append((col, grp1, grp2, effect_size))
 
     effect_size_df = pd.DataFrame.from_records(effect_size_records)
