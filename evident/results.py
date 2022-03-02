@@ -104,9 +104,7 @@ class EffectSizeResults(_EvidentResults):
     def to_dataframe(sort: bool = True):
         df = super().to_dataframe()
         if sort:
-            df = (
-                df
-                .sort_values(by=["metric", "effect_size"],
-                             ascending=[True, False])
-            )
+            df = df .sort_values(by=["metric", "effect_size"],
+                                 ascending=[True, False])
+
         return df.reset_index(drop=True)
