@@ -54,7 +54,7 @@ Commands:
   visualize-results              Tabulate evident results.
 ```
 
-## Usage
+## Standalone Usage
 
 evident requires two input files:
 
@@ -138,3 +138,51 @@ plot_power_curve(results, target_power=0.8, style="alpha", markers=True)
 When we inspect this plot, we can see how many samples we would need to collect to observe the same effect size at different levels of significance and power.
 
 ![Power Curve](https://raw.githubusercontent.com/gibsramen/evident/main/imgs/power_curve.png)
+
+## QIIME 2 Usage
+
+evident provides support for the popular QIIME 2 framework of microbiome data analysis.
+We assume in this tutorial that you are familiar with using QIIME 2 on the command line.
+If not, we recommend you read the excellent [documentation](https://docs.qiime2.org/) before you get started with evident.
+Note that we have only tested evident on QIIME 2 version 2021.11.
+If you are using a different version and encounter an error please let us know via an issue.
+
+As with the standalone version, evident requires a diversity file and a sample metadata file.
+These inputs are expected to conform to QIIME 2 standards.
+
+To calculate power, we can run the following command:
+
+```bash
+qiime evident alpha-power-analysis \
+    --i-alpha-diversity faith_pd.qza \
+    --m-sample-metadata-file metadata.qza \
+    --m-sample-metadata-column classification \
+    --p-alpha 0.01 0.05 0.1 \
+    --p-total-observations $(seq 10 10 100) \
+    --o-power-analysis-results results.qza
+```
+
+Notice how we used `$(seq 10 10 100)` to provide input into the `--p-total-observations` argument.
+`seq` is a command on UNIX-like systems that generates a sequence of numbers.
+In our example, we used `seq` to generate the values from 10 to 100 in intervals of 10 (10, 20, ..., 100).
+
+With this results artifact, we can visualize the power curve to get a sense of how power varies with number of observations and significance level.
+Run the following command:
+
+```bash
+qiime evident plot-power-curve \
+    --i-power-analysis-results results.qza \
+    --p-target-power 0.8 \
+    --p-style alpha \
+    --o-visualization power_curve.qzv
+```
+
+You can view this visualization at [view.qiime2.org](https://view.qiime2.org/) directly in your browser.
+
+## Help with evident
+
+If you encounter a bug in evident, please post a GitHub issue and we will get to it as soon as we can.
+We welcome any ideas or documentation updates/fixes so please submit an issue and/or a pull request if you have thoughts on making evident better.
+
+If your question is regarding the QIIME 2 version of evident, consider posting to the [QIIME 2 forum](https://forum.qiime2.org/).
+You can open an issue on the [Community Plugin Support](https://forum.qiime2.org/c/community-plugin-support/24) board and tag [@gibsramen](https://forum.qiime2.org/u/gibsramen) if required.
