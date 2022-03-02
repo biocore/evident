@@ -5,7 +5,7 @@ from qiime2 import CategoricalMetadataColumn, Metadata
 from skbio import DistanceMatrix
 
 from evident import AlphaDiversityHandler, BetaDiversityHandler
-from evident.exploration import (effect_size_by_category,
+from evident.effect_size import (effect_size_by_category,
                                  pairwise_effect_size_by_category)
 
 

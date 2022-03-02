@@ -76,7 +76,7 @@ class _BaseDiversityHandler(ABC):
             pooled_stdev = calculate_pooled_stdev(*arrays)
             result = difference / pooled_stdev
 
-        return EffectSizeResult(value=result, metric=metric,
+        return EffectSizeResult(effect_size=result, metric=metric,
                                 column=column)
 
     def power_analysis(
@@ -171,8 +171,10 @@ class _BaseDiversityHandler(ABC):
             difference=difference,
             total_observations=total_observations
         )
+        effect_size_result = self.calculate_effect_size(column, difference)
 
-        val_to_solve = power_func(power=power, alpha=alpha)
+        val_to_solve = power_func(power=power, alpha=alpha,
+                                  effect_size=effect_size_result.effect_size)
 
         # If calculating total_observations, check to see if doing t-test
         # If so, multiply by two as tt_ind_solve_power returns number of
@@ -197,7 +199,7 @@ class _BaseDiversityHandler(ABC):
             alpha=alpha,
             total_observations=total_observations,
             power=power,
-            effect_size=power_func.keywords["effect_size"],
+            effect_size_result=effect_size_result,
             difference=difference
         )
         return results
@@ -309,11 +311,7 @@ class _BaseDiversityHandler(ABC):
                 nobs=total_observations,
             )
 
-        effect_size = self.calculate_effect_size(
-            column,
-            difference=difference
-        ).value
-        return partial(power_func, effect_size=effect_size)
+        return power_func
 
 
 class AlphaDiversityHandler(_BaseDiversityHandler):

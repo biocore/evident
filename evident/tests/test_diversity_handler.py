@@ -192,8 +192,8 @@ class TestEffectSize:
             difference=3
         )
         exp_effect_size = 0.812497
-        np.testing.assert_almost_equal(calc_effect_size, exp_effect_size,
-                                       decimal=6)
+        np.testing.assert_almost_equal(calc_effect_size.effect_size,
+                                       exp_effect_size, decimal=6)
 
 
 class TestVectorArgsPowerAnalysis:
