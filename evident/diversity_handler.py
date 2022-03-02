@@ -283,7 +283,7 @@ class _BaseDiversityHandler(ABC):
         if self.metadata[column].dtype != np.dtype("object"):
             raise exc.NonCategoricalColumnError(self.metadata[column])
 
-        column_choices = self.metadata[column].unique()
+        column_choices = self.metadata[column].dropna().unique()
         num_choices = len(column_choices)
 
         if num_choices == 1:
