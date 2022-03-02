@@ -70,7 +70,7 @@ def test_alpha_effect_size_by_cat(alpha_artifact, metadata):
         columns=["classification", "cd_behavior"]
     ).effect_size_results.view(pd.DataFrame)
     assert non_pairwise.shape == (2, 3)
-    assert (non_pairwise.columns == ["column", "metric", "value"]).all()
+    assert (non_pairwise.columns == ["effect_size", "metric", "column"]).all()
 
     pairwise = evident.methods.alpha_effect_size_by_category(
         alpha_diversity=alpha_artifact,
@@ -78,8 +78,8 @@ def test_alpha_effect_size_by_cat(alpha_artifact, metadata):
         columns=["classification", "cd_behavior"],
         pairwise=True
     ).effect_size_results.view(pd.DataFrame)
-    assert pairwise.shape == (4, 4)
-    exp_cols = ["column", "group_1", "group_2", "cohens_d"]
+    assert pairwise.shape == (4, 5)
+    exp_cols = ["effect_size", "metric", "column", "group_1", "group_2"]
     assert (pairwise.columns == exp_cols).all()
 
 
@@ -90,7 +90,7 @@ def test_beta_effect_size_by_cat(beta_artifact, metadata):
         columns=["classification", "cd_behavior"]
     ).effect_size_results.view(pd.DataFrame)
     assert non_pairwise.shape == (2, 3)
-    assert (non_pairwise.columns == ["column", "metric", "value"]).all()
+    assert (non_pairwise.columns == ["effect_size", "metric", "column"]).all()
 
     pairwise = evident.methods.beta_effect_size_by_category(
         beta_diversity=beta_artifact,
@@ -98,8 +98,8 @@ def test_beta_effect_size_by_cat(beta_artifact, metadata):
         columns=["classification", "cd_behavior"],
         pairwise=True
     ).effect_size_results.view(pd.DataFrame)
-    assert pairwise.shape == (4, 4)
-    exp_cols = ["column", "group_1", "group_2", "cohens_d"]
+    assert pairwise.shape == (4, 5)
+    exp_cols = ["effect_size", "metric", "column", "group_1", "group_2"]
     assert (pairwise.columns == exp_cols).all()
 
 

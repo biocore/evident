@@ -5,7 +5,7 @@ from qiime2 import CategoricalMetadataColumn, Metadata
 from skbio import DistanceMatrix
 
 from evident import AlphaDiversityHandler, BetaDiversityHandler
-from evident.exploration import (effect_size_by_category,
+from evident.effect_size import (effect_size_by_category,
                                  pairwise_effect_size_by_category)
 
 
@@ -72,7 +72,7 @@ def beta_effect_size_by_category(
 def _effect_size_by_category(data, metadata, handler, columns, pairwise):
     dh = handler(data, metadata.to_dataframe())
     if pairwise:
-        df = pairwise_effect_size_by_category(dh, columns)
+        res = pairwise_effect_size_by_category(dh, columns)
     else:
-        df = effect_size_by_category(dh, columns)
-    return df
+        res = effect_size_by_category(dh, columns)
+    return res.to_dataframe()

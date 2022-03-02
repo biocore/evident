@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from functools import lru_cache, partial
 from itertools import product
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Union
 
 import numpy as np
 import pandas as pd
@@ -9,7 +9,8 @@ from skbio import DistanceMatrix
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
 from . import _exceptions as exc
-from .power import PowerAnalysisResult, PowerAnalysisResults
+from .results import (PowerAnalysisResult, PowerAnalysisResults,
+                      EffectSizeResult)
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev)
 from .utils import _listify, _check_sample_overlap
@@ -31,7 +32,7 @@ class _BaseDiversityHandler(ABC):
         self,
         column: str,
         difference: float = None
-    ) -> float:
+    ) -> EffectSizeResult:
         """Get effect size of diversity differences given column.
 
         If two categories, return Cohen's d from t-test. If more than two
@@ -45,7 +46,7 @@ class _BaseDiversityHandler(ABC):
         :type difference: float
 
         :returns: Effect size
-        :rtype: float
+        :rtype: evident.results.EffectSizeResult
         """
         if self.metadata[column].dtype != np.dtype("object"):
             raise exc.NonCategoricalColumnError(self.metadata[column])
@@ -57,8 +58,10 @@ class _BaseDiversityHandler(ABC):
             raise exc.OnlyOneCategoryError(self.metadata[column])
         elif num_choices == 2:
             effect_size_func = calculate_cohens_d
+            metric = "cohens_d"
         else:
             effect_size_func = calculate_cohens_f
+            metric = "cohens_f"
 
         # Create list of arrays for effect size calculation
         arrays = []
@@ -68,10 +71,13 @@ class _BaseDiversityHandler(ABC):
             arrays.append(values)
 
         if difference is None:
-            return effect_size_func(*arrays)
+            result = effect_size_func(*arrays)
         else:
             pooled_stdev = calculate_pooled_stdev(*arrays)
-            return difference / pooled_stdev
+            result = difference / pooled_stdev
+
+        return EffectSizeResult(effect_size=result, metric=metric,
+                                column=column)
 
     def power_analysis(
         self,
@@ -80,7 +86,7 @@ class _BaseDiversityHandler(ABC):
         difference: float = None,
         alpha: float = None,
         power: float = None
-    ):
+    ) -> Union[PowerAnalysisResult, PowerAnalysisResults]:
         """Perform power analysis using this diversity dataset.
 
         Exactly one of total_observations, alpha, or power must be None.
@@ -106,6 +112,9 @@ class _BaseDiversityHandler(ABC):
         :param power: Power level to use in power calculation, defaults to
             None. Can be either float or sequence of floats.
         :type power: float or np.array[float]
+
+        :returns: Results from power analysis
+        :rtype: Either PowerAnalysisResult or PowerAnalysisResults
         """
         args = [alpha, power, total_observations]
         none_args = [x is None for x in args]
@@ -137,7 +146,7 @@ class _BaseDiversityHandler(ABC):
         difference: float = None,
         alpha: float = None,
         power: float = None
-    ) -> float:
+    ) -> PowerAnalysisResult:
         """Compute the power analysis for a single value.
 
         :param column: Name of column in metadata to consider
@@ -162,11 +171,12 @@ class _BaseDiversityHandler(ABC):
         """
         power_func = self._create_partial_power_func(
             column=column,
-            difference=difference,
             total_observations=total_observations
         )
+        effect_size_result = self.calculate_effect_size(column, difference)
 
-        val_to_solve = power_func(power=power, alpha=alpha)
+        val_to_solve = power_func(power=power, alpha=alpha,
+                                  effect_size=effect_size_result.effect_size)
 
         # If calculating total_observations, check to see if doing t-test
         # If so, multiply by two as tt_ind_solve_power returns number of
@@ -191,7 +201,7 @@ class _BaseDiversityHandler(ABC):
             alpha=alpha,
             total_observations=total_observations,
             power=power,
-            effect_size=power_func.keywords["effect_size"],
+            effect_size_result=effect_size_result,
             difference=difference
         )
         return results
@@ -203,7 +213,7 @@ class _BaseDiversityHandler(ABC):
         difference: float = None,
         alpha: float = None,
         power: float = None
-    ):
+    ) -> PowerAnalysisResults:
         """Compute the power analysis for a multiple values.
 
         :param column: Name of column in metadata to consider
@@ -249,7 +259,6 @@ class _BaseDiversityHandler(ABC):
     def _create_partial_power_func(
         self,
         column: str,
-        difference: float = None,
         total_observations: int = None
     ) -> Callable:
         """Create basic function to solve for power.
@@ -263,12 +272,6 @@ class _BaseDiversityHandler(ABC):
 
         :param column: Name of column in metadata to consider
         :type column: str
-
-        :param difference: Difference between groups to consider, defaults to
-            None. If provided, uses the pooled standard deviation as the
-            denominator to calculate the effect size with the difference as the
-            numerator.
-        :type difference: float
 
         :param total_observations: Total number of observations for power
             calculation, defaults to None
@@ -303,11 +306,7 @@ class _BaseDiversityHandler(ABC):
                 nobs=total_observations,
             )
 
-        effect_size = self.calculate_effect_size(
-            column,
-            difference=difference
-        )
-        return partial(power_func, effect_size=effect_size)
+        return power_func
 
 
 class AlphaDiversityHandler(_BaseDiversityHandler):

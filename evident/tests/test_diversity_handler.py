@@ -113,6 +113,16 @@ class TestPower:
         )
         assert str(exc_info.value) == exp_err_msg
 
+    def test_alpha_power_err_no_args(self, alpha_mock):
+        with pytest.raises(exc.WrongPowerArguments) as exc_info:
+            alpha_mock.power_analysis("classification")
+        exp_err_msg = (
+            "No arguments were provided. Exactly one of alpha, power, "
+            "or total_observations must be None. Arguments: "
+            "alpha = None, power = None, total_observations = None."
+        )
+        assert str(exc_info.value) == exp_err_msg
+
     def test_alpha_power_non_categorical(self, alpha_mock):
         with pytest.raises(exc.NonCategoricalColumnError) as exc_info:
             alpha_mock.power_analysis(
@@ -192,8 +202,8 @@ class TestEffectSize:
             difference=3
         )
         exp_effect_size = 0.812497
-        np.testing.assert_almost_equal(calc_effect_size, exp_effect_size,
-                                       decimal=6)
+        np.testing.assert_almost_equal(calc_effect_size.effect_size,
+                                       exp_effect_size, decimal=6)
 
 
 class TestVectorArgsPowerAnalysis:

@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from evident import AlphaDiversityHandler
-from evident import exploration as expl
+from evident import effect_size as expl
 
 
 @pytest.mark.parametrize("mock", ["alpha_mock", "beta_mock"])
@@ -12,7 +12,7 @@ def test_effect_size_by_cat(mock, request):
     df = expl.effect_size_by_category(
         dh, columns=["perianal_disease", "sex", "classification",
                      "cd_behavior"]
-    )
+    ).to_dataframe()
 
     assert ~df.isna().any().any()
 
@@ -20,19 +20,22 @@ def test_effect_size_by_cat(mock, request):
                  "cd_behavior"}
     assert set(df["column"]) == exp_index
 
-    exp_cols = ["column", "metric", "value"]
+    exp_cols = ["effect_size", "metric", "column"]
     assert (df.columns == exp_cols).all()
 
     exp_metrics = {
         "perianal_disease": "cohens_d",
         "sex": "cohens_d",
         "classification": "cohens_d",
-        "cd_behavror": "cohens_f"
+        "cd_behavior": "cohens_f"
     }
 
     def check_column_metric(column, metric):
-        val = df[df["column"] == column]["metric"]
+        val = df[df["column"] == column]["metric"].item()
         assert val == exp_metrics[column]
+
+    for k, v in exp_metrics.items():
+        check_column_metric(k, v)
 
 
 @pytest.mark.parametrize("mock", ["alpha_mock", "beta_mock"])
@@ -41,11 +44,11 @@ def test_pairwise_effect_size_by_cat(mock, request):
     df = expl.pairwise_effect_size_by_category(
         dh, columns=["perianal_disease", "sex", "classification",
                      "cd_behavior"]
-    )
+    ).to_dataframe()
 
     assert ~df.isna().any().any()
 
-    exp_cols = ["column", "group_1", "group_2", "cohens_d"]
+    exp_cols = ["effect_size", "metric", "column", "group_1", "group_2"]
     assert (df.columns == exp_cols).all()
 
     all_grp_counts = df["column"].value_counts()
@@ -54,7 +57,7 @@ def test_pairwise_effect_size_by_cat(mock, request):
     assert all_grp_counts.loc["sex"] == 1
 
     cd_behavior_df = df.query("column == 'cd_behavior'")
-    assert cd_behavior_df.shape == (3, 4)
+    assert cd_behavior_df.shape == (3, 5)
 
     cd_behavior_melt_df = cd_behavior_df.melt(
         value_vars=["group_1", "group_2"]
@@ -93,5 +96,5 @@ def test_nan_in_cols():
     faith_vals = pd.Series([1, 3, 4, 5, 6, 6])
     faith_vals.index = df.index
     adh = AlphaDiversityHandler(faith_vals, df)
-    assert not np.isnan(adh.calculate_effect_size("col1"))
-    assert not np.isnan(adh.calculate_effect_size("col2"))
+    assert not np.isnan(adh.calculate_effect_size("col1").effect_size)
+    assert not np.isnan(adh.calculate_effect_size("col2").effect_size)

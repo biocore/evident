@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from evident.power import PowerAnalysisResults
+from evident.results import PowerAnalysisResults
 
 
 def plot_power_curve(

@@ -4,6 +4,7 @@ import pandas as pd
 
 from evident.diversity_handler import _BaseDiversityHandler
 from evident.stats import calculate_cohens_d
+from evident.results import EffectSizeResults, PairwiseEffectSizeResult
 
 
 def effect_size_by_category(
@@ -29,25 +30,13 @@ def effect_size_by_category(
     """
     _check_columns(columns)
     dh = diversity_handler
-    effect_size_dict = dict()
 
+    results = []
     for col in columns:
-        num_choices = len(dh.metadata[col].unique())
-        effect_size = dh.calculate_effect_size(col)
-        if num_choices == 2:
-            metric = "cohens_d"
-        else:
-            metric = "cohens_f"
-        effect_size_dict[col] = {"metric": metric, "value": effect_size}
+        res = dh.calculate_effect_size(col)
+        results.append(res)
 
-    # Sort by metric first (d -> f) then value in descending order
-    effect_size_df = pd.DataFrame.from_dict(effect_size_dict, orient="index")
-    effect_size_df.index.name = "column"
-    effect_size_df = effect_size_df.sort_values(by=["metric", "value"],
-                                                ascending=[True, False])
-    effect_size_df = effect_size_df.reset_index(drop=False)
-
-    return effect_size_df
+    return EffectSizeResults(results)
 
 
 def pairwise_effect_size_by_category(
@@ -74,8 +63,8 @@ def pairwise_effect_size_by_category(
     """
     _check_columns(columns)
     dh = diversity_handler
-    effect_size_records = []
 
+    results = []
     for col in columns:
         values_dict = dict()
 
@@ -88,12 +77,10 @@ def pairwise_effect_size_by_category(
             vals1 = values_dict[grp1]
             vals2 = values_dict[grp2]
             effect_size = calculate_cohens_d(vals1, vals2)
-            effect_size_records.append((col, grp1, grp2, effect_size))
+            res = PairwiseEffectSizeResult(effect_size, col, grp1, grp2)
+            results.append(res)
 
-    effect_size_df = pd.DataFrame.from_records(effect_size_records)
-    effect_size_df.columns = ["column", "group_1", "group_2", "cohens_d"]
-
-    return effect_size_df.sort_values(by="cohens_d", ascending=False)
+    return EffectSizeResults(results)
 
 
 def _check_columns(columns) -> None:
