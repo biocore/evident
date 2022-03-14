@@ -2,8 +2,7 @@ import os
 import glob
 
 from bokeh.layouts import column, row
-from bokeh.models import (ColumnDataSource, Select, NumericInput,
-                          HoverTool)
+from bokeh.models import ColumnDataSource, Select, NumericInput, HoverTool
 from bokeh.plotting import curdoc, figure
 import pandas as pd
 from skbio import DistanceMatrix
@@ -25,9 +24,11 @@ data_loc = glob.glob(f"{data_path}/diversity*")[0]
 if "alpha" in data_loc:
     alpha_div_data = pd.read_table(data_loc, sep="\t", index_col=0)
     dh = AlphaDiversityHandler(alpha_div_data, md)
+    div_type = "Alpha"
 elif "beta" in data_loc:
     beta_div_data = DistanceMatrix.read(data_loc)
     dh = BetaDiversityHandler(beta_div_data, md)
+    div_type = "Beta"
 else:
     raise ValueError("No valid data found!")
 
@@ -43,7 +44,12 @@ hover = HoverTool(names=["points"])
 # Much of this taken from
 # https://github.com/bokeh/bokeh/tree/branch-3.0/examples/app/crossfilter
 def create_figure():
-    obs_range = range(min_obs.value, max_obs.value + 1, step_obs.value)
+    kw["x_range"][-1] = max_obs.value + step_obs.value  # Resize x-axis
+    obs_range = range(
+        min_obs.value,
+        max_obs.value + 1,
+        step_obs.value
+    )
 
     plot = figure(height=600, width=600, tools=tools+[hover],
                   sizing_mode="stretch_width", **kw)
@@ -51,13 +57,26 @@ def create_figure():
     plot.yaxis.axis_label = r"Power (1 - β)"
 
     for ax in [plot.xaxis, plot.yaxis]:
-        ax.axis_label_text_font_size = "20px"
+        ax.axis_label_text_font_size = "15pt"
+        ax.major_label_text_font_size = "10pt"
+
+    if len(md[chosen_col.value].unique()) == 2:
+        metric = "Cohen's d"
+    else:
+        metric = "Cohen's f"
 
     res = dh.power_analysis(
         column=chosen_col.value,
         total_observations=obs_range,
         alpha=alpha.value
     ).to_dataframe()
+    effect_size = res["effect_size"].unique().item()
+
+    plot.title.text = (
+        f"{div_type} Diversity - {chosen_col.value} {metric} = "
+        f"{effect_size:.3f}"
+    )
+    plot.title.text_font_size = "20pt"
 
     source = ColumnDataSource(res)
     plot.line(x="total_observations", y="power", source=source)
