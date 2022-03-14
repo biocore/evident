@@ -29,7 +29,7 @@ jobs:
 
       - name: Install conda packages
         shell: bash -l {0}
-        run: conda install -c conda-forge -c anaconda pandas pytest flake8 pytest-cov statsmodels scikit-bio seaborn
+        run: conda install -c conda-forge -c anaconda pandas pytest flake8 pytest-cov statsmodels scikit-bio seaborn bokeh
 
       - name: Install evident
         shell: bash -l {0}

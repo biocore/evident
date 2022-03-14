@@ -49,7 +49,8 @@ setup(
         "statsmodels",
         "scikit-bio",
         "matplotlib",
-        "seaborn"
+        "seaborn",
+        "bokeh"
     ],
     classifiers=classifiers,
     extras_require={"dev": ["pytest", "pytest-cov", "flake8"]},
