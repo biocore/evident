@@ -134,7 +134,8 @@ def create_figure():
     lw = 2
     pal = sns.color_palette("colorblind", len(groups)).as_hex()
 
-    boxes = figure(tools=[hover, "reset", "save"], x_range=groups_with_n)
+    boxes = figure(tools=[hover, "reset", "save"], x_range=groups_with_n,
+                   )
 
     box_args = {"x": groups_with_n, "width": 0.7, "line_color": "black",
                 "fill_color": pal, "line_width": lw}
@@ -184,8 +185,8 @@ def create_figure():
 
 def update(attr, old, new):
     curve, boxes = create_figure()
-    layout.children[1] = curve
-    layout.children[2] = boxes
+    plots.children[0] = curve
+    plots.children[1] = boxes
 
 
 chosen_col = Select(options=cols, title="Column", value=cols[0])
@@ -203,7 +204,8 @@ for ctrl in controls:
     ctrl.on_change("value", update)
 
 control_panel = column(*controls, width=200)
-layout = row(control_panel, *create_figure())
+plots = row(*create_figure(), sizing_mode="scale_width", height=600)
+layout = row(control_panel, plots, height=600)
 
 curdoc().add_root(layout)
 curdoc().title = "Power Curve"
