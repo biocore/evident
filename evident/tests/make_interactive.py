@@ -11,8 +11,7 @@ from evident.interactive import create_bokeh_app
 @click.command()
 @click.option("--output", type=click.Path())
 @click.option("--diversity-type", type=str, default="alpha")
-@click.option("--exist-ok", type=bool, default=False)
-def interactive(output, diversity_type, exist_ok):
+def interactive(output, diversity_type):
     na_vals = ["missing: not provided", "not applicable"]
     curr_path = os.path.dirname(__file__)
     fname = os.path.join(curr_path, "data/metadata.tsv")
@@ -29,7 +28,7 @@ def interactive(output, diversity_type, exist_ok):
     else:
         raise ValueError("No valid data!")
 
-    create_bokeh_app(dh, output, exist_ok=exist_ok)
+    create_bokeh_app(dh, output)
 
 
 if __name__ == "__main__":
