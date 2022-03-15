@@ -50,7 +50,8 @@ setup(
         "scikit-bio",
         "matplotlib",
         "seaborn",
-        "bokeh"
+        "bokeh",
+        "click"
     ],
     classifiers=classifiers,
     extras_require={"dev": ["pytest", "pytest-cov", "flake8"]},

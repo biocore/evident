@@ -139,6 +139,32 @@ When we inspect this plot, we can see how many samples we would need to collect 
 
 ![Power Curve](https://raw.githubusercontent.com/gibsramen/evident/main/imgs/power_curve.png)
 
+## Interactive power curve with Bokeh
+
+evident allows users to *interactively* perform effect size and power calculations using [Bokeh](https://docs.bokeh.org/en/latest/).
+To create a Bokeh app, use the following command:
+
+```python
+from evident.interactive import create_bokeh_app
+
+create_bokeh_app(adh, "app")
+```
+
+This will save the necessary files into a new directory `app/`.
+Navigate to the directory containing `app/` (**not** `app/` itself) and execute this command from your terminal:
+
+```bash
+bokeh serve --show app
+```
+
+This should open up a browser window where you can modify the chosen column, significance, level, and observations.
+We also provide a command line script to generate an interactive app using some test data.
+You can access this script at `evident/tests/make_interactive.py`.
+
+![Bokeh App](https://raw.githubusercontent.com/gibsramen/evident/main/imgs/bokeh_screenshot.png)
+
+Note that because evident uses Python to perform the power calculations, it is at the moment not possible to embded this interactive app into a standalone webpage.
+
 ## QIIME 2 Usage
 
 evident provides support for the popular QIIME 2 framework of microbiome data analysis.

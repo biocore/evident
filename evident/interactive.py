@@ -14,12 +14,12 @@ def create_bokeh_app(
     max_levels_per_category: int = 5,
     exist_ok: bool = False
 ) -> None:
-    """Creates interactive power analysis using bokeh.
+    """Creates interactive power analysis using Bokeh.
 
     :param diversity_handler: Handler with diversity data
     :type diversity_handler: evident.diversity_handler._BaseDiversityHandler
 
-    :param output: Location to create bokeh app
+    :param output: Location to create Bokeh app
     :type output: os.PathLike
 
     :param max_levels_per_category: Max number of levels in a category to
@@ -34,7 +34,7 @@ def create_bokeh_app(
     curr_path = os.path.dirname(__file__)
     support_files = os.path.join(curr_path, "support_files")
 
-    # Copy support files (bokeh template + script) and data directory
+    # Copy support files (Bokeh template + script) and data directory
     shutil.copytree(support_files, output, dirs_exist_ok=exist_ok)
     data_dir = os.path.join(output, "data")
     os.makedirs(data_dir, exist_ok=exist_ok)
