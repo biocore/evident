@@ -17,6 +17,8 @@ def interactive(output, diversity_type, exist_ok):
     curr_path = os.path.dirname(__file__)
     fname = os.path.join(curr_path, "data/metadata.tsv")
     df = pd.read_table(fname, sep="\t", index_col=0, na_values=na_vals)
+    df = df.dropna(axis=1, how="all")
+    df = df.dropna(axis=0)
 
     if diversity_type == "alpha":
         dh = AlphaDiversityHandler(df["faith_pd"], df)

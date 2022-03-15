@@ -9,7 +9,8 @@ from evident.diversity_handler import (_BaseDiversityHandler,
 
 
 def create_bokeh_app(diversity_handler: _BaseDiversityHandler,
-                     output: os.PathLike, exist_ok: bool = False) -> None:
+                     output: os.PathLike, max_levels_per_category: int = 5,
+                     exist_ok: bool = False) -> None:
     curr_path = os.path.dirname(__file__)
     support_files = os.path.join(curr_path, "support_files")
 
@@ -21,7 +22,8 @@ def create_bokeh_app(diversity_handler: _BaseDiversityHandler,
     # Get all categorical columns
     valid_cols = [
         x for x in md.columns
-        if md[x].dtype == np.dtype("object") and len(md[x].unique()) > 1
+        if md[x].dtype == np.dtype("object")
+        and 1 < len(md[x].unique()) <= max_levels_per_category
     ]
     md_loc = os.path.join(data_dir, "metadata.tsv")
     md[valid_cols].to_csv(md_loc, sep="\t", index=True)

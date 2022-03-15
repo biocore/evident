@@ -327,7 +327,7 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
 
     def subset_values(self, ids: list) -> np.array:
         """Get alpha-diversity differences among provided samples."""
-        return self.data.loc[ids].values
+        return np.squeeze(self.data.loc[ids].values)
 
 
 class BetaDiversityHandler(_BaseDiversityHandler):
