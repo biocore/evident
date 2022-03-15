@@ -40,6 +40,12 @@ kw = dict()
 kw["x_range"] = [0, 110]
 kw["y_range"] = [-0.1, 1.1]
 
+plots_kw = {
+    "width": 600,
+    "height": 600,
+    "sizing_mode": "scale_both",
+}
+
 # https://github.com/bokeh/bokeh/issues/2351#issuecomment-108101144
 tools = ["pan", "reset", "box_zoom", "save"]
 hover = HoverTool(names=["points"])
@@ -55,7 +61,7 @@ def create_figure():
         step_obs.value
     )
 
-    curve = figure(tools=tools+[hover], **kw)
+    curve = figure(tools=tools+[hover], **kw, **plots_kw)
     curve.xaxis.axis_label = "Total Observations"
     curve.yaxis.axis_label = r"Power (1 - β)"
 
@@ -83,9 +89,10 @@ def create_figure():
     curve.title.text_font_size = "10pt"
 
     source = ColumnDataSource(res)
-    curve.line(x="total_observations", y="power", source=source)
-    curve.circle(x="total_observations", y="power", source=source,
-                 name="points", size=10)
+    curve_args = {"x": "total_observations", "y": "power", "source": source,
+                  "color": "black"}
+    curve.line(**curve_args)
+    curve.circle(**curve_args, name="points", size=10)
 
     # Boxplots
     # https://docs.bokeh.org/en/latest/docs/gallery/boxplot.html
@@ -135,7 +142,7 @@ def create_figure():
     pal = sns.color_palette("colorblind", len(groups)).as_hex()
 
     boxes = figure(tools=[hover, "reset", "save"], x_range=groups_with_n,
-                   )
+                   **plots_kw)
 
     box_args = {"x": groups_with_n, "width": 0.7, "line_color": "black",
                 "fill_color": pal, "line_width": lw}
@@ -145,11 +152,11 @@ def create_figure():
     # https://tinyurl.com/bp7axw9v
     legend = Legend(
         items=[LegendItem(label=dict(field="x"), renderers=[box])],
-        location="center",
+        location="top",
         border_line_width=1,
         border_line_color="black"
     )
-    boxes.add_layout(legend, "below")
+    boxes.add_layout(legend, "right")
     boxes.xaxis.major_label_text_font_size = "0pt"
 
     seg_args = {"x0": groups_with_n, "x1": groups_with_n,
@@ -179,6 +186,7 @@ def create_figure():
         ax.axis_label_text_font_size = "15pt"
         ax.axis_label_text_font_style = "normal"
         ax.major_tick_line_width = 0
+    boxes.yaxis.major_label_text_font_size = "10pt"
 
     return curve, boxes
 
@@ -203,9 +211,16 @@ controls = [chosen_col, alpha, min_obs, max_obs, step_obs]
 for ctrl in controls:
     ctrl.on_change("value", update)
 
-control_panel = column(*controls, width=200)
-plots = row(*create_figure(), sizing_mode="scale_width", height=600)
-layout = row(control_panel, plots, height=600)
+control_panel = column(
+    *controls,
+    width=200,
+    height=200,
+)
+plots = row(*create_figure(), **plots_kw)
+layout = row(
+    control_panel,
+    plots,
+)
 
 curdoc().add_root(layout)
 curdoc().title = "Power Curve"
