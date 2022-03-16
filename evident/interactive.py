@@ -39,7 +39,7 @@ def create_bokeh_app(
     valid_cols = [
         x for x in md.columns
         if md[x].dtype == np.dtype("object")
-        and 1 < len(md[x].unique()) <= max_levels_per_category
+        and 1 < len(md[x].dropna().unique()) <= max_levels_per_category
     ]
     md_loc = os.path.join(data_dir, "metadata.tsv")
     md[valid_cols].to_csv(md_loc, sep="\t", index=True)

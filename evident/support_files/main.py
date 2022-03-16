@@ -16,7 +16,7 @@ md_loc = os.path.join(curr_path, "data/metadata.tsv")
 md = pd.read_table(md_loc, sep="\t", index_col=0)
 cols = list(md.columns)
 binary_cols = [
-    col for col in cols if len(md[col].unique()) == 2
+    col for col in cols if len(md[col].dropna().unique()) == 2
 ]
 multiclass_cols = [col for col in cols if col not in binary_cols]
 
@@ -70,7 +70,8 @@ def create_figure():
         ax.major_label_text_font_size = "10pt"
         ax.axis_label_text_font_style = "normal"
 
-    if len(md[chosen_col.value].unique()) == 2:
+    groups = sorted(md[chosen_col.value].dropna().unique())
+    if len(groups) == 2:
         metric = "Cohen's d"
     else:
         metric = "Cohen's f"
@@ -96,7 +97,6 @@ def create_figure():
 
     # Boxplots
     # https://docs.bokeh.org/en/latest/docs/gallery/boxplot.html
-    groups = sorted(md[chosen_col.value].unique())
 
     group_vals = []
     groups_with_n = []
@@ -223,4 +223,4 @@ layout = row(
 )
 
 curdoc().add_root(layout)
-curdoc().title = "Power Curve"
+curdoc().title = "Evident"
