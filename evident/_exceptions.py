@@ -58,7 +58,7 @@ class NonCategoricalColumnError(Exception):
 
 class OnlyOneCategoryError(Exception):
     def __init__(self, column: pd.Series):
-        value = column.unique().item()
+        value = column.dropna().unique().item()
         message = (
             f"Column {column.name} has only one value: '{value}'."
         )
