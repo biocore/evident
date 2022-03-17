@@ -45,9 +45,9 @@ setup(
     packages=find_packages(),
     install_requires=[
         "numpy",
-        "pandas",
+        "pandas>1.0.0",
         "statsmodels",
-        "scikit-bio",
+        "scikit-bio>=0.5.6",
         "matplotlib",
         "seaborn",
         "bokeh",
