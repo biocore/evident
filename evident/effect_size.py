@@ -1,5 +1,6 @@
-from itertools import combinations
+from itertools import combinations, chain
 
+from joblib import Parallel, delayed
 import pandas as pd
 
 from evident.diversity_handler import _BaseDiversityHandler
@@ -10,6 +11,8 @@ from evident.results import EffectSizeResults, PairwiseEffectSizeResult
 def effect_size_by_category(
     diversity_handler: _BaseDiversityHandler,
     columns: list = None,
+    n_jobs: int = None,
+    parallel_args: dict = None
 ) -> pd.DataFrame:
     """Compute effect size for a set of columns.
 
@@ -25,23 +28,37 @@ def effect_size_by_category(
     :param columns: Columns to use for effect size calculations
     :type columns: List[str]
 
+    :param n_jobs: Number of jobs to run in parallel, defaults to None (single
+        CPU)
+    :type n_jobs: int
+
+    :param parallel_args: Dictionary of arguments to be passed into
+        joblib.Parallel. See the documentation for this class at
+        https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html
+    :type parallel_args: dict
+
     :returns: DataFrame of effect size per category
     :rtype: pd.DataFrame
     """
     _check_columns(columns)
     dh = diversity_handler
 
-    results = []
-    for col in columns:
-        res = dh.calculate_effect_size(col)
-        results.append(res)
+    if parallel_args is None:
+        parallel_args = dict()
+
+    results = Parallel(n_jobs=n_jobs, **parallel_args)(
+        delayed(dh.calculate_effect_size)(col)
+        for col in columns
+    )
 
     return EffectSizeResults(results)
 
 
 def pairwise_effect_size_by_category(
     diversity_handler: _BaseDiversityHandler,
-    columns: list = None
+    columns: list = None,
+    n_jobs: int = None,
+    parallel_args: dict = None
 ) -> pd.DataFrame:
     """Compute effect size for a set of columns using pairwise comparisons.
 
@@ -58,27 +75,30 @@ def pairwise_effect_size_by_category(
     :param columns: Columns to use for effect size calculations
     :type columns: List[str]
 
+    :param n_jobs: Number of jobs to run in parallel, defaults to None (single
+        CPU)
+    :type n_jobs: int
+
+    :param parallel_args: Dictionary of arguments to be passed into
+        joblib.Parallel. See the documentation for this class at
+        https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html
+    :type parallel_args: dict
+
     :returns: DataFrame of effect size per pairwise comparison
     :rtype: pd.DataFrame
     """
     _check_columns(columns)
     dh = diversity_handler
 
-    results = []
-    for col in columns:
-        values_dict = dict()
+    if parallel_args is None:
+        parallel_args = dict()
 
-        # Get all index sets here to avoid redundant computation
-        grp_dfs = (dh.metadata .groupby(col))
-        for grp, _df in grp_dfs:
-            values_dict[grp] = dh.subset_values(_df.index)
-
-        for grp1, grp2 in combinations(values_dict.keys(), 2):
-            vals1 = values_dict[grp1]
-            vals2 = values_dict[grp2]
-            effect_size = calculate_cohens_d(vals1, vals2)
-            res = PairwiseEffectSizeResult(effect_size, col, grp1, grp2)
-            results.append(res)
+    results = Parallel(n_jobs=n_jobs, **parallel_args)(
+        delayed(_pw_column)(dh, col)
+        for col in columns
+    )
+    # Above results in list of lists - want to combine into one list
+    results = list(chain.from_iterable(results))
 
     return EffectSizeResults(results)
 
@@ -87,3 +107,22 @@ def _check_columns(columns) -> None:
     """Check to make sure a list of columns has been passed."""
     if columns is None:
         raise ValueError("Must provide list of columns!")
+
+
+def _pw_column(dh, col):
+    """Compute pairwise effect sizes on a single column."""
+    col_results = []
+    values_dict = dict()
+
+    # Get all index sets here to avoid redundant computation
+    grp_dfs = (dh.metadata .groupby(col))
+    for grp, _df in grp_dfs:
+        values_dict[grp] = dh.subset_values(_df.index)
+
+    for grp1, grp2 in combinations(values_dict.keys(), 2):
+        vals1 = values_dict[grp1]
+        vals2 = values_dict[grp2]
+        effect_size = calculate_cohens_d(vals1, vals2)
+        res = PairwiseEffectSizeResult(effect_size, col, grp1, grp2)
+        col_results.append(res)
+    return col_results
