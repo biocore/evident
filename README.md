@@ -179,6 +179,34 @@ qiime evident plot-power-curve \
 
 You can view this visualization at [view.qiime2.org](https://view.qiime2.org/) directly in your browser.
 
+## Parallelization
+
+evident provides support for parallelizing effect size calculations through [joblib](https://joblib.readthedocs.io/en/latest/parallel.html).
+Parallelization is performed across different columns when using `effect_size_by_category` and `pairwise_effect_size_by_category`.
+Consider parallelization if you have a lot of samples and/or a lot of different metadata categories of interest.
+By default, no parallelization is performed.
+
+With Python:
+
+```python
+effect_size_by_category(
+    adh,
+    ["classification", "cd_resection", "cd_behavior"],
+    n_jobs=2
+)
+```
+
+With QIIME 2:
+
+```bash
+qiime evident alpha-effect-size-by-category \
+    --i-alpha-diversity faith_pd.qza \
+    --m-sample-metadata-file metadata.qza \
+    --p-columns classification sex cd_behavior \
+    --p-n-jobs 2 \
+    --o-effect-size-results alpha_effect_sizes.qza
+```
+
 ## Help with evident
 
 If you encounter a bug in evident, please post a GitHub issue and we will get to it as soon as we can.
