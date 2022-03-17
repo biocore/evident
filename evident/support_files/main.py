@@ -25,7 +25,8 @@ data_loc = glob.glob(f"{data_path}/diversity*")[0]
 
 if "alpha" in data_loc:
     alpha_div_data = pd.read_table(data_loc, sep="\t", index_col=0)
-    dh = AlphaDiversityHandler(alpha_div_data, md)
+    # Loads as DataFrame. Need to squeeze to Series for ADH.
+    dh = AlphaDiversityHandler(alpha_div_data.squeeze(), md)
     div_type = "Alpha"
     ylabel = "Alpha Diversity"
 elif "beta" in data_loc:

@@ -316,6 +316,9 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
         data: pd.Series,
         metadata: pd.DataFrame
     ):
+        if not isinstance(data, pd.Series):
+            raise ValueError("data must be of type pandas.Series")
+
         md_samps = set(metadata.index)
         data_samps = set(data.index)
         samps_in_common = _check_sample_overlap(md_samps, data_samps)
@@ -327,7 +330,7 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
 
     def subset_values(self, ids: list) -> np.array:
         """Get alpha-diversity differences among provided samples."""
-        return np.squeeze(self.data.loc[ids].values)
+        return self.data.loc[ids].values
 
 
 class BetaDiversityHandler(_BaseDiversityHandler):
@@ -337,6 +340,9 @@ class BetaDiversityHandler(_BaseDiversityHandler):
         data: DistanceMatrix,
         metadata: pd.DataFrame
     ):
+        if not isinstance(data, DistanceMatrix):
+            raise ValueError("data must be of type skbio.DistanceMatrix")
+
         md_samps = set(metadata.index)
         data_samps = set(data.ids)
         samps_in_common = _check_sample_overlap(md_samps, data_samps)

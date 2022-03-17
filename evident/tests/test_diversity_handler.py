@@ -30,6 +30,15 @@ class TestAlphaDiv:
         md = alpha_mock.metadata
         assert (md.index == alpha_mock.samples).all()
 
+    def test_alpha_wrong_data(self, alpha_mock):
+        data = alpha_mock.data.to_frame()
+
+        with pytest.raises(ValueError) as exc_info:
+            AlphaDiversityHandler(data, alpha_mock.metadata)
+
+        exp_err_msg = "data must be of type pandas.Series"
+        assert str(exc_info.value) == exp_err_msg
+
 
 class TestBetaDiv:
     def test_init_beta_div_handler(self):
@@ -53,6 +62,15 @@ class TestBetaDiv:
     def test_beta_samples(self, beta_mock):
         md = beta_mock.metadata
         assert (md.index == beta_mock.samples).all()
+
+    def test_beta_wrong_data(self, beta_mock):
+        data = beta_mock.data.to_data_frame()
+
+        with pytest.raises(ValueError) as exc_info:
+            BetaDiversityHandler(data, beta_mock.metadata)
+
+        exp_err_msg = "data must be of type skbio.DistanceMatrix"
+        assert str(exc_info.value) == exp_err_msg
 
 
 class TestPower:
