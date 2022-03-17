@@ -189,6 +189,8 @@ By default, no parallelization is performed.
 With Python:
 
 ```python
+from evident.effect_size import effect_size_by_category
+
 effect_size_by_category(
     adh,
     ["classification", "cd_resection", "cd_behavior"],
