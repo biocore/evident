@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from functools import lru_cache, partial
 from itertools import product
 from typing import Callable, Iterable, Union
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -318,9 +319,12 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
     ):
         if not isinstance(data, pd.Series):
             raise ValueError("data must be of type pandas.Series")
+        if data.isna().any():
+            num_nas = data.isna().sum()
+            warn(f"data has {num_nas} NAs. Dropping these values.")
 
         md_samps = set(metadata.index)
-        data_samps = set(data.index)
+        data_samps = set(data.dropna().index)
         samps_in_common = _check_sample_overlap(md_samps, data_samps)
 
         super().__init__(
