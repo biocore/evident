@@ -51,10 +51,12 @@ def alpha_effect_size_by_category(
     alpha_diversity: pd.Series,
     sample_metadata: Metadata,
     columns: List[str],
-    pairwise: bool = False
+    pairwise: bool = False,
+    n_jobs: int = None
 ) -> pd.DataFrame:
     res = _effect_size_by_category(alpha_diversity, sample_metadata,
-                                   AlphaDiversityHandler, columns, pairwise)
+                                   AlphaDiversityHandler, columns, pairwise,
+                                   n_jobs)
     return res
 
 
@@ -62,17 +64,20 @@ def beta_effect_size_by_category(
     beta_diversity: DistanceMatrix,
     sample_metadata: Metadata,
     columns: List[str],
-    pairwise: bool = False
+    pairwise: bool = False,
+    n_jobs: int = None
 ) -> pd.DataFrame:
     res = _effect_size_by_category(beta_diversity, sample_metadata,
-                                   BetaDiversityHandler, columns, pairwise)
+                                   BetaDiversityHandler, columns, pairwise,
+                                   n_jobs)
     return res
 
 
-def _effect_size_by_category(data, metadata, handler, columns, pairwise):
+def _effect_size_by_category(data, metadata, handler, columns, pairwise,
+                             n_jobs):
     dh = handler(data, metadata.to_dataframe())
     if pairwise:
-        res = pairwise_effect_size_by_category(dh, columns)
+        res = pairwise_effect_size_by_category(dh, columns, n_jobs=n_jobs)
     else:
-        res = effect_size_by_category(dh, columns)
+        res = effect_size_by_category(dh, columns, n_jobs=n_jobs)
     return res.to_dataframe()

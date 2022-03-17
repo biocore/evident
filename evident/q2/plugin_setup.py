@@ -46,6 +46,9 @@ ES_PARAM_DESCS = {
         "with more than 2 levels. If true, computes Cohen's d for all "
         "pairwise comparisons. If false (default), computes Cohen's f "
         "for each group overall."
+    ),
+    "n_jobs": (
+        "Number of jobs to run in parallel, defaults to no parallelization."
     )
 }
 
@@ -114,7 +117,8 @@ plugin.methods.register_function(
     parameters={
         "sample_metadata": Metadata,
         "columns": List[Str],
-        "pairwise": Bool
+        "pairwise": Bool,
+        "n_jobs": Int
     },
     parameter_descriptions=ES_PARAM_DESCS,
     outputs=[("effect_size_results", EffectSizeResults)],
@@ -132,7 +136,8 @@ plugin.methods.register_function(
     parameters={
         "sample_metadata": Metadata,
         "columns": List[Str],
-        "pairwise": Bool
+        "pairwise": Bool,
+        "n_jobs": Int
     },
     parameter_descriptions=ES_PARAM_DESCS,
     outputs=[("effect_size_results", EffectSizeResults)],
