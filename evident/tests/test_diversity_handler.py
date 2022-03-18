@@ -30,6 +30,33 @@ class TestAlphaDiv:
         md = alpha_mock.metadata
         assert (md.index == alpha_mock.samples).all()
 
+    def test_alpha_wrong_data(self, alpha_mock):
+        data = alpha_mock.data.to_frame()
+
+        with pytest.raises(ValueError) as exc_info:
+            AlphaDiversityHandler(data, alpha_mock.metadata)
+
+        exp_err_msg = "data must be of type pandas.Series"
+        assert str(exc_info.value) == exp_err_msg
+
+    def test_alpha_data_nan(self, alpha_mock):
+        data = alpha_mock.data
+        data[0] = np.nan
+        data[-1] = np.nan
+        with pytest.warns(UserWarning) as warn_info:
+            AlphaDiversityHandler(data, alpha_mock.metadata)
+
+        warn_msg_1 = warn_info[0].message.args[0]
+        warn_msg_2 = warn_info[1].message.args[0]
+
+        exp_warn_msg_1 = "data has 2 NAs. Dropping these values."
+        exp_warn_msg_2 = (
+            "Data and metadata do not have the same sample IDs. Using "
+            "218 samples common to both."
+        )
+        assert exp_warn_msg_1 == warn_msg_1
+        assert exp_warn_msg_2 == warn_msg_2
+
 
 class TestBetaDiv:
     def test_init_beta_div_handler(self):
@@ -53,6 +80,15 @@ class TestBetaDiv:
     def test_beta_samples(self, beta_mock):
         md = beta_mock.metadata
         assert (md.index == beta_mock.samples).all()
+
+    def test_beta_wrong_data(self, beta_mock):
+        data = beta_mock.data.to_data_frame()
+
+        with pytest.raises(ValueError) as exc_info:
+            BetaDiversityHandler(data, beta_mock.metadata)
+
+        exp_err_msg = "data must be of type skbio.DistanceMatrix"
+        assert str(exc_info.value) == exp_err_msg
 
 
 class TestPower:
