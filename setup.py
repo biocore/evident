@@ -45,7 +45,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         "numpy",
-        "pandas>1.0.0",
+        "pandas>=1.0.0",
         "statsmodels",
         "scikit-bio>=0.5.6",
         "matplotlib",
