@@ -1,4 +1,4 @@
-.coverage
+.coverage*
 *.swo
 *.swp
 *__pycache__/

@@ -74,6 +74,44 @@ def test_pairwise_effect_size_by_cat(mock, request):
 
 
 @pytest.mark.parametrize("mock", ["alpha_mock", "beta_mock"])
+def test_effect_size_by_cat_parallel(mock, request):
+    dh = request.getfixturevalue(mock)
+
+    df_1 = expl.pairwise_effect_size_by_category(
+        dh,
+        columns=["perianal_disease", "sex", "classification",
+                 "cd_behavior"]
+    ).to_dataframe()
+    df_2 = expl.pairwise_effect_size_by_category(
+        dh,
+        columns=["perianal_disease", "sex", "classification",
+                 "cd_behavior"],
+        n_jobs=2
+    ).to_dataframe()
+
+    pd.testing.assert_frame_equal(df_1, df_2)
+
+
+@pytest.mark.parametrize("mock", ["alpha_mock", "beta_mock"])
+def test_pairwise_effect_size_by_cat_parallel(mock, request):
+    dh = request.getfixturevalue(mock)
+
+    df_1 = expl.pairwise_effect_size_by_category(
+        dh,
+        columns=["perianal_disease", "sex", "classification",
+                 "cd_behavior"]
+    ).to_dataframe()
+    df_2 = expl.pairwise_effect_size_by_category(
+        dh,
+        columns=["perianal_disease", "sex", "classification",
+                 "cd_behavior"],
+        n_jobs=2
+    ).to_dataframe()
+
+    pd.testing.assert_frame_equal(df_1, df_2)
+
+
+@pytest.mark.parametrize("mock", ["alpha_mock", "beta_mock"])
 def test_no_cols(mock, request):
     dh = request.getfixturevalue(mock)
 
