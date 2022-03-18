@@ -158,6 +158,8 @@ bokeh serve --show app
 ```
 
 This should open up a browser window where you can modify the chosen column, significance, level, and observations.
+By default, this interactive view will only consider metadata columns with, at max, 5 levels.
+To modify this behavior, use the `max_levels_per_category` argument in `create_bokeh_app`.
 We also provide a command line script to generate an interactive app using some test data.
 You can access this script at `evident/tests/make_interactive.py`.
 
