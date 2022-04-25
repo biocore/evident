@@ -373,8 +373,8 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
     ):
         """Handler for alpha diversity data.
 
-        :param data: Beta diversity distance matrix
-        :type data: skbio.DistanceMatrix
+        :param data: Alpha diversity vector
+        :type data: pd.Series
 
         :param metadata: Sample metadata
         :type metadata: pd.DataFrame
