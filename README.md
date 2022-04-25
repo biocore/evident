@@ -84,6 +84,10 @@ The main data structure in evident is the 'DiversityHandler'.
 This is the way that evident stores the diversity data and metadata for power calculations.
 For our alpha diversity example, we'll load the `AlphaDiversityHandler` class from evident.
 `AlphaDiversityHandler` takes as input the pandas Series with the diversity values and the pandas DataFrame containing the sample metadata.
+By default, evident will only consider metadata columns with, at max, 5 levels.
+To modify this behavior, provide a value for the `max_levels_per_category` argument.
+Additionally, evident will not consider any category levels represented by fewer than 3 samples.
+To modify this behavior, use the `min_count_per_level` argument.
 
 ```python
 adh = evident.AlphaDiversityHandler(faith_pd, metadata)
@@ -158,10 +162,6 @@ bokeh serve --show app
 ```
 
 This should open up a browser window where you can modify the chosen column, significance, level, and observations.
-By default, this interactive view will only consider metadata columns with, at max, 5 levels.
-To modify this behavior, use the `max_levels_per_category` argument in `create_bokeh_app`.
-Additionally, this interactive view will not consider any category levels represented by fewer than 3 samples.
-To modify this behavior, use the `min_count_per_level` argument.
 We also provide a command line script to generate an interactive app using some test data.
 You can access this script at `evident/tests/make_interactive.py`.
 
