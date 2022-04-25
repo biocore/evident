@@ -62,8 +62,8 @@ class _BaseDiversityHandler(ABC):
 
         if warn_msg_num_levels:
             warn(
-                "Some categories have been dropped because they had either only "
-                "one level or too many. Use the max_levels_per_category "
+                "Some categories have been dropped because they had either "
+                "only one level or too many. Use the max_levels_per_category "
                 "argument to modify this threshold.\n"
                 f"Dropped columns: {cols_to_drop}"
             )

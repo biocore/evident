@@ -11,6 +11,7 @@ import evident._exceptions as exc
 
 na_values = ["not applicable"]
 
+
 class TestAlphaDiv:
     def test_init_alpha_div_handler(self):
         fname = os.path.join(os.path.dirname(__file__), "data/metadata.tsv")

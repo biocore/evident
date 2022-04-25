@@ -1,6 +1,5 @@
 import os
 import shutil
-from warnings import warn
 
 from evident.diversity_handler import (_BaseDiversityHandler,
                                        AlphaDiversityHandler,

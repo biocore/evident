@@ -4,7 +4,6 @@ import pytest
 
 from evident import AlphaDiversityHandler
 from evident import effect_size as expl
-from evident import _exceptions as exc
 
 
 @pytest.mark.parametrize("mock", ["alpha_mock", "beta_mock"])
@@ -151,5 +150,5 @@ def test_nan_in_cols_one_one_cat():
     adh = AlphaDiversityHandler(faith_vals, df, min_count_per_level=1)
     assert not np.isnan(adh.calculate_effect_size("col1").effect_size)
 
-    with pytest.raises(KeyError) as exc_info:
+    with pytest.raises(KeyError):
         adh.calculate_effect_size("col2")
