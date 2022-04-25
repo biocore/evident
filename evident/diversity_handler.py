@@ -49,7 +49,6 @@ class _BaseDiversityHandler(ABC):
 
             # Drop levels that have fewer than min_count_per_level samples
             level_count = metadata[col].value_counts()
-            print(col, level_count, min_count_per_level)
             under_thresh = level_count[level_count < min_count_per_level]
             if not under_thresh.empty:
                 levels_under_thresh = list(under_thresh.index)
