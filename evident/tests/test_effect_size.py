@@ -4,7 +4,6 @@ import pytest
 
 from evident import AlphaDiversityHandler
 from evident import effect_size as expl
-from evident import _exceptions as exc
 
 
 @pytest.mark.parametrize("mock", ["alpha_mock", "beta_mock"])
@@ -134,7 +133,7 @@ def test_nan_in_cols():
 
     faith_vals = pd.Series([1, 3, 4, 5, 6, 6])
     faith_vals.index = df.index
-    adh = AlphaDiversityHandler(faith_vals, df)
+    adh = AlphaDiversityHandler(faith_vals, df, min_count_per_level=1)
     assert not np.isnan(adh.calculate_effect_size("col1").effect_size)
     assert not np.isnan(adh.calculate_effect_size("col2").effect_size)
 
@@ -148,11 +147,8 @@ def test_nan_in_cols_one_one_cat():
 
     faith_vals = pd.Series([1, 3, 4, 5, 6, 6])
     faith_vals.index = df.index
-    adh = AlphaDiversityHandler(faith_vals, df)
+    adh = AlphaDiversityHandler(faith_vals, df, min_count_per_level=1)
     assert not np.isnan(adh.calculate_effect_size("col1").effect_size)
 
-    with pytest.raises(exc.OnlyOneCategoryError) as exc_info:
+    with pytest.raises(KeyError):
         adh.calculate_effect_size("col2")
-
-    exp_err_msg = "Column col2 has only one value: 'c'."
-    assert str(exc_info.value) == exp_err_msg

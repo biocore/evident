@@ -19,9 +19,62 @@ from .utils import _listify, _check_sample_overlap
 
 class _BaseDiversityHandler(ABC):
     """Abstract class for handling diversity data and metadata."""
-    def __init__(self, data=None, metadata: pd.DataFrame = None):
+    def __init__(
+        self,
+        data=None,
+        metadata: pd.DataFrame = None,
+        max_levels_per_category: int = 5,
+        min_count_per_level: int = 3
+    ):
         self.data = data
-        self.metadata = metadata
+        metadata = metadata.copy()
+
+        cols_to_drop = []
+        levels_to_drop = dict()
+
+        warn_msg_num_levels = False
+        warn_msg_level_count = False
+        for col in metadata.columns:
+            # Drop non-categorical columns
+            if metadata[col].dtype != np.dtype("object"):
+                cols_to_drop.append(col)
+                continue
+
+            # Drop columns with only one level or more than max
+            num_uniq_cols = len(metadata[col].dropna().unique())
+            if not (1 < num_uniq_cols <= max_levels_per_category):
+                cols_to_drop.append(col)
+                warn_msg_num_levels = True
+                continue
+
+            # Drop levels that have fewer than min_count_per_level samples
+            level_count = metadata[col].value_counts()
+            under_thresh = level_count[level_count < min_count_per_level]
+            if not under_thresh.empty:
+                levels_under_thresh = list(under_thresh.index)
+                metadata[col].replace(
+                    {x: np.nan for x in levels_under_thresh},
+                    inplace=True
+                )
+                levels_to_drop[col] = levels_under_thresh
+                warn_msg_level_count = True
+
+        if warn_msg_num_levels:
+            warn(
+                "Some categories have been dropped because they had either "
+                "only one level or too many. Use the max_levels_per_category "
+                "argument to modify this threshold.\n"
+                f"Dropped columns: {cols_to_drop}"
+            )
+        if warn_msg_level_count:
+            warn(
+                "Some categorical levels have been dropped because they "
+                "did not have enough samples. Use the min_count_per_level "
+                "argument to modify this threshold.\n"
+                f"Dropped levels: {levels_to_drop}"
+            )
+
+        self.metadata = metadata.drop(columns=cols_to_drop)
 
     @property
     def samples(self):
@@ -168,7 +221,7 @@ class _BaseDiversityHandler(ABC):
         :type power: float
 
         :returns: Collection of values from power analysis
-        :rtype: evident.power.PowerAnalysisResult
+        :rtype: evident.results.PowerAnalysisResult
         """
         power_func = self._create_partial_power_func(
             column=column,
@@ -235,7 +288,7 @@ class _BaseDiversityHandler(ABC):
         :type power: sequence of floats
 
         :returns: Collection of values from power analyses
-        :rtype: evident.power.PowerAnalysisResults
+        :rtype: evident.results.PowerAnalysisResults
         """
         # Convert all to list so we can use Cartesian product
         difference = _listify(difference)
@@ -311,12 +364,31 @@ class _BaseDiversityHandler(ABC):
 
 
 class AlphaDiversityHandler(_BaseDiversityHandler):
-    """Handler for alpha diversity data."""
     def __init__(
         self,
         data: pd.Series,
-        metadata: pd.DataFrame
+        metadata: pd.DataFrame,
+        max_levels_per_category: int = 5,
+        min_count_per_level: int = 3
     ):
+        """Handler for alpha diversity data.
+
+        :param data: Alpha diversity vector
+        :type data: pd.Series
+
+        :param metadata: Sample metadata
+        :type metadata: pd.DataFrame
+
+        :param max_levels_per_category: Max number of levels in a category to
+            keep. Any categorical columns that have more than this number of
+            unique levels will not be saved, defaults to 5.
+        :type max_levels_per_category: int
+
+        :param min_count_per_level: Min number of samples in a given category
+            level to keep. Any levels that have fewer than this many samples
+            will not be saved, defaults to 3.
+        :type min_count_per_level: int
+        """
         if not isinstance(data, pd.Series):
             raise ValueError("data must be of type pandas.Series")
         if data.isna().any():
@@ -329,7 +401,9 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
 
         super().__init__(
             data=data.loc[samps_in_common],
-            metadata=metadata.loc[samps_in_common]
+            metadata=metadata.loc[samps_in_common],
+            max_levels_per_category=max_levels_per_category,
+            min_count_per_level=min_count_per_level
         )
 
     def subset_values(self, ids: list) -> np.array:
@@ -338,12 +412,31 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
 
 
 class BetaDiversityHandler(_BaseDiversityHandler):
-    """Handler for beta diversity data."""
     def __init__(
         self,
         data: DistanceMatrix,
-        metadata: pd.DataFrame
+        metadata: pd.DataFrame,
+        max_levels_per_category: int = 5,
+        min_count_per_level: int = 3
     ):
+        """Handler for beta diversity data.
+
+        :param data: Beta diversity distance matrix
+        :type data: skbio.DistanceMatrix
+
+        :param metadata: Sample metadata
+        :type metadata: pd.DataFrame
+
+        :param max_levels_per_category: Max number of levels in a category to
+            keep. Any categorical columns that have more than this number of
+            unique levels will not be saved, defaults to 5.
+        :type max_levels_per_category: int
+
+        :param min_count_per_level: Min number of samples in a given category
+            level to keep. Any levels that have fewer than this many samples
+            will not be saved, defaults to 3.
+        :type min_count_per_level: int
+        """
         if not isinstance(data, DistanceMatrix):
             raise ValueError("data must be of type skbio.DistanceMatrix")
 
@@ -353,7 +446,9 @@ class BetaDiversityHandler(_BaseDiversityHandler):
 
         super().__init__(
             data=data.filter(samps_in_common),
-            metadata=metadata.loc[samps_in_common]
+            metadata=metadata.loc[samps_in_common],
+            max_levels_per_category=max_levels_per_category,
+            min_count_per_level=min_count_per_level
         )
 
     def subset_values(self, ids: list) -> np.array:

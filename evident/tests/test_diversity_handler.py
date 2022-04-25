@@ -9,13 +9,19 @@ from evident.diversity_handler import (AlphaDiversityHandler,
                                        BetaDiversityHandler)
 import evident._exceptions as exc
 
+na_values = ["not applicable"]
+
 
 class TestAlphaDiv:
     def test_init_alpha_div_handler(self):
         fname = os.path.join(os.path.dirname(__file__), "data/metadata.tsv")
-        df = pd.read_table(fname, sep="\t", index_col=0)
+        df = pd.read_table(fname, sep="\t", index_col=0, na_values=na_values)
+        exp_cols = [
+            "cd_behavior", "cd_location", "cd_resection", "ibd_subtype",
+            "perianal_disease", "sex", "classification"
+        ]
         a = AlphaDiversityHandler(df["faith_pd"], df)
-        assert a.metadata.shape == (220, 40)
+        assert a.metadata.shape == (220, len(exp_cols))
         assert a.data.shape == (220, )
 
     def test_subset_alpha_values(self, alpha_mock):
@@ -61,12 +67,16 @@ class TestAlphaDiv:
 class TestBetaDiv:
     def test_init_beta_div_handler(self):
         fname = os.path.join(os.path.dirname(__file__), "data/metadata.tsv")
-        df = pd.read_table(fname, sep="\t", index_col=0)
+        df = pd.read_table(fname, sep="\t", index_col=0, na_values=na_values)
+        exp_cols = [
+            "cd_behavior", "cd_location", "cd_resection", "ibd_subtype",
+            "perianal_disease", "sex", "classification"
+        ]
         dm_file = os.path.join(os.path.dirname(__file__),
                                "data/distance_matrix.lsmat.gz")
         dm = DistanceMatrix.read(dm_file)
         b = BetaDiversityHandler(dm, df)
-        assert b.metadata.shape == (220, 40)
+        assert b.metadata.shape == (220, len(exp_cols))
         assert b.data.shape == (220, 220)
 
     def test_subset_beta_values(self, beta_mock):
@@ -159,31 +169,6 @@ class TestPower:
         )
         assert str(exc_info.value) == exp_err_msg
 
-    def test_alpha_power_non_categorical(self, alpha_mock):
-        with pytest.raises(exc.NonCategoricalColumnError) as exc_info:
-            alpha_mock.power_analysis(
-                "year_diagnosed",
-                alpha=0.05,
-                power=0.8
-            )
-        exp_err_msg = (
-            "Column must be categorical (dtype object). 'year_diagnosed' "
-            "is of type int64."
-        )
-        assert str(exc_info.value) == exp_err_msg
-
-    def test_alpha_power_only_one_cat(self, alpha_mock):
-        with pytest.raises(exc.OnlyOneCategoryError) as exc_info:
-            alpha_mock.power_analysis(
-                "env_biome",
-                alpha=0.05,
-                power=0.8
-            )
-        exp_err_msg = (
-            "Column env_biome has only one value: 'urban biome'."
-        )
-        assert str(exc_info.value) == exp_err_msg
-
     def test_alpha_power_f(self, alpha_mock, monkeypatch):
         # Monkey patch Cohen's f calculation directly in diversity_handler
         #     instead of in _utils. Doesn't really make sense that it has
@@ -215,23 +200,6 @@ class TestPower:
 
 
 class TestEffectSize:
-    def test_non_categorical(self, alpha_mock):
-        with pytest.raises(exc.NonCategoricalColumnError) as exc_info:
-            alpha_mock.calculate_effect_size("year_diagnosed")
-        exp_err_msg = (
-            "Column must be categorical (dtype object). 'year_diagnosed' "
-            "is of type int64."
-        )
-        assert str(exc_info.value) == exp_err_msg
-
-    def test_only_one_category(self, alpha_mock):
-        with pytest.raises(exc.OnlyOneCategoryError) as exc_info:
-            alpha_mock.calculate_effect_size("env_biome")
-        exp_err_msg = (
-            "Column env_biome has only one value: 'urban biome'."
-        )
-        assert str(exc_info.value) == exp_err_msg
-
     def test_difference(self, alpha_mock):
         calc_effect_size = alpha_mock.calculate_effect_size(
             "classification",

@@ -35,6 +35,16 @@ PA_PARAM_DESCS = {
         "difference. The pooled standard deviation of the groups will still "
         "be used. If not provided, evident will calculate the difference in "
         "means automatically."
+    ),
+    "max_levels_per_category": (
+        "Max number of levels in a category to keep. Any categorical columns "
+        "that have more than this number of unique levels will not be saved, "
+        "defaults to 5."
+    ),
+    "min_count_per_level": (
+        "Min number of samples in a given category level to keep. Any levels "
+        "that have fewer than this many samples will not be saved, defaults "
+        "to 3."
     )
 }
 
@@ -49,6 +59,16 @@ ES_PARAM_DESCS = {
     ),
     "n_jobs": (
         "Number of jobs to run in parallel, defaults to no parallelization."
+    ),
+    "max_levels_per_category": (
+        "Max number of levels in a category to keep. Any categorical columns "
+        "that have more than this number of unique levels will not be saved, "
+        "defaults to 5."
+    ),
+    "min_count_per_level": (
+        "Min number of samples in a given category level to keep. Any levels "
+        "that have fewer than this many samples will not be saved, defaults "
+        "to 3."
     )
 }
 
@@ -78,7 +98,9 @@ plugin.methods.register_function(
         "alpha": List[Probability],
         "power": List[Probability],
         "total_observations": List[Int],
-        "difference": List[Float]
+        "difference": List[Float],
+        "max_levels_per_category": Int,
+        "min_count_per_level": Int
     },
     parameter_descriptions=PA_PARAM_DESCS,
     outputs=[("power_analysis_results", PowerAnalysisResults)],
@@ -99,7 +121,9 @@ plugin.methods.register_function(
         "alpha": List[Probability],
         "power": List[Probability],
         "total_observations": List[Int],
-        "difference": List[Float]
+        "difference": List[Float],
+        "max_levels_per_category": Int,
+        "min_count_per_level": Int
     },
     parameter_descriptions=PA_PARAM_DESCS,
     outputs=[("power_analysis_results", PowerAnalysisResults)],
@@ -118,7 +142,9 @@ plugin.methods.register_function(
         "sample_metadata": Metadata,
         "columns": List[Str],
         "pairwise": Bool,
-        "n_jobs": Int
+        "n_jobs": Int,
+        "max_levels_per_category": Int,
+        "min_count_per_level": Int
     },
     parameter_descriptions=ES_PARAM_DESCS,
     outputs=[("effect_size_results", EffectSizeResults)],
@@ -137,7 +163,9 @@ plugin.methods.register_function(
         "sample_metadata": Metadata,
         "columns": List[Str],
         "pairwise": Bool,
-        "n_jobs": Int
+        "n_jobs": Int,
+        "max_levels_per_category": Int,
+        "min_count_per_level": Int
     },
     parameter_descriptions=ES_PARAM_DESCS,
     outputs=[("effect_size_results", EffectSizeResults)],
