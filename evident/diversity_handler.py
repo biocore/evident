@@ -49,6 +49,7 @@ class _BaseDiversityHandler(ABC):
 
             # Drop levels that have fewer than min_count_per_level samples
             level_count = metadata[col].value_counts()
+            print(col, level_count, min_count_per_level)
             under_thresh = level_count[level_count < min_count_per_level]
             if not under_thresh.empty:
                 levels_under_thresh = list(under_thresh.index)
@@ -401,7 +402,9 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
 
         super().__init__(
             data=data.loc[samps_in_common],
-            metadata=metadata.loc[samps_in_common]
+            metadata=metadata.loc[samps_in_common],
+            max_levels_per_category=max_levels_per_category,
+            min_count_per_level=min_count_per_level
         )
 
     def subset_values(self, ids: list) -> np.array:
@@ -444,7 +447,9 @@ class BetaDiversityHandler(_BaseDiversityHandler):
 
         super().__init__(
             data=data.filter(samps_in_common),
-            metadata=metadata.loc[samps_in_common]
+            metadata=metadata.loc[samps_in_common],
+            max_levels_per_category=max_levels_per_category,
+            min_count_per_level=min_count_per_level
         )
 
     def subset_values(self, ids: list) -> np.array:
