@@ -221,7 +221,7 @@ class _BaseDiversityHandler(ABC):
         :type power: float
 
         :returns: Collection of values from power analysis
-        :rtype: evident.power.PowerAnalysisResult
+        :rtype: evident.results.PowerAnalysisResult
         """
         power_func = self._create_partial_power_func(
             column=column,
@@ -288,7 +288,7 @@ class _BaseDiversityHandler(ABC):
         :type power: sequence of floats
 
         :returns: Collection of values from power analyses
-        :rtype: evident.power.PowerAnalysisResults
+        :rtype: evident.results.PowerAnalysisResults
         """
         # Convert all to list so we can use Cartesian product
         difference = _listify(difference)

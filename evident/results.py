@@ -87,10 +87,7 @@ class PowerAnalysisResults(_EvidentResults):
         records = []
         for res in self.results:
             this_res_dict = res.to_dict()
-            this_effect_size_result = (
-                this_res_dict["effect_size"]
-                .to_dict()
-            )
+            this_effect_size_result = this_res_dict["effect_size"].to_dict()
             this_res_dict.update(this_effect_size_result)
             records.append(this_res_dict)
 
@@ -104,7 +101,7 @@ class EffectSizeResults(_EvidentResults):
     def to_dataframe(sort: bool = True):
         df = super().to_dataframe()
         if sort:
-            df = df .sort_values(by=["metric", "effect_size"],
-                                 ascending=[True, False])
+            df = df.sort_values(by=["metric", "effect_size"],
+                                ascending=[True, False])
 
         return df.reset_index(drop=True)
