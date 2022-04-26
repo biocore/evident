@@ -1,0 +1,26 @@
+table {
+    border-collapse: collapse;
+}
+th, td {
+    padding: 10px;
+}
+td {
+    border: none;
+}
+th {
+    text-align: center;
+    border-right: none;
+    border-left: none;
+    color: white;
+    background-color: #696969;
+}
+
+/* https://stackoverflow.com/a/50939211 */
+.dataframe tr:nth-child(even) {
+    background: #E0E0E0;
+}
+/* https://stackoverflow.com/a/55918830 */
+.dataframe tbody > tr:hover {
+    background: silver;
+    cursor: pointer;
+}
