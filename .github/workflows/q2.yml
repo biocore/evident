@@ -1,4 +1,4 @@
-name: "Main CI"
+name: "QIIME 2 CI"
 
 on:
   pull_request:
@@ -12,33 +12,36 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        python-version: ["3.7", "3.8", "3.9"]
-
     steps:
       - uses: actions/checkout@v2
         with:
           persist-credentials: false
           fetch-depth: 0
 
+      - name: Download Q2 file
+        run: wget -q https://raw.githubusercontent.com/qiime2/environment-files/master/latest/staging/qiime2-latest-py36-linux-conda.yml
+
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          activate-environment: evident
-          python-version: ${{ matrix.python-version }}
+          activate-environment: q2-evident
+          environment-file: qiime2-latest-py36-linux-conda.yml
 
       - name: Install conda packages
         shell: bash -l {0}
-        run: conda install -c conda-forge -c anaconda pandas pytest flake8 pytest-cov statsmodels scikit-bio seaborn bokeh click
+        run: conda install -c conda-forge -c anaconda pandas pytest flake8 pytest-cov statsmodels scikit-bio seaborn
 
       - name: Install evident
         shell: bash -l {0}
         run: pip install -e .[dev]
 
+      - name: Refresh QIIME 2 cache
+        shell: bash -l {0}
+        run: qiime dev refresh-cache
+
       - name: Check style
         shell: bash -l {0}
-        run: make standalone_stylecheck
+        run: make q2_stylecheck
 
       - name: Run tests
         shell: bash -l {0}
-        run: make standalone_test
+        run: make q2_test

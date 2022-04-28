@@ -1,157 +1,128 @@
+from itertools import combinations, chain
 
-# -----------------------------------------------------------------------------
-# Copyright (c) 2018, The Evident Development Team.
-#
-# Distributed under the terms of the BSD 3-clause License.
-#
-# The full license is in the file LICENSE, distributed with this software.
-# -----------------------------------------------------------------------------
-
-import joblib
-import pickle
-import hashlib
-
+from joblib import Parallel, delayed
 import pandas as pd
-import numpy as np
 
-from os.path import join, basename, exists
-
-from itertools import combinations
-from functools import partial
-from skbio import DistanceMatrix
-from scipy.stats import mannwhitneyu
-from skbio.stats.distance import permanova
+from evident.diversity_handler import _BaseDiversityHandler
+from evident.stats import calculate_cohens_d
+from evident.results import EffectSizeResults, PairwiseEffectSizeResult
 
 
-def effect_size(mappings, alphas, betas, output, jobs, permutations,
-                overwrite, na_values):
-    # As we can have multiple mapping, alpha or beta files, we will construct
-    # a mfs dictionary with all the dataframes. Additionally, we will load the
-    # data_dictionary.csv file so we can use it to process the data
-    mappings = {f: pd.read_csv(f, sep='\t', dtype=str, na_values=na_values)
-                for f in mappings}
-    for m, mf in mappings.items():
-        mappings[m].set_index('#SampleID', inplace=True)
-    if betas:
-        betas = {f: DistanceMatrix.read(f) for f in betas}
+def effect_size_by_category(
+    diversity_handler: _BaseDiversityHandler,
+    columns: list = None,
+    n_jobs: int = None,
+    parallel_args: dict = None
+) -> pd.DataFrame:
+    """Compute effect size for a set of columns.
 
-        with joblib.parallel.Parallel(n_jobs=jobs, verbose=100) as par:
-            par(joblib.delayed(
-                _process_column)(bf, c, fname, finfo, alphas, betas,
-                                 permutations)
-                for bf, c, fname, finfo in _generate_betas(
-                betas, mappings, permutations, output, overwrite))
-    else:
-        alphas = {f: pd.read_csv(f, sep='\t', dtype=str, na_values=na_values)
-                  for f in alphas}
-        for a, af in alphas.items():
-            alphas[a].set_index('#SampleID', inplace=True)
+    Output DataFrame has as index the argument columns. DataFrame columns are
+    'metric' and 'value'. Metric is either 'cohens_d' or 'cohens_f' if the
+    given category has 2 or more than 2 levels, respectively. 'value' has the
+    numeric effect size. Sorts output first by Cohen's d -> f and then effect
+    size in decreasing order.
 
-        for af, c, fname, finfo in _generate_alphas(alphas, mappings,
-                                                    output, overwrite):
-            _process_column(af, c, fname, finfo, alphas, betas, permutations)
+    :param diversity_handler: Either an alpha or beta DiversityHandler
+    :type diversity_handler: evident.diversity_handler._BaseDiversityHandler
 
+    :param columns: Columns to use for effect size calculations
+    :type columns: List[str]
 
-def _beta(permutations, data, xvalues, yvalues):
-    x_ids = list(xvalues.index.values)
-    y_ids = list(yvalues.index.values)
-    ids = x_ids + y_ids
-    data_test = data.filter(ids)
-    permanova_result = permanova(
-        distance_matrix=data_test,
-        # we can use use either x or y cause they are the same
-        column=xvalues.name,
-        grouping=pd.concat([xvalues, yvalues]).to_frame(),
-        permutations=permutations).to_dict()
-    xvals = list(
-        data_test.filter(xvalues.index.values).to_series().dropna().values)
-    yvals = list(
-        data_test.filter(yvalues.index.values).to_series().dropna().values)
-    return (permanova_result['p-value'], permanova_result['test statistic'],
-            xvals, yvals)
+    :param n_jobs: Number of jobs to run in parallel, defaults to None (single
+        CPU)
+    :type n_jobs: int
 
+    :param parallel_args: Dictionary of arguments to be passed into
+        joblib.Parallel. See the documentation for this class at
+        https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html
+    :type parallel_args: dict
 
-def _alpha(data, xvalues, yvalues):
-    x_data = data.loc[xvalues.index.values].dropna().tolist()
-    y_data = data.loc[yvalues.index.values].dropna().tolist()
-    stat, pval = mannwhitneyu(x_data, y_data, alternative='two-sided')
-    return pval, stat, x_data, y_data
-
-
-def _generate_betas(betas, mappings, permutations, output, overwrite):
-    for beta, bf in betas.items():
-        bfp = basename(beta)
-        for mapping, mf in mappings.items():
-            mfp = basename(mapping)
-            for col in mf.columns.values:
-                finfo = [bfp, mfp, col, str(permutations)]
-                name = hashlib.md5('.'.join(finfo).encode()).hexdigest()
-                fname = join(output, '%s.pickle' % name)
-                if not exists(fname) or overwrite:
-                    yield (bf, mf[col].dropna(), fname, finfo)
-
-
-def _generate_alphas(alphas, mappings, output, overwrite):
-    for alpha, af in alphas.items():
-        afp = basename(alpha)
-        for ac in af.columns.values:
-            for mapping, mf in mappings.items():
-                mfp = basename(mapping)
-                for col in mf.columns.values:
-                    finfo = [afp, ac, mfp, col]
-                    name = hashlib.md5('.'.join(finfo).encode()).hexdigest()
-                    fname = join(output, '%s.pickle' % name)
-                    if not exists(fname) or overwrite:
-                        yield (
-                            pd.to_numeric(af[ac], errors='coerce'),
-                            mf[col].dropna(), fname, finfo)
-
-
-def _process_column(data, cseries, fname, finfo, alphas, betas, permutations):
-    """calculate significant comparisons and return them as a list/rows
-
-    Parameters
-    ===========
+    :returns: DataFrame of effect size per category
+    :rtype: pd.DataFrame
     """
-    values = {k: df.dropna() for k, df in cseries.groupby(cseries)}
-    # Step 1. Pairwise pvals, only keeping those ones that are significant
-    qip = []
-    pairwise_comparisons = []
-    for x, y in combinations(values.keys(), 2):
-        if betas:
-            method = partial(_beta, permutations)
-        else:
-            method = _alpha
-        pval, stat, xval, yval = method(data, values[x], values[y])
-        if np.isnan(pval) or np.isnan(stat):
-            continue
-        qip.append(pval)
-        pairwise_comparisons.append(
-            (pval,
-             x, len(xval), np.var(xval), np.mean(xval),
-             y, len(yval), np.var(yval), np.mean(yval)))
+    _check_columns(columns)
+    dh = diversity_handler
 
-    if qip:
-        pooled_pval = len(qip) * np.min(qip)
-    else:
-        pooled_pval = None
+    if parallel_args is None:
+        parallel_args = dict()
 
-    if alphas:
-        results = {'div_file': finfo[0],
-                   'alpha_metric': finfo[1],
-                   'mapping_file': finfo[2],
-                   'mapping_col': finfo[3],
-                   'pairwise_comparisons': pairwise_comparisons,
-                   'pooled_pval': pooled_pval}
-    else:
-        results = {'div_file': finfo[0],
-                   'mapping_file': finfo[1],
-                   'mapping_col': finfo[2],
-                   'permuations': finfo[3],
-                   'pairwise_comparisons': pairwise_comparisons,
-                   'pooled_pval': pooled_pval}
+    results = Parallel(n_jobs=n_jobs, **parallel_args)(
+        delayed(dh.calculate_effect_size)(col)
+        for col in columns
+    )
 
-    with open(fname, 'wb') as f:
-        pickle.dump(results, f)
+    return EffectSizeResults(results)
 
-    return []
+
+def pairwise_effect_size_by_category(
+    diversity_handler: _BaseDiversityHandler,
+    columns: list = None,
+    n_jobs: int = None,
+    parallel_args: dict = None
+) -> pd.DataFrame:
+    """Compute effect size for a set of columns using pairwise comparisons.
+
+    Output DataFrame has no index. DataFrame columns are 'column', 'group_1',
+    'group_2', and 'cohens_d'. 'column' has the column from which each row's
+    pairwise comparison arises. 'group_1' has the first level of the category
+    in 'column' while 'group_2' has the second level of the category in
+    'column'. 'cohens_d' has the effect size of each comparison. Output is
+    sorted by decreasing 'cohens_d'.
+
+    :param diversity_handler: Either an alpha or beta DiversityHandler
+    :type diversity_handler: evident.diversity_handler._BaseDiversityHandler
+
+    :param columns: Columns to use for effect size calculations
+    :type columns: List[str]
+
+    :param n_jobs: Number of jobs to run in parallel, defaults to None (single
+        CPU)
+    :type n_jobs: int
+
+    :param parallel_args: Dictionary of arguments to be passed into
+        joblib.Parallel. See the documentation for this class at
+        https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html
+    :type parallel_args: dict
+
+    :returns: DataFrame of effect size per pairwise comparison
+    :rtype: pd.DataFrame
+    """
+    _check_columns(columns)
+    dh = diversity_handler
+
+    if parallel_args is None:
+        parallel_args = dict()
+
+    results = Parallel(n_jobs=n_jobs, **parallel_args)(
+        delayed(_pw_column)(dh, col)
+        for col in columns
+    )
+    # Above results in list of lists - want to combine into one list
+    results = list(chain.from_iterable(results))
+
+    return EffectSizeResults(results)
+
+
+def _check_columns(columns) -> None:
+    """Check to make sure a list of columns has been passed."""
+    if columns is None:
+        raise ValueError("Must provide list of columns!")
+
+
+def _pw_column(dh, col):
+    """Compute pairwise effect sizes on a single column."""
+    col_results = []
+    values_dict = dict()
+
+    # Get all index sets here to avoid redundant computation
+    grp_dfs = (dh.metadata .groupby(col))
+    for grp, _df in grp_dfs:
+        values_dict[grp] = dh.subset_values(_df.index)
+
+    for grp1, grp2 in combinations(values_dict.keys(), 2):
+        vals1 = values_dict[grp1]
+        vals2 = values_dict[grp2]
+        effect_size = calculate_cohens_d(vals1, vals2)
+        res = PairwiseEffectSizeResult(effect_size, col, grp1, grp2)
+        col_results.append(res)
+    return col_results
