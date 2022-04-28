@@ -39,7 +39,7 @@ setup(
     description=description,
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/gibsramen/evident",
+    url="https://github.com/biocore/evident",
     version=version,
     license="BSD-3-Clause",
     packages=find_packages(),

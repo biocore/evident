@@ -1,5 +1,5 @@
-[![Main CI](https://github.com/gibsramen/evident/actions/workflows/main.yml/badge.svg)](https://github.com/gibsramen/evident/actions/workflows/main.yml)
-[![QIIME 2 CI](https://github.com/gibsramen/evident/actions/workflows/q2.yml/badge.svg)](https://github.com/gibsramen/evident/actions/workflows/q2.yml)
+[![Main CI](https://github.com/biocore/evident/actions/workflows/main.yml/badge.svg)](https://github.com/biocore/evident/actions/workflows/main.yml)
+[![QIIME 2 CI](https://github.com/biocore/evident/actions/workflows/q2.yml/badge.svg)](https://github.com/biocore/evident/actions/workflows/q2.yml)
 [![PyPI](https://img.shields.io/pypi/v/evident.svg)](https://pypi.org/project/evident)
 
 # evident
@@ -141,7 +141,7 @@ plot_power_curve(results, target_power=0.8, style="alpha", markers=True)
 
 When we inspect this plot, we can see how many samples we would need to collect to observe the same effect size at different levels of significance and power.
 
-![Power Curve](https://raw.githubusercontent.com/gibsramen/evident/main/imgs/power_curve.png)
+![Power Curve](https://raw.githubusercontent.com/biocore/evident/main/imgs/power_curve.png)
 
 ## Interactive power curve with Bokeh
 
@@ -165,7 +165,7 @@ This should open up a browser window where you can modify the chosen column, sig
 We also provide a command line script to generate an interactive app using some test data.
 You can access this script at `evident/tests/make_interactive.py`.
 
-![Bokeh App](https://raw.githubusercontent.com/gibsramen/evident/main/imgs/bokeh_screenshot.png)
+![Bokeh App](https://raw.githubusercontent.com/biocore/evident/main/imgs/bokeh_screenshot.png)
 
 Note that because evident uses Python to perform the power calculations, it is at the moment not possible to embded this interactive app into a standalone webpage.
 
