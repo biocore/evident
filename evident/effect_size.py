@@ -126,4 +126,3 @@ def _pw_column(dh, col):
         res = PairwiseEffectSizeResult(effect_size, col, grp1, grp2)
         col_results.append(res)
     return col_results
->>>>>>> new-repo/main

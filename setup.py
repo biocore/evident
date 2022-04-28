@@ -17,7 +17,7 @@ with open("README.md") as f:
 q2_cmds = ["q2-evident=evident.q2.plugin_setup:plugin"]
 
 classes = """
-    Development Status :: 3 - Alpha
+    Development Status :: 4 - Beta
     License :: OSI Approved :: BSD License
     Topic :: Software Development :: Libraries
     Topic :: Scientific/Engineering
