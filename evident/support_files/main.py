@@ -3,7 +3,7 @@ import glob
 
 from bokeh.layouts import column, row
 from bokeh.models import (ColumnDataSource, Select, NumericInput, HoverTool,
-                          Legend, LegendItem)
+                          Legend, LegendItem, MultiChoice)
 from bokeh.models.widgets import Tabs, Panel
 from bokeh.plotting import curdoc, figure
 import pandas as pd
@@ -17,6 +17,7 @@ curr_path = os.path.dirname(__file__)
 md_loc = os.path.join(curr_path, "data/metadata.tsv")
 md = pd.read_table(md_loc, sep="\t", index_col=0)
 cols = list(md.columns)
+
 binary_cols = [
     col for col in cols if len(md[col].dropna().unique()) == 2
 ]
@@ -39,6 +40,28 @@ elif "beta" in data_loc:
 else:
     raise ValueError("No valid data found!")
 
+blues = sns.color_palette("Blues", len(binary_cols)).as_hex()
+reds = sns.color_palette("Reds", len(multiclass_cols)).as_hex()
+
+binary_effect_sizes = (
+    effect_size_by_category(dh, binary_cols)
+    .to_dataframe()
+    .assign(color=blues[::-1])
+)
+mc_effect_sizes = (
+    effect_size_by_category(dh, multiclass_cols)
+    .to_dataframe()
+    .assign(color=reds[::-1])
+)
+color_dict = dict(zip(
+    binary_effect_sizes["column"],
+    binary_effect_sizes["color"]
+))
+color_dict.update(dict(zip(
+    mc_effect_sizes["column"],
+    mc_effect_sizes["color"]
+)))
+
 
 def get_detailed_layout():
     kw = dict()
@@ -48,15 +71,18 @@ def get_detailed_layout():
     plots_kw = {
         "width": 600,
         "height": 600,
-        "sizing_mode": "scale_both",
+        "sizing_mode": "stretch_both",
     }
 
     # https://github.com/bokeh/bokeh/issues/2351#issuecomment-108101144
     tools = ["pan", "reset", "box_zoom", "save"]
     hover = HoverTool(names=["points"])
     hover.tooltips = [
+        ("Column", "@column"),
+        ("Metric", "@metric"),
+        ("Effect Size", "@effect_size{0.000}"),
         ("Total Observations", "@total_observations"),
-        ("Power", "@power{0.000}")
+        ("Power", "@power{0.000}"),
     ]
 
     # Much of this taken from
@@ -70,6 +96,7 @@ def get_detailed_layout():
         )
 
         curve = figure(tools=tools+[hover], **kw, **plots_kw)
+        curve.title.text = "Power Curve"
         curve.xaxis.axis_label = "Total Observations"
         curve.yaxis.axis_label = r"Power (1 - β)"
 
@@ -78,33 +105,51 @@ def get_detailed_layout():
             ax.major_label_text_font_size = "10pt"
             ax.axis_label_text_font_style = "normal"
 
-        groups = sorted(md[chosen_col.value].dropna().unique())
-        if len(groups) == 2:
-            metric = "Cohen's d"
-        else:
-            metric = "Cohen's f"
+        leg_items = []
+        for col in col_select.value:
+            res = dh.power_analysis(
+                column=col,
+                total_observations=obs_range,
+                alpha=alpha.value
+            ).to_dataframe()
 
-        res = dh.power_analysis(
-            column=chosen_col.value,
-            total_observations=obs_range,
-            alpha=alpha.value
-        ).to_dataframe()
-        effect_size = res["effect_size"].unique().item()
+            source = ColumnDataSource(res)
+            curve.line(
+                x="total_observations",
+                y="power",
+                source=source,
+                line_color=color_dict[col]
+            )
+            circ = curve.circle(
+                x="total_observations",
+                y="power",
+                source=source,
+                color=color_dict[col],
+                name="points",
+                size=10
+            )
+            col_leg_item = LegendItem(
+                label=dict(field="column"),
+                renderers=[circ]
+            )
+            leg_items.append(col_leg_item)
 
-        curve.title.text = (
-            f"{div_type} Diversity - {chosen_col.value}\n"
-            f"{metric} = {effect_size:.3f}"
+        # https://tinyurl.com/bp7axw9v
+        legend = Legend(
+            items=leg_items,
+            location="top",
+            border_line_width=1,
+            border_line_color="black"
         )
-        curve.title.text_font_size = "10pt"
-
-        source = ColumnDataSource(res)
-        curve_args = {"x": "total_observations", "y": "power",
-                      "source": source, "color": "black"}
-        curve.line(**curve_args)
-        curve.circle(**curve_args, name="points", size=10)
+        curve.add_layout(legend, "right")
 
         # Boxplots
         # https://docs.bokeh.org/en/latest/docs/gallery/boxplot.html
+
+        groups = sorted(md[chosen_col.value].dropna().unique())
+        es_res = dh.calculate_effect_size(chosen_col.value)
+        effect_size = es_res.effect_size
+        metric = es_res.metric.replace("_", " ").capitalize()
 
         group_vals = []
         groups_with_n = []
@@ -207,7 +252,9 @@ def get_detailed_layout():
         plots.children[0] = curve
         plots.children[1] = boxes
 
-    chosen_col = Select(options=cols, title="Column", value=cols[0])
+    chosen_col = Select(options=cols, title="Boxplot Column", value=cols[0])
+    col_select = MultiChoice(options=cols, value=[cols[0]],
+                             title="Power Curve Columns")
     alpha = NumericInput(low=0.00001, high=0.99999, value=0.05, mode="float",
                          title="Significance Level")
     min_obs = NumericInput(low=10, value=10, mode="int",
@@ -217,14 +264,13 @@ def get_detailed_layout():
     step_obs = NumericInput(low=0, high=max_obs.value, value=10,
                             mode="int", title="Observation Step Size")
 
-    controls = [chosen_col, alpha, min_obs, max_obs, step_obs]
+    controls = [alpha, min_obs, max_obs, step_obs, chosen_col, col_select]
     for ctrl in controls:
         ctrl.on_change("value", update)
 
     control_panel = column(
         *controls,
         width=200,
-        height=200,
     )
     plots = row(*create_figure(), **plots_kw)
     detailed_layout = row(
@@ -236,20 +282,6 @@ def get_detailed_layout():
 
 
 def get_overview():
-    blues = sns.color_palette("Blues", len(binary_cols)).as_hex()
-    reds = sns.color_palette("Reds", len(multiclass_cols)).as_hex()
-
-    binary_effect_sizes = (
-        effect_size_by_category(dh, binary_cols)
-        .to_dataframe()
-        .assign(color=blues[::-1])
-    )
-    mc_effect_sizes = (
-        effect_size_by_category(dh, multiclass_cols)
-        .to_dataframe()
-        .assign(color=reds[::-1])
-    )
-
     def barplots(df, title):
         metric = df["metric"].unique().item().replace("_", " ").capitalize()
         hover = HoverTool()
