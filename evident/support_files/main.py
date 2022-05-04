@@ -3,7 +3,7 @@ import glob
 
 from bokeh.layouts import column, row
 from bokeh.models import (ColumnDataSource, Select, NumericInput, HoverTool,
-                          Legend, LegendItem, MultiChoice)
+                          MultiChoice)
 from bokeh.models.widgets import Tabs, Panel
 from bokeh.plotting import curdoc, figure
 import pandas as pd
@@ -62,227 +62,25 @@ color_dict.update(dict(zip(
     mc_effect_sizes["color"]
 )))
 
+chosen_box_col = Select(options=cols, title="Boxplot Column", value=cols[0])
+col_select = MultiChoice(options=cols, value=[cols[0]],
+                         title="Power Curve Columns")
+alpha = NumericInput(low=0.00001, high=0.99999, value=0.05, mode="float",
+                     title="Significance Level")
+min_obs = NumericInput(low=10, value=10, mode="int",
+                       title="Minimum Total Observations")
+max_obs = NumericInput(value=100, mode="int",
+                       title="Maximum Total Observations")
+step_obs = NumericInput(low=0, high=max_obs.value, value=10,
+                        mode="int", title="Observation Step Size")
 
-def get_detailed_layout():
-    kw = dict()
-    kw["x_range"] = [0, 110]
-    kw["y_range"] = [-0.1, 1.1]
-
-    plots_kw = {
-        "width": 600,
-        "height": 600,
-        "sizing_mode": "stretch_both",
-    }
-
-    # https://github.com/bokeh/bokeh/issues/2351#issuecomment-108101144
-    tools = ["pan", "reset", "box_zoom", "save"]
-    hover = HoverTool(names=["points"])
-    hover.tooltips = [
-        ("Column", "@column"),
-        ("Metric", "@metric"),
-        ("Effect Size", "@effect_size{0.000}"),
-        ("Total Observations", "@total_observations"),
-        ("Power", "@power{0.000}"),
-    ]
-
-    # Much of this taken from
-    # https://github.com/bokeh/bokeh/tree/branch-3.0/examples/app/crossfilter
-    def create_figure():
-        kw["x_range"][-1] = max_obs.value + step_obs.value  # Resize x-axis
-        obs_range = range(
-            min_obs.value,
-            max_obs.value + 1,
-            step_obs.value
-        )
-
-        curve = figure(tools=tools+[hover], **kw, **plots_kw)
-        curve.title.text = "Power Curve"
-        curve.xaxis.axis_label = "Total Observations"
-        curve.yaxis.axis_label = r"Power (1 - β)"
-
-        for ax in [curve.xaxis, curve.yaxis]:
-            ax.axis_label_text_font_size = "15pt"
-            ax.major_label_text_font_size = "10pt"
-            ax.axis_label_text_font_style = "normal"
-
-        leg_items = []
-        for col in col_select.value:
-            res = dh.power_analysis(
-                column=col,
-                total_observations=obs_range,
-                alpha=alpha.value
-            ).to_dataframe()
-
-            source = ColumnDataSource(res)
-            curve.line(
-                x="total_observations",
-                y="power",
-                source=source,
-                line_color=color_dict[col]
-            )
-            circ = curve.circle(
-                x="total_observations",
-                y="power",
-                source=source,
-                color=color_dict[col],
-                name="points",
-                size=10
-            )
-            col_leg_item = LegendItem(
-                label=dict(field="column"),
-                renderers=[circ]
-            )
-            leg_items.append(col_leg_item)
-
-        # https://tinyurl.com/bp7axw9v
-        legend = Legend(
-            items=leg_items,
-            location="top",
-            border_line_width=1,
-            border_line_color="black"
-        )
-        curve.add_layout(legend, "right")
-
-        # Boxplots
-        # https://docs.bokeh.org/en/latest/docs/gallery/boxplot.html
-
-        groups = sorted(md[chosen_col.value].dropna().unique())
-        es_res = dh.calculate_effect_size(chosen_col.value)
-        effect_size = es_res.effect_size
-        metric = es_res.metric.replace("_", " ").capitalize()
-
-        group_vals = []
-        groups_with_n = []
-        for i, grp in enumerate(groups):
-            grp_idx = md[md[chosen_col.value] == grp].index
-            vals = dh.subset_values(grp_idx)
-            n = len(vals)
-            groups_with_n.append(f"{grp} (n = {n})")
-            vals = pd.DataFrame.from_dict(
-                {"group": grp, "value": vals, "n": n}
-            )
-            group_vals.append(vals)
-        group_df = pd.concat(group_vals)
-
-        gb = group_df.groupby("group")
-        q1 = gb.quantile(q=0.25)
-        q2 = gb.quantile(q=0.5)
-        q3 = gb.quantile(q=0.75)
-        iqr = q3 - q1
-        upper = q3 + 1.5*iqr
-        lower = q1 - 1.5*iqr
-
-        def outliers(grp):
-            cat = grp.name
-            low = grp.value > upper.loc[cat]["value"]
-            high = grp.value < lower.loc[cat]["value"]
-            res = grp[low | high]
-            return res
-        out = gb.apply(outliers).dropna()
-
-        if not out.empty:
-            outx = list(out.index.get_level_values(0))
-            outy = list(out.values)
-
-        qmin = gb.quantile(q=0.00)
-        qmax = gb.quantile(q=1.00)
-        uv = upper.value
-        lv = lower.value
-        upper.value = [
-            min([x, y]) for (x, y) in zip(list(qmax.loc[:, "value"]), uv)
-        ]
-        lower.value = [
-            max([x, y]) for (x, y) in zip(list(qmin.loc[:, "value"]), lv)
-        ]
-
-        lw = 2
-        pal = sns.color_palette("colorblind", len(groups)).as_hex()
-
-        boxes = figure(tools=["reset", "save"], x_range=groups_with_n,
-                       **plots_kw)
-
-        box_args = {"x": groups_with_n, "width": 0.7, "line_color": "black",
-                    "fill_color": pal, "line_width": lw}
-        box = boxes.vbar(**box_args, bottom=q1.value, top=q2.value)
-        boxes.vbar(**box_args, bottom=q2.value, top=q3.value)
-
-        # https://tinyurl.com/bp7axw9v
-        legend = Legend(
-            items=[LegendItem(label=dict(field="x"), renderers=[box])],
-            location="top",
-            border_line_width=1,
-            border_line_color="black"
-        )
-        boxes.add_layout(legend, "right")
-        boxes.xaxis.major_label_text_font_size = "0pt"
-
-        seg_args = {"x0": groups_with_n, "x1": groups_with_n,
-                    "line_color": "black", "line_width": lw}
-        boxes.segment(**seg_args, y0=upper.value, y1=q3.value)
-        boxes.segment(**seg_args, y0=lower.value, y1=q1.value)
-
-        whisker_args = {"x": groups_with_n, "width": 0.2, "height": 0.00001,
-                        "line_color": "black", "line_width": lw}
-        boxes.rect(**whisker_args, y=lower.value)
-        boxes.rect(**whisker_args, y=upper.value)
-
-        if not out.empty:
-            boxes.circle(outx, outy, size=6, color="black", fill_alpha=0.6)
-
-        boxes.xaxis.major_label_text_font_size = "0pt"
-        boxes.xaxis.axis_label = chosen_col.value
-        boxes.xgrid.grid_line_color = None
-        boxes.yaxis.axis_label = ylabel
-        boxes.title.text = (
-            f"{div_type} Diversity - {chosen_col.value}\n"
-            f"{metric} = {effect_size:.3f}"
-        )
-        boxes.title.text_font_size = "10pt"
-
-        for ax in [boxes.xaxis, boxes.yaxis]:
-            ax.axis_label_text_font_size = "15pt"
-            ax.axis_label_text_font_style = "normal"
-            ax.major_tick_line_width = 0
-        boxes.yaxis.major_label_text_font_size = "10pt"
-
-        return curve, boxes
-
-    def update(attr, old, new):
-        curve, boxes = create_figure()
-        plots.children[0] = curve
-        plots.children[1] = boxes
-
-    chosen_col = Select(options=cols, title="Boxplot Column", value=cols[0])
-    col_select = MultiChoice(options=cols, value=[cols[0]],
-                             title="Power Curve Columns")
-    alpha = NumericInput(low=0.00001, high=0.99999, value=0.05, mode="float",
-                         title="Significance Level")
-    min_obs = NumericInput(low=10, value=10, mode="int",
-                           title="Minimum Total Observations")
-    max_obs = NumericInput(value=100, mode="int",
-                           title="Maximum Total Observations")
-    step_obs = NumericInput(low=0, high=max_obs.value, value=10,
-                            mode="int", title="Observation Step Size")
-
-    controls = [alpha, min_obs, max_obs, step_obs, chosen_col, col_select]
-    for ctrl in controls:
-        ctrl.on_change("value", update)
-
-    control_panel = column(
-        *controls,
-        width=200,
-    )
-    plots = row(*create_figure(), **plots_kw)
-    detailed_layout = row(
-        control_panel,
-        plots,
-    )
-    detailed_layout_panel = Panel(child=detailed_layout, title="Detailed")
-    return detailed_layout_panel
+summary_controls = [alpha, min_obs, max_obs, step_obs, col_select]
+box_controls = [chosen_box_col]
 
 
-def get_overview():
-    def barplots(df, title):
+def get_barplots():
+    """Get static barplots of Cohen's d & f."""
+    def create_barplot(df, title):
         metric = df["metric"].unique().item().replace("_", " ").capitalize()
         hover = HoverTool()
         hover.tooltips = [
@@ -292,8 +90,8 @@ def get_overview():
         tools = [hover, "pan", "reset", "box_zoom", "save"]
 
         source = ColumnDataSource(df)
-        p = figure(y_range=df["column"][::-1], height=500, title=title,
-                   tools=tools)
+        p = figure(y_range=df["column"][::-1], title=title,
+                   tools=tools, sizing_mode="stretch_both")
         p.hbar(y="column", right="effect_size", height=0.9, source=source,
                color="color")
         p.y_range.range_padding = 0.1
@@ -308,15 +106,183 @@ def get_overview():
 
         return p
 
-    bin_bars = barplots(binary_effect_sizes, "Binary Categories")
-    mc_bars = barplots(mc_effect_sizes, "Multi-Class Categories")
+    bin_bars = create_barplot(binary_effect_sizes, "Binary Categories")
+    mc_bars = create_barplot(mc_effect_sizes, "Multi-Class Categories")
 
-    barplots = row(bin_bars, mc_bars, sizing_mode="stretch_width")
-    barplots_panel = Panel(child=barplots, title="Overview")
-    return barplots_panel
+    return bin_bars, mc_bars
 
 
-tabs = Tabs(tabs=[get_overview(), get_detailed_layout()])
+def get_curves():
+    """Get reactive power curves."""
+    kw = dict()
+    kw["x_range"] = [0, 110]
+    kw["y_range"] = [-0.1, 1.1]
+
+    # https://github.com/bokeh/bokeh/issues/2351#issuecomment-108101144
+    tools = ["pan", "reset", "box_zoom", "save"]
+    hover = HoverTool(names=["points"])
+    hover.tooltips = [
+        ("Column", "@column"),
+        ("Metric", "@metric"),
+        ("Effect Size", "@effect_size{0.000}"),
+        ("Total Observations", "@total_observations"),
+        ("Power", "@power{0.000}"),
+    ]
+
+    # Much of this taken from
+    # https://github.com/bokeh/bokeh/tree/branch-3.0/examples/app/crossfilter
+    kw["x_range"][-1] = max_obs.value + step_obs.value  # Resize x-axis
+    obs_range = range(
+        min_obs.value,
+        max_obs.value + 1,
+        step_obs.value
+    )
+
+    curve = figure(tools=tools+[hover], **kw,
+                   sizing_mode="stretch_both")
+    curve.title.text = "Power Curve"
+    curve.xaxis.axis_label = "Total Observations"
+    curve.yaxis.axis_label = r"Power (1 - β)"
+
+    for ax in [curve.xaxis, curve.yaxis]:
+        ax.axis_label_text_font_size = "15pt"
+        ax.major_label_text_font_size = "10pt"
+        ax.axis_label_text_font_style = "normal"
+
+    for col in col_select.value:
+        res = dh.power_analysis(
+            column=col,
+            total_observations=obs_range,
+            alpha=alpha.value
+        ).to_dataframe()
+
+        source = ColumnDataSource(res)
+        curve_args = {"x": "total_observations", "y": "power",
+                      "source": source}
+        curve.line(**curve_args, line_color=color_dict[col])
+        curve.circle(**curve_args, color=color_dict[col], name="points",
+                     size=10)
+
+    return curve
+
+
+def get_boxplot():
+    groups = sorted(md[chosen_box_col.value].dropna().unique())
+    es_res = dh.calculate_effect_size(chosen_box_col.value)
+    effect_size = es_res.effect_size
+    metric = es_res.metric.replace("_", " ").capitalize()
+
+    group_vals = []
+    groups_with_n = []
+    rename_dict = dict()
+    for i, grp in enumerate(groups):
+        grp_idx = md[md[chosen_box_col.value] == grp].index
+        vals = dh.subset_values(grp_idx)
+        n = len(vals)
+        groups_with_n.append(f"{grp} (n = {n})")
+        rename_dict[grp] = f"{grp} (n = {n})"
+        vals = pd.DataFrame.from_dict(
+            {"group": grp, "value": vals, "n": n}
+        )
+        group_vals.append(vals)
+    group_df = pd.concat(group_vals)
+
+    gb = group_df.groupby("group")
+    q1 = gb.quantile(q=0.25)
+    q2 = gb.quantile(q=0.5)
+    q3 = gb.quantile(q=0.75)
+    iqr = q3 - q1
+    upper = q3 + 1.5*iqr
+    lower = q1 - 1.5*iqr
+
+    def outliers(grp):
+        cat = grp.name
+        low = grp.value > upper.loc[cat]["value"]
+        high = grp.value < lower.loc[cat]["value"]
+        res = grp[low | high]
+        return res
+    out = gb.apply(outliers).dropna()["value"]
+
+    if not out.empty:
+        outx = [rename_dict[x] for x in out.index.get_level_values(0)]
+        outy = list(out.values)
+
+    qmin = gb.quantile(q=0.00)
+    qmax = gb.quantile(q=1.00)
+    uv = upper.value
+    lv = lower.value
+    upper.value = [
+        min([x, y]) for (x, y) in zip(list(qmax.loc[:, "value"]), uv)
+    ]
+    lower.value = [
+        max([x, y]) for (x, y) in zip(list(qmin.loc[:, "value"]), lv)
+    ]
+
+    lw = 2
+    pal = sns.color_palette("colorblind", len(groups)).as_hex()
+
+    boxes = figure(tools=["reset", "save"], y_range=groups_with_n,
+                   sizing_mode="stretch_width")
+
+    box_args = {"y": groups_with_n, "height": 0.7, "line_color": "black",
+                "fill_color": pal, "line_width": lw}
+    boxes.hbar(**box_args, left=q1.value, right=q2.value)
+    boxes.hbar(**box_args, left=q2.value, right=q3.value)
+
+    seg_args = {"y0": groups_with_n, "y1": groups_with_n,
+                "line_color": "black", "line_width": lw}
+    boxes.segment(**seg_args, x0=upper.value, x1=q3.value)
+    boxes.segment(**seg_args, x0=lower.value, x1=q1.value)
+
+    whisker_args = {"y": groups_with_n, "height": 0.2, "width": 0.00001,
+                    "line_color": "black", "line_width": lw}
+    boxes.rect(**whisker_args, x=lower.value)
+    boxes.rect(**whisker_args, x=upper.value)
+
+    if not out.empty:
+        boxes.circle(y=outx, x=outy, size=10, color="black")
+
+    boxes.yaxis.axis_label = chosen_box_col.value
+    boxes.ygrid.grid_line_color = None
+    boxes.xaxis.axis_label = ylabel
+    boxes.title.text = (
+        f"{div_type} Diversity - {chosen_box_col.value}\n"
+        f"{metric} = {effect_size:.3f}"
+    )
+    boxes.title.text_font_size = "10pt"
+
+    for ax in [boxes.xaxis, boxes.yaxis]:
+        ax.axis_label_text_font_size = "15pt"
+        ax.axis_label_text_font_style = "normal"
+        ax.major_tick_line_width = 0
+    boxes.yaxis.major_label_text_font_size = "12pt"
+
+    return boxes
+
+
+def update(attr, old, new):
+    curve = get_curves()
+    boxes = get_boxplot()
+    plots.children[1] = curve
+    page2.children[1] = boxes
+
+
+all_controls = summary_controls + box_controls
+for ctrl in all_controls:
+    ctrl.on_change("value", update)
+
+summary_control_panel = column(*summary_controls, width=200)
+curve = get_curves()
+barplot_col = column(*get_barplots())
+plots = row(barplot_col, curve)
+page1 = row(summary_control_panel, plots, sizing_mode="stretch_height")
+panel1 = Panel(child=page1, title="Summary")
+
+box_control_panel = column(*box_controls, width=200)
+page2 = row(box_control_panel, get_boxplot())
+panel2 = Panel(child=page2, title="Data")
+
+tabs = Tabs(tabs=[panel1, panel2])
 
 curdoc().add_root(tabs)
 curdoc().title = "Evident"
