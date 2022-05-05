@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 
 from evident.diversity_handler import RepeatedMeasuresAlphaDiversityHandler
+from evident.stats import calculate_eta_squared
 
 
 @pytest.fixture
@@ -41,7 +42,18 @@ def rm_alpha_mock():
     return rmadh
 
 
-def test_eta_squared(rm_alpha_mock):
+def test_calc_eta_squared(rm_alpha_mock):
+    wide_data = pd.pivot_table(
+        pd.concat([rm_alpha_mock.metadata, rm_alpha_mock.data], axis=1),
+        index="subject",
+        columns="group",
+        values="diversity"
+    )
+    calc_eta_sq = calculate_eta_squared(wide_data)
+    np.testing.assert_almost_equal(calc_eta_sq, 0.715, decimal=3)
+
+
+def test_calc_effect_size(rm_alpha_mock):
     result = rm_alpha_mock.calculate_effect_size("group")
     np.testing.assert_almost_equal(result.effect_size, 0.715, decimal=3)
     assert result.metric == "eta_squared"
