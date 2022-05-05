@@ -3,9 +3,10 @@ import glob
 
 from bokeh.layouts import column, row
 from bokeh.models import (ColumnDataSource, Select, NumericInput, HoverTool,
-                          MultiChoice)
+                          MultiChoice, CheckboxGroup)
 from bokeh.models.widgets import Tabs, Panel
 from bokeh.plotting import curdoc, figure
+from bokeh.transform import jitter
 import pandas as pd
 import seaborn as sns
 from skbio import DistanceMatrix
@@ -63,6 +64,12 @@ color_dict.update(dict(zip(
 )))
 
 chosen_box_col = Select(options=cols, title="Boxplot Column", value=cols[0])
+show_points_check = CheckboxGroup(
+    labels=["Show scatter points"],
+    active=[],
+)
+show_points = False
+
 col_select = MultiChoice(options=cols, value=[cols[0]],
                          title="Power Curve Columns")
 alpha = NumericInput(low=0.00001, high=0.99999, value=0.05, mode="float",
@@ -75,7 +82,7 @@ step_obs = NumericInput(low=0, high=max_obs.value, value=10,
                         mode="int", title="Observation Step Size")
 
 summary_controls = [alpha, min_obs, max_obs, step_obs, col_select]
-box_controls = [chosen_box_col]
+box_controls = [chosen_box_col, show_points_check]
 
 
 def get_barplots():
@@ -166,7 +173,7 @@ def get_curves():
     return curve
 
 
-def get_boxplot():
+def get_boxplot(show_points):
     groups = sorted(md[chosen_box_col.value].dropna().unique())
     es_res = dh.calculate_effect_size(chosen_box_col.value)
     effect_size = es_res.effect_size
@@ -221,8 +228,8 @@ def get_boxplot():
     lw = 2
     pal = sns.color_palette("colorblind", len(groups)).as_hex()
 
-    boxes = figure(tools=["reset", "save"], y_range=groups_with_n,
-                   sizing_mode="stretch_width")
+    boxes = figure(tools=["reset", "save", "box_zoom", "pan"],
+                   y_range=groups_with_n, sizing_mode="stretch_width")
 
     box_args = {"y": groups_with_n, "height": 0.7, "line_color": "black",
                 "fill_color": pal, "line_width": lw}
@@ -240,9 +247,9 @@ def get_boxplot():
     boxes.rect(**whisker_args, x=upper.value)
 
     if not out.empty:
-        boxes.circle(y=outx, x=outy, size=10, color="black")
+        boxes.diamond(y=outx, x=outy, size=15, color="white",
+                      line_color="black")
 
-    boxes.yaxis.axis_label = chosen_box_col.value
     boxes.ygrid.grid_line_color = None
     boxes.xaxis.axis_label = ylabel
     boxes.title.text = (
@@ -257,19 +264,40 @@ def get_boxplot():
         ax.major_tick_line_width = 0
     boxes.yaxis.major_label_text_font_size = "12pt"
 
+    group_df["group"] = group_df["group"].map(rename_dict)
+    if show_points:
+        boxes.circle(y=jitter("group", 0.4, range=boxes.y_range), x="value",
+                     source=ColumnDataSource(group_df), color="black",
+                     size=5)
+
     return boxes
 
 
-def update(attr, old, new):
+def update_plots(attr, old, new):
+    # Set show points to False when column changes
     curve = get_curves()
-    boxes = get_boxplot()
     plots.children[1] = curve
+
+
+def update_boxplot(attr, old, new):
+    show_points_check.active = []
+    show_points = False
+    boxes = get_boxplot(show_points)
     page2.children[1] = boxes
 
 
-all_controls = summary_controls + box_controls
-for ctrl in all_controls:
-    ctrl.on_change("value", update)
+def toggle_box_points(attr, old, new):
+    # Empty list is falsy
+    show_points = bool(show_points_check.active)
+    boxes = get_boxplot(show_points)
+    page2.children[1] = boxes
+
+
+for ctrl in summary_controls:
+    ctrl.on_change("value", update_plots)
+
+chosen_box_col.on_change("value", update_boxplot)
+show_points_check.on_change("active", toggle_box_points)
 
 summary_control_panel = column(*summary_controls, width=200)
 curve = get_curves()
@@ -279,7 +307,7 @@ page1 = row(summary_control_panel, plots, sizing_mode="stretch_height")
 panel1 = Panel(child=page1, title="Summary")
 
 box_control_panel = column(*box_controls, width=200)
-page2 = row(box_control_panel, get_boxplot())
+page2 = row(box_control_panel, get_boxplot(show_points))
 panel2 = Panel(child=page2, title="Data")
 
 tabs = Tabs(tabs=[panel1, panel2])
