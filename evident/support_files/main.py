@@ -84,11 +84,13 @@ step_obs = NumericInput(low=0, high=max_obs.value, value=10,
 summary_controls = [alpha, min_obs, max_obs, step_obs, col_select]
 box_controls = [chosen_box_col, show_points_check]
 
+metric_dict = {"cohens_f": "Cohen's f", "cohens_d": "Cohen's d"}
+
 
 def get_barplots():
     """Get static barplots of Cohen's d & f."""
     def create_barplot(df, title):
-        metric = df["metric"].unique().item().replace("_", " ").capitalize()
+        metric = metric_dict[df["metric"].unique().item()]
         hover = HoverTool()
         hover.tooltips = [
             ("Column", "@column"),
@@ -162,6 +164,7 @@ def get_curves():
             total_observations=obs_range,
             alpha=alpha.value
         ).to_dataframe()
+        res["metric"] = res["metric"].map(metric_dict)
 
         source = ColumnDataSource(res)
         curve_args = {"x": "total_observations", "y": "power",
