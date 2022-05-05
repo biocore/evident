@@ -469,7 +469,7 @@ class RepeatedMeasuresAlphaDiversityHandler(AlphaDiversityHandler):
         correlation: float,
         epsilon: float,
     ):
-        effect_size_res = self.calculate_eta_squared(state_column)
+        effect_size_res = self.calculate_effect_size(state_column)
         args = [subjects, measurements, alpha, correlation, epsilon]
         vector_args = map(lambda x: isinstance(x, Iterable), args)
         if any(vector_args):
@@ -488,6 +488,7 @@ class RepeatedMeasuresAlphaDiversityHandler(AlphaDiversityHandler):
         return results
 
     def _single_power_analysis(
+        self,
         effect_size_result: EffectSizeResult,
         subjects: int,
         measurements: int,
@@ -510,7 +511,8 @@ class RepeatedMeasuresAlphaDiversityHandler(AlphaDiversityHandler):
             subjects=subjects,
             measurements=measurements,
             epsilon=epsilon,
-            correlation=correlation
+            correlation=correlation,
+            total_observations=subjects*measurements
         )
         return result
 

@@ -91,3 +91,17 @@ def test_calculate_rm_anova_power():
         epsilon=0.2
     )
     np.testing.assert_almost_equal(calc_power, 0.058864331610035125)
+
+
+def test_power_analysis(rm_alpha_mock):
+    # Calculated expected with pingouin
+    exp_power = 0.6362084728045014
+    result = rm_alpha_mock.power_analysis(
+        state_column="group",
+        subjects=2,
+        measurements=10,
+        alpha=0.05,
+        correlation=0.0,
+        epsilon=0.5
+    )
+    np.testing.assert_almost_equal(result.power, exp_power, decimal=5)
