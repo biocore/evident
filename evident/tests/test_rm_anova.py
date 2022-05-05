@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from evident.diversity_handler import RepeatedMeasuresAlphaDiversityHandler
-from evident.stats import calculate_eta_squared
+from evident.stats import calculate_eta_squared, calculate_rm_anova_power
 
 
 @pytest.fixture
@@ -69,3 +69,25 @@ def test_eta_squared_missing_vals(rm_alpha_mock):
         "values."
     )
     assert str(exc_info.value) == exp_err_msg
+
+
+def test_calculate_rm_anova_power():
+    calc_power = calculate_rm_anova_power(
+        subjects=10,
+        measurements=5,
+        effect_size=0.3,
+        threshold=0.01,
+        correlation=0.1,
+        epsilon=1
+    )
+    np.testing.assert_almost_equal(calc_power, 0.8806256734819309)
+
+    calc_power = calculate_rm_anova_power(
+        subjects=100,
+        measurements=2,
+        effect_size=0.02,
+        threshold=0.01,
+        correlation=-0.8,
+        epsilon=0.2
+    )
+    np.testing.assert_almost_equal(calc_power, 0.058864331610035125)
