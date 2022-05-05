@@ -25,14 +25,14 @@ class _BaseDiversityHandler(ABC):
         metadata: pd.DataFrame = None,
         max_levels_per_category: int = 5,
         min_count_per_level: int = 3,
-        subject_column: str = None
+        individual_id_column: str = None
     ):
         cat_columns = metadata.columns
-        if subject_column is not None:
-            if subject_column not in cat_columns:
-                raise ValueError(f"{subject_column} not in metadata!")
-            cat_columns = cat_columns.drop(subject_column)
-            self.subject_column = subject_column
+        if individual_id_column is not None:
+            if individual_id_column not in cat_columns:
+                raise ValueError(f"{individual_id_column} not in metadata!")
+            cat_columns = cat_columns.drop(individual_id_column)
+            self.individual_id_column = individual_id_column
 
         self.data = data
         metadata = metadata.copy()
@@ -381,7 +381,7 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
         metadata: pd.DataFrame,
         max_levels_per_category: int = 5,
         min_count_per_level: int = 3,
-        subject_column: str = None
+        individual_id_column: str = None
     ):
         """Handler for alpha diversity data.
 
@@ -401,15 +401,10 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
             will not be saved, defaults to 3.
         :type min_count_per_level: int
 
-        :param subject_column: Column to use as subject identifier, defaults
-            to None. If a value is provided, all effect sizes will be
+        :param individual_id_column: Column to use as subject identifier,
+            defaults to None. If a value is provided, all effect sizes will be
             calculated as repeated measures.
-        :type subject_column: str
-
-        :param subject_column: Column to use as subject identifier, defaults
-            to None. If a value is provided, all effect sizes will be
-            calculated as repeated measures.
-        :type subject_column: str
+        :type individual_id_column: str
         """
         if not isinstance(data, pd.Series):
             raise ValueError("data must be of type pandas.Series")
@@ -426,7 +421,7 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
             metadata=metadata.loc[samps_in_common],
             max_levels_per_category=max_levels_per_category,
             min_count_per_level=min_count_per_level,
-            subject_column=subject_column
+            individual_id_column=individual_id_column
         )
 
     def subset_values(self, ids: list) -> np.array:
