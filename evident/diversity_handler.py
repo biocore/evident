@@ -24,8 +24,16 @@ class _BaseDiversityHandler(ABC):
         data=None,
         metadata: pd.DataFrame = None,
         max_levels_per_category: int = 5,
-        min_count_per_level: int = 3
+        min_count_per_level: int = 3,
+        subject_column: str = None
     ):
+        cat_columns = metadata.columns
+        if subject_column is not None:
+            if subject_column not in cat_columns:
+                raise ValueError(f"{subject_column} not in metadata!")
+            cat_columns = cat_columns.drop(subject_column)
+            self.subject_column = subject_column
+
         self.data = data
         metadata = metadata.copy()
 
@@ -34,7 +42,7 @@ class _BaseDiversityHandler(ABC):
 
         warn_msg_num_levels = False
         warn_msg_level_count = False
-        for col in metadata.columns:
+        for col in cat_columns:
             # Drop non-categorical columns
             if metadata[col].dtype != np.dtype("object"):
                 cols_to_drop.append(col)
@@ -369,7 +377,8 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
         data: pd.Series,
         metadata: pd.DataFrame,
         max_levels_per_category: int = 5,
-        min_count_per_level: int = 3
+        min_count_per_level: int = 3,
+        subject_column: str = None
     ):
         """Handler for alpha diversity data.
 
@@ -388,6 +397,16 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
             level to keep. Any levels that have fewer than this many samples
             will not be saved, defaults to 3.
         :type min_count_per_level: int
+
+        :param subject_column: Column to use as subject identifier, defaults
+            to None. If a value is provided, all effect sizes will be
+            calculated as repeated measures.
+        :type subject_column: str
+
+        :param subject_column: Column to use as subject identifier, defaults
+            to None. If a value is provided, all effect sizes will be
+            calculated as repeated measures.
+        :type subject_column: str
         """
         if not isinstance(data, pd.Series):
             raise ValueError("data must be of type pandas.Series")
@@ -403,7 +422,8 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
             data=data.loc[samps_in_common],
             metadata=metadata.loc[samps_in_common],
             max_levels_per_category=max_levels_per_category,
-            min_count_per_level=min_count_per_level
+            min_count_per_level=min_count_per_level,
+            subject_column=subject_column
         )
 
     def subset_values(self, ids: list) -> np.array:
@@ -417,7 +437,8 @@ class BetaDiversityHandler(_BaseDiversityHandler):
         data: DistanceMatrix,
         metadata: pd.DataFrame,
         max_levels_per_category: int = 5,
-        min_count_per_level: int = 3
+        min_count_per_level: int = 3,
+        subject_column: str = None
     ):
         """Handler for beta diversity data.
 
@@ -448,7 +469,8 @@ class BetaDiversityHandler(_BaseDiversityHandler):
             data=data.filter(samps_in_common),
             metadata=metadata.loc[samps_in_common],
             max_levels_per_category=max_levels_per_category,
-            min_count_per_level=min_count_per_level
+            min_count_per_level=min_count_per_level,
+            subject_column=subject_column
         )
 
     def subset_values(self, ids: list) -> np.array:
