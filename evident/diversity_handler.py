@@ -97,8 +97,11 @@ class _BaseDiversityHandler(ABC):
     ) -> EffectSizeResult:
         """Get effect size of diversity differences given column.
 
-        If two categories, return Cohen's d from t-test. If more than two
-        categories, return Cohen's f from ANOVA.
+        If a subject column was provided, all effect sizes will be calculated
+        as eta squared from a repeated measures ANOVA.
+
+        Otherwise, if two categories, return Cohen's d from t-test. If more
+        than two categories, return Cohen's f from ANOVA.
 
         :param column: Column containing categories
         :type column: str
@@ -438,7 +441,6 @@ class BetaDiversityHandler(_BaseDiversityHandler):
         metadata: pd.DataFrame,
         max_levels_per_category: int = 5,
         min_count_per_level: int = 3,
-        subject_column: str = None
     ):
         """Handler for beta diversity data.
 
@@ -452,11 +454,6 @@ class BetaDiversityHandler(_BaseDiversityHandler):
             keep. Any categorical columns that have more than this number of
             unique levels will not be saved, defaults to 5.
         :type max_levels_per_category: int
-
-        :param min_count_per_level: Min number of samples in a given category
-            level to keep. Any levels that have fewer than this many samples
-            will not be saved, defaults to 3.
-        :type min_count_per_level: int
         """
         if not isinstance(data, DistanceMatrix):
             raise ValueError("data must be of type skbio.DistanceMatrix")
@@ -470,7 +467,6 @@ class BetaDiversityHandler(_BaseDiversityHandler):
             metadata=metadata.loc[samps_in_common],
             max_levels_per_category=max_levels_per_category,
             min_count_per_level=min_count_per_level,
-            subject_column=subject_column
         )
 
     def subset_values(self, ids: list) -> np.array:
