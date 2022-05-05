@@ -93,7 +93,7 @@ def test_calculate_rm_anova_power():
     np.testing.assert_almost_equal(calc_power, 0.058864331610035125)
 
 
-def test_power_analysis(rm_alpha_mock):
+def test_single_power_analysis(rm_alpha_mock):
     # Calculated expected with pingouin
     exp_power = 0.6362084728045014
     result = rm_alpha_mock.power_analysis(
@@ -105,3 +105,38 @@ def test_power_analysis(rm_alpha_mock):
         epsilon=0.5
     )
     np.testing.assert_almost_equal(result.power, exp_power, decimal=5)
+
+
+def test_bulk_power_analysis(rm_alpha_mock):
+    exp_power_dict = {
+        (2, -0.5): 0.11387136147153543,
+        (2, 0): 0.13648071042423104,
+        (2, 0.5): 0.18720958942768118,
+        (4, -0.5): 0.42616026628041437,
+        (4, 0): 0.5662936523912177,
+        (4, 0.5): 0.8221488475653276,
+        (5, -0.5): 0.5891411383898337,
+        (5, 0): 0.7508935036261379,
+        (5, 0.5): 0.9517932434077899
+    }
+    results = rm_alpha_mock.power_analysis(
+        state_column="group",
+        subjects=[2, 4, 5],
+        measurements=10,
+        alpha=0.05,
+        correlation=[-0.5, 0, 0.5],
+        epsilon=0.1
+    ).to_dataframe()
+
+    assert set(results.columns) == {
+        "alpha", "total_observations", "power", "effect_size", "subjects",
+        "measurements", "epsilon", "correlation", "total_observations",
+        "metric", "column"
+    }
+    for i, row in results.iterrows():
+        key = row["subjects"], row["correlation"]
+        np.testing.assert_almost_equal(
+            exp_power_dict[key],
+            row["power"],
+            decimal=5
+        )
