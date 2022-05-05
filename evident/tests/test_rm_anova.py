@@ -27,6 +27,12 @@ def rm_alpha_mock():
     num_samples = 6
     num_groups = 3
     long_data["cov"] = rng.choice(["A", "B"], size=num_samples*num_groups)
+    bad_col = rng.choice(
+        ["C", "D", np.nan],
+        size=num_samples*num_groups,
+        p=[0.25, 0.25, 0.5]
+    )
+    long_data["bad_col"] = bad_col
     rmadh = RepeatedMeasuresAlphaDiversityHandler(
         data=long_data["diversity"],
         metadata=long_data.drop(columns=["diversity"]),
@@ -40,3 +46,14 @@ def test_eta_squared(rm_alpha_mock):
     np.testing.assert_almost_equal(result.effect_size, 0.715, decimal=3)
     assert result.metric == "eta_squared"
     assert result.column == "group"
+
+
+def test_eta_squared_missing_vals(rm_alpha_mock):
+    with pytest.raises(ValueError) as exc_info:
+        rm_alpha_mock.calculate_effect_size("bad_col")
+
+    exp_err_msg = (
+        "Cannot calculate effect size of repeated measures with missing "
+        "values."
+    )
+    assert str(exc_info.value) == exp_err_msg
