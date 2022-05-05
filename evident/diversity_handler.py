@@ -446,15 +446,16 @@ class RepeatedMeasuresAlphaDiversityHandler(AlphaDiversityHandler):
     @lru_cache()
     def calculate_effect_size(self, state_column: str) -> EffectSizeResult:
         if self.data.name not in self.metadata.columns:
-            long_data = self.data.join(self.metadata)
+            long_data = pd.concat([self.data, self.metadata], axis=1)
         else:
             long_data = self.metadata
-        long_data = long_data.pivot(
+        wide_data = pd.pivot_table(
+            data=long_data,
             index=self.individual_id_column,
             columns=state_column,
             values=self.data.name
         )
-        result = calculate_eta_squared(long_data)
+        result = calculate_eta_squared(wide_data)
 
         return EffectSizeResult(effect_size=result, metric="eta_squared",
                                 column=state_column)
