@@ -33,12 +33,11 @@ class PairwiseEffectSizeResult(EffectSizeResult):
 
 
 @dataclass
-class PowerAnalysisResult:
+class _PowerAnalysisResult:
     alpha: float
     total_observations: int
     power: float
     effect_size_result: EffectSizeResult
-    difference: float
 
     def to_dict(self) -> dict:
         res_dict = {
@@ -46,8 +45,43 @@ class PowerAnalysisResult:
             "total_observations": self.total_observations,
             "power": self.power,
             "effect_size": self.effect_size_result,
-            "difference": self.difference
         }
+        return res_dict
+
+
+@dataclass
+class CrossSectionalPowerAnalysisResult(_PowerAnalysisResult):
+    alpha: float
+    total_observations: int
+    power: float
+    effect_size_result: EffectSizeResult
+    difference: float
+
+    def to_dict(self) -> dict:
+        res_dict = super().to_dict()
+        res_dict["difference"] = self.difference
+        return res_dict
+
+
+@dataclass
+class RepeatedMeasuresPowerAnalysisResult(_PowerAnalysisResult):
+    alpha: float
+    power: float
+    effect_size_result: EffectSizeResult
+    subjects: int
+    measurements: int
+    epsilon: float
+    correlation: float
+
+    def to_dict(self) -> dict:
+        res_dict = super().to_dict()
+        res_dict.update({
+            "subjects": self.subjects,
+            "measurements": self.measurements,
+            "epsilon": self.epsilon,
+            "correlation": self.correlation,
+            "total_observations": self.subjects * self.measurements
+        })
         return res_dict
 
 
@@ -80,7 +114,7 @@ class _EvidentResults:
 
 
 class PowerAnalysisResults(_EvidentResults):
-    def __init__(self, results: List[PowerAnalysisResult]):
+    def __init__(self, results: List[_PowerAnalysisResult]):
         super().__init__(results)
 
     def to_dataframe(self):

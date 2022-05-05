@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 
 def calculate_pooled_stdev(*arrays) -> float:
@@ -123,3 +124,46 @@ def calculate_eta_squared(data: pd.DataFrame) -> float:
     eta_sq = ss_cond / (ss_cond + ss_error)
 
     return eta_sq
+
+
+def calculate_rm_anova_power(
+    subjects: int,
+    measurements: int,
+    threshold: float,
+    correlation: float,
+    epsilon: float,
+    effect_size: float
+) -> float:
+    """Calculate power for a repeated measures ANOVA.
+
+    :param subjects: Number of subjects (same for all classes)
+    :type subjects: int
+
+    :param measurements: Number of measurements per subject (same for all
+        subjects)
+    :type measurements: int
+
+    :param threshold: Significance level to reject null hypothesis
+    :type threshold: float
+
+    :param correlation: Correlation between repeated measurements
+    :type correlation: float
+
+    :param epsilon: Adjustment for sphericity
+    :type epsilon: float
+
+    :param effect_size: Effect size as eta-squared of differences
+    :type effect_size: float
+
+    :returns: Probability of rejecting null hypothesis given that the
+        alternative hypothesis is true
+    :rtype: float
+    """
+    dm = (measurements - 1) * epsilon
+    ds = (subjects - 1) * dm
+    f = np.abs(effect_size) / (1 - np.abs(effect_size))
+    x = f * measurements * subjects * epsilon
+    location = x / (1 - correlation)
+    q = stats.f.ppf(1 - threshold, dm, ds)
+    power = stats.ncf.sf(q, dm, ds, location)
+    return power
