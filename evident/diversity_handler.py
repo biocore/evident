@@ -492,10 +492,10 @@ class RepeatedMeasuresAlphaDiversityHandler(AlphaDiversityHandler):
         effect_size_result: EffectSizeResult,
         subjects: int,
         measurements: int,
-        alpha: float,
-        correlation: float,
-        epsilon: float
-    ):
+        alpha: float = 0.05,
+        correlation: float = 0.5,
+        epsilon: float = 1.0
+    ) -> RepeatedMeasuresPowerAnalysisResult:
         power = calculate_rm_anova_power(
             subjects=subjects,
             measurements=measurements,
@@ -524,7 +524,7 @@ class RepeatedMeasuresAlphaDiversityHandler(AlphaDiversityHandler):
         alpha=None,
         correlation=float,
         epsilon=float
-    ):
+    ) -> PowerAnalysisResults:
         alpha = _listify(alpha)
         subjects = _listify(subjects)
         measurements = _listify(measurements)

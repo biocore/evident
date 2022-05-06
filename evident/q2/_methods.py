@@ -5,6 +5,9 @@ from qiime2 import CategoricalMetadataColumn, Metadata
 from skbio import DistanceMatrix
 
 from evident import AlphaDiversityHandler, BetaDiversityHandler
+from evident.diversity_handler import (
+    RepeatedMeasuresAlphaDiversityHandler as RDH
+)
 from evident.effect_size import (effect_size_by_category,
                                  pairwise_effect_size_by_category)
 
@@ -99,3 +102,32 @@ def _effect_size_by_category(data, metadata, handler, columns, pairwise,
     else:
         res = effect_size_by_category(dh, columns, n_jobs=n_jobs)
     return res.to_dataframe()
+
+
+def alpha_power_analysis_repeated_measures(
+    alpha_diversity: pd.Series,
+    sample_metadata: Metadata,
+    individual_id_column: str,
+    state_column: str,
+    subjects: list = None,
+    measurements: list = None,
+    alpha: list = None,
+    correlation: list = None,
+    epsilon: list = None,
+    max_levels_per_category: int = 5,
+    min_count_per_level: int = 3,
+) -> pd.DataFrame:
+    dh = RDH(alpha_diversity, sample_metadata.to_dataframe(),
+             individual_id_column, max_levels_per_category,
+             min_count_per_level)
+
+    results = dh.power_analysis(
+        state_column,
+        subjects,
+        measurements,
+        alpha,
+        correlation,
+        epsilon
+    ).to_dataframe()
+
+    return results
