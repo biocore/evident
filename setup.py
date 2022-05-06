@@ -53,10 +53,12 @@ setup(
         "bokeh",
         "click"
     ],
+    include_package_data=True,
     classifiers=classifiers,
     extras_require={"dev": ["pytest", "pytest-cov", "flake8"]},
     entry_points={"qiime2.plugins": q2_cmds},
     package_data={
-        "evident": ["citations.bib", "q2/dataframe.css", "q2/curve.css"]
+        "evident": ["citations.bib", "q2/dataframe.css", "q2/curve.css",
+                    "support_files"]
     }
 )
