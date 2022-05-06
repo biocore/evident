@@ -165,13 +165,25 @@ Navigate to the directory containing `app/` (**not** `app/` itself) and execute 
 bokeh serve --show app
 ```
 
-This should open up a browser window where you can modify the chosen column, significance, level, and observations.
-We also provide a command line script to generate an interactive app using some test data.
+This should open up a browser window with the interactive visualizations.
+The "Summary" tab gives an overview of the data and the effect sizes/power.
+Barplots showing the metadata effect sizes for both binary and multi-class categories (ranked in descending order) are shown.
+On the right is a dynamic power curve showing the power analysis for metadata columns.
+The significance level, total observation range, and chosen columns can be modified by using the control panel on the left side of the tab.
+
+![Bokeh Summary Panel](https://raw.githubusercontent.com/biocore/evident/master/imgs/bokeh_panel_1.png)
+
+Swap to the "Data" tab using the bar on the top.
+Here you can see boxplots of the data for each metadata category.
+Select a column from the dropdown to change which data is shown.
+You can also check the "Show scatter points" box to overlay the raw data onto the boxplots.
+
+![Bokeh Data Panel](https://raw.githubusercontent.com/biocore/evident/master/imgs/bokeh_panel_2.png)
+
+We provide a command line script to generate an interactive app using some test data.
 You can access this script at `evident/tests/make_interactive.py`.
 
-![Bokeh App](https://raw.githubusercontent.com/biocore/evident/master/imgs/bokeh_screenshot.png)
-
-Note that because Evident uses Python to perform the power calculations, it is at the moment not possible to embed this interactive app into a standalone webpage.
+Note that because evident uses Python to perform the power calculations, it is at the moment *not* possible to embed this interactive app into a standalone webpage.
 
 ## QIIME 2 Usage
 
