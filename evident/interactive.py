@@ -2,8 +2,8 @@ import os
 import shutil
 
 from evident.data_handler import (_BaseDataHandler,
-                                       UnivariateDataHandler,
-                                       BivariateDataHandler)
+                                  UnivariateDataHandler,
+                                  BivariateDataHandler)
 
 
 def create_bokeh_app(
@@ -12,7 +12,7 @@ def create_bokeh_app(
 ) -> None:
     """Creates interactive power analysis using Bokeh.
 
-    :param data_handler: Handler with diversity data
+    :param data_handler: Handler with data
     :type data_handler: evident.data_handler._BaseDataHandler
 
     :param output: Location to create Bokeh app
@@ -32,10 +32,10 @@ def create_bokeh_app(
 
     data = data_handler.data
     if isinstance(data_handler, UnivariateDataHandler):
-        data_loc = os.path.join(data_dir, "diversity.alpha.tsv")
+        data_loc = os.path.join(data_dir, "data.univariate.tsv")
         data.to_csv(data_loc, sep="\t", index=True)
     elif isinstance(data_handler, BivariateDataHandler):
-        data_loc = os.path.join(data_dir, "diversity.beta.lsmat")
+        data_loc = os.path.join(data_dir, "data.bivariate.lsmat")
         data.write(data_loc)
     else:
         raise ValueError("No valid data found!")

@@ -25,19 +25,19 @@ binary_cols = [
 multiclass_cols = [col for col in cols if col not in binary_cols]
 
 data_path = os.path.join(curr_path, "data")
-data_loc = glob.glob(f"{data_path}/diversity*")[0]
+data_loc = glob.glob(f"{data_path}/data*")[0]
 
-if "alpha" in data_loc:
-    alpha_div_data = pd.read_table(data_loc, sep="\t", index_col=0)
-    # Loads as DataFrame. Need to squeeze to Series for ADH.
-    dh = UnivariateDataHandler(alpha_div_data.squeeze(), md)
-    div_type = "Alpha"
-    ylabel = "Alpha Diversity"
-elif "beta" in data_loc:
-    beta_div_data = DistanceMatrix.read(data_loc)
-    dh = BivariateDataHandler(beta_div_data, md)
-    div_type = "Beta"
-    ylabel = "Within-Group Distances"
+if "univariate" in data_loc:
+    univariate_data = pd.read_table(data_loc, sep="\t", index_col=0)
+    # Loads as DataFrame. Need to squeeze to Series for UDH.
+    dh = UnivariateDataHandler(univariate_data.squeeze(), md)
+    data_type = "Univariate"
+    data_name = univariate_data.name
+elif "bivariate" in data_loc:
+    bivariate_data = DistanceMatrix.read(data_loc)
+    dh = BivariateDataHandler(bivariate_data, md)
+    data_type = "Bivariate"
+    data_name = "Within-Group Distances"
 else:
     raise ValueError("No valid data found!")
 
@@ -254,9 +254,9 @@ def get_boxplot(show_points):
                       line_color="black")
 
     boxes.ygrid.grid_line_color = None
-    boxes.xaxis.axis_label = ylabel
+    boxes.xaxis.axis_label = data_name
     boxes.title.text = (
-        f"{div_type} Diversity - {chosen_box_col.value}\n"
+        f"{data_type} Data - {chosen_box_col.value}\n"
         f"{metric} = {effect_size:.3f}"
     )
     boxes.title.text_font_size = "10pt"
