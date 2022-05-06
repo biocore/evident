@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from evident import utils
-from evident.diversity_handler import UnivariateDataHandler
+from evident.data_handler import UnivariateDataHandler
 
 
 def test_listify():

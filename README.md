@@ -267,7 +267,7 @@ This power analysis assumes that the number of measurements per group is equal.
 With Python:
 
 ```python
-from evident.diversity_handler import RepeatedMeasuresUnivariateDataHandler
+from evident.data_handler import RepeatedMeasuresUnivariateDataHandler
 
 rmadh = RepeatedMeasuresUnivariateDataHandler(
     faith_pd,

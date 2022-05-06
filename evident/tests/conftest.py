@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from skbio import DistanceMatrix
 
-from evident.diversity_handler import (UnivariateDataHandler,
+from evident.data_handler import (UnivariateDataHandler,
                                        BivariateDataHandler)
 
 NA_VALS = ["missing: not provided", "not applicable"]

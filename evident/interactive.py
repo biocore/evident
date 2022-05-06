@@ -1,19 +1,19 @@
 import os
 import shutil
 
-from evident.diversity_handler import (_BaseDataHandler,
+from evident.data_handler import (_BaseDataHandler,
                                        UnivariateDataHandler,
                                        BivariateDataHandler)
 
 
 def create_bokeh_app(
-    diversity_handler: _BaseDataHandler,
+    data_handler: _BaseDataHandler,
     output: os.PathLike,
 ) -> None:
     """Creates interactive power analysis using Bokeh.
 
-    :param diversity_handler: Handler with diversity data
-    :type diversity_handler: evident.diversity_handler._BaseDataHandler
+    :param data_handler: Handler with diversity data
+    :type data_handler: evident.data_handler._BaseDataHandler
 
     :param output: Location to create Bokeh app
     :type output: os.PathLike
@@ -26,15 +26,15 @@ def create_bokeh_app(
     data_dir = os.path.join(output, "data")
     os.mkdir(data_dir)
 
-    md = diversity_handler.metadata.copy()
+    md = data_handler.metadata.copy()
     md_loc = os.path.join(data_dir, "metadata.tsv")
     md.to_csv(md_loc, sep="\t", index=True)
 
-    data = diversity_handler.data
-    if isinstance(diversity_handler, UnivariateDataHandler):
+    data = data_handler.data
+    if isinstance(data_handler, UnivariateDataHandler):
         data_loc = os.path.join(data_dir, "diversity.alpha.tsv")
         data.to_csv(data_loc, sep="\t", index=True)
-    elif isinstance(diversity_handler, BivariateDataHandler):
+    elif isinstance(data_handler, BivariateDataHandler):
         data_loc = os.path.join(data_dir, "diversity.beta.lsmat")
         data.write(data_loc)
     else:

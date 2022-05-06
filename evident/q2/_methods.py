@@ -5,7 +5,7 @@ from qiime2 import CategoricalMetadataColumn, Metadata
 from skbio import DistanceMatrix
 
 from evident import UnivariateDataHandler, BivariateDataHandler
-from evident.diversity_handler import (
+from evident.data_handler import (
     RepeatedMeasuresUnivariateDataHandler as RDH
 )
 from evident.effect_size import (effect_size_by_category,

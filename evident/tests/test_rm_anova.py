@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from evident.diversity_handler import RepeatedMeasuresUnivariateDataHandler
+from evident.data_handler import RepeatedMeasuresUnivariateDataHandler
 from evident.stats import calculate_eta_squared, calculate_rm_anova_power
 
 

@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from skbio import DistanceMatrix
 
-from evident.diversity_handler import (UnivariateDataHandler,
+from evident.data_handler import (UnivariateDataHandler,
                                        BivariateDataHandler)
 import evident._exceptions as exc
 
@@ -170,7 +170,7 @@ class TestPower:
         assert str(exc_info.value) == exp_err_msg
 
     def test_alpha_power_f(self, alpha_mock, monkeypatch):
-        # Monkey patch Cohen's f calculation directly in diversity_handler
+        # Monkey patch Cohen's f calculation directly in data_handler
         #     instead of in _utils. Doesn't really make sense that it has
         #     to be done this way but whatever.
         # https://stackoverflow.com/a/45466846
@@ -178,7 +178,7 @@ class TestPower:
             return 0.4
 
         monkeypatch.setattr(
-            "evident.diversity_handler.calculate_cohens_f",
+            "evident.data_handler.calculate_cohens_f",
             mock_cohens_f
         )
         calc_power = alpha_mock.power_analysis(
