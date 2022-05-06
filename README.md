@@ -1,6 +1,6 @@
-[![Main CI](https://github.com/biocore/Evident/actions/workflows/main.yml/badge.svg)](https://github.com/biocore/Evident/actions/workflows/main.yml)
-[![QIIME 2 CI](https://github.com/biocore/Evident/actions/workflows/q2.yml/badge.svg)](https://github.com/biocore/Evident/actions/workflows/q2.yml)
-[![PyPI](https://img.shields.io/pypi/v/Evident.svg)](https://pypi.org/project/Evident)
+[![Main CI](https://github.com/biocore/evident/actions/workflows/main.yml/badge.svg)](https://github.com/biocore/evident/actions/workflows/main.yml)
+[![QIIME 2 CI](https://github.com/biocore/evident/actions/workflows/q2.yml/badge.svg)](https://github.com/biocore/evident/actions/workflows/q2.yml)
+[![PyPI](https://img.shields.io/pypi/v/evident.svg)](https://pypi.org/project/evident)
 
 # Evident
 
@@ -22,7 +22,7 @@ Make sure you have activated a QIIME 2 environment and run the same installation
 To check that Evident installed correctly, run the following from the command line:
 
 ```bash
-qiime Evident --help
+qiime evident --help
 ```
 
 You should see something like this if Evident installed correctly:
@@ -68,7 +68,7 @@ Evident requires two input files:
 First, open Python and import Evident
 
 ```python
-import Evident
+import evident
 ```
 
 Next, load your diversity file and sample metadata.
@@ -130,7 +130,7 @@ Evident allows you to easily specify arguments for alpha, power, or total observ
 We can then plot these results as a power curve to summarize the data.
 
 ```python
-from Evident.plotting import plot_power_curve
+from evident.plotting import plot_power_curve
 import numpy as np
 
 alpha_vals = [0.01, 0.05, 0.1]
@@ -153,7 +153,7 @@ Evident allows users to *interactively* perform effect size and power calculatio
 To create a Bokeh app, use the following command:
 
 ```python
-from Evident.interactive import create_bokeh_app
+from evident.interactive import create_bokeh_app
 
 create_bokeh_app(adh, "app")
 ```
@@ -187,7 +187,7 @@ These inputs are expected to conform to QIIME 2 standards.
 To calculate power, we can run the following command:
 
 ```bash
-qiime Evident alpha-power-analysis \
+qiime evident alpha-power-analysis \
     --i-alpha-diversity faith_pd.qza \
     --m-sample-metadata-file metadata.qza \
     --m-sample-metadata-column classification \
@@ -223,7 +223,7 @@ By default, no parallelization is performed.
 With Python:
 
 ```python
-from Evident.effect_size import effect_size_by_category
+from evident.effect_size import effect_size_by_category
 
 effect_size_by_category(
     adh,
@@ -235,7 +235,7 @@ effect_size_by_category(
 With QIIME 2:
 
 ```bash
-qiime Evident alpha-effect-size-by-category \
+qiime evident alpha-effect-size-by-category \
     --i-alpha-diversity faith_pd.qza \
     --m-sample-metadata-file metadata.qza \
     --p-columns classification sex cd_behavior \
