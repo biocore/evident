@@ -94,7 +94,7 @@ Additionally, Evident will not consider any category levels represented by fewer
 To modify this behavior, use the `min_count_per_level` argument.
 
 ```python
-adh = Evident.AlphaDiversityHandler(faith_pd, metadata)
+adh = evident.AlphaDiversityHandler(faith_pd, metadata)
 ```
 
 Next, let's say we want to get the effect size of the diversity differences between two groups of samples.
@@ -145,7 +145,7 @@ plot_power_curve(results, target_power=0.8, style="alpha", markers=True)
 
 When we inspect this plot, we can see how many samples we would need to collect to observe the same effect size at different levels of significance and power.
 
-![Power Curve](https://raw.githubusercontent.com/biocore/Evident/master/imgs/power_curve.png)
+![Power Curve](https://raw.githubusercontent.com/biocore/evident/master/imgs/power_curve.png)
 
 ## Interactive power curve with Bokeh
 
@@ -167,9 +167,9 @@ bokeh serve --show app
 
 This should open up a browser window where you can modify the chosen column, significance, level, and observations.
 We also provide a command line script to generate an interactive app using some test data.
-You can access this script at `Evident/tests/make_interactive.py`.
+You can access this script at `evident/tests/make_interactive.py`.
 
-![Bokeh App](https://raw.githubusercontent.com/biocore/Evident/master/imgs/bokeh_screenshot.png)
+![Bokeh App](https://raw.githubusercontent.com/biocore/evident/master/imgs/bokeh_screenshot.png)
 
 Note that because Evident uses Python to perform the power calculations, it is at the moment not possible to embed this interactive app into a standalone webpage.
 
@@ -204,7 +204,7 @@ With this results artifact, we can visualize the power curve to get a sense of h
 Run the following command:
 
 ```bash
-qiime Evident plot-power-curve \
+qiime evident plot-power-curve \
     --i-power-analysis-results results.qza \
     --p-target-power 0.8 \
     --p-style alpha \
