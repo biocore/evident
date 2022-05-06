@@ -180,7 +180,7 @@ def get_boxplot(show_points):
     groups = sorted(md[chosen_box_col.value].dropna().unique())
     es_res = dh.calculate_effect_size(chosen_box_col.value)
     effect_size = es_res.effect_size
-    metric = es_res.metric.replace("_", " ").capitalize()
+    metric = metric_dict[es_res.metric]
 
     group_vals = []
     groups_with_n = []
