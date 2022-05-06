@@ -79,7 +79,7 @@ citations = Citations.load("citations.bib", package="evident")
 plugin = Plugin(
     name="evident",
     version=__version__,
-    website="https://github.com/gibsramen/evident",
+    website="https://github.com/biocore/evident",
     citations=[citations["Casals-Pascual2020"]],
     short_description="Plugin for diversity effect size calculations",
     description=(
