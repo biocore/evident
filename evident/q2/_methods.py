@@ -5,16 +5,16 @@ from qiime2 import CategoricalMetadataColumn, Metadata
 from skbio import DistanceMatrix
 
 from evident import UnivariateDataHandler, BivariateDataHandler
-from evident.data_handler import (
-    RepeatedMeasuresUnivariateDataHandler as RDH
-)
+from evident.data_handler import RepeatedMeasuresUnivariateDataHandler as RDH
 from evident.effect_size import (effect_size_by_category,
                                  pairwise_effect_size_by_category)
 
 
-def alpha_power_analysis(
-    alpha_diversity: pd.Series,
-    sample_metadata: CategoricalMetadataColumn,
+def univariate_power_analysis(
+    sample_metadata: Metadata,
+    group_column: str,
+    data: pd.Series = None,
+    data_column: str = None,
     max_levels_per_category: int = 5,
     min_count_per_level: int = 3,
     alpha: list = None,
@@ -22,7 +22,11 @@ def alpha_power_analysis(
     total_observations: list = None,
     difference: list = None,
 ) -> pd.DataFrame:
-    res = _power_analysis(alpha_diversity, sample_metadata,
+    sample_metadata = sample_metadata.to_dataframe()
+    if data is None:
+        data = sample_metadata[data_column]
+        sample_metadata = sample_metadata.drop(columns=[data_column])
+    res = _power_analysis(data, sample_metadata, group_column,
                           UnivariateDataHandler,
                           max_levels_per_category, min_count_per_level,
                           alpha=alpha, power=power,
@@ -31,9 +35,10 @@ def alpha_power_analysis(
     return res
 
 
-def beta_power_analysis(
-    beta_diversity: DistanceMatrix,
-    sample_metadata: CategoricalMetadataColumn,
+def bivariate_power_analysis(
+    data: DistanceMatrix,
+    sample_metadata: Metadata,
+    group_column: str,
     max_levels_per_category: int = 5,
     min_count_per_level: int = 3,
     alpha: list = None,
@@ -41,7 +46,8 @@ def beta_power_analysis(
     total_observations: list = None,
     difference: list = None,
 ) -> pd.DataFrame:
-    res = _power_analysis(beta_diversity, sample_metadata,
+    sample_metadata = sample_metadata.to_dataframe()
+    res = _power_analysis(data, sample_metadata, group_column,
                           BivariateDataHandler,
                           max_levels_per_category, min_count_per_level,
                           alpha=alpha, power=power,
@@ -50,34 +56,38 @@ def beta_power_analysis(
     return res
 
 
-def _power_analysis(data, metadata, handler, max_levels_per_category,
-                    min_count_per_level, **kwargs):
-    md = metadata.to_series()
-    column = md.name
-    dh = handler(data, md.to_frame(), max_levels_per_category,
+def _power_analysis(data, metadata, group_column, handler,
+                    max_levels_per_category, min_count_per_level, **kwargs):
+    dh = handler(data, metadata, max_levels_per_category,
                  min_count_per_level)
-    res = dh.power_analysis(column, **kwargs)
+    res = dh.power_analysis(group_column, **kwargs)
     return res.to_dataframe()
 
 
-def alpha_effect_size_by_category(
-    alpha_diversity: pd.Series,
+def univariate_effect_size_by_category(
     sample_metadata: Metadata,
     columns: List[str],
+    data: pd.Series = None,
+    data_column: str = None,
     pairwise: bool = False,
     n_jobs: int = None,
     max_levels_per_category: int = 5,
     min_count_per_level: int = 3
 ) -> pd.DataFrame:
-    res = _effect_size_by_category(alpha_diversity, sample_metadata,
+    if data is not None and data_column is not None:
+        data = data.squeeze()
+    else:
+        data = sample_metadata[data_column]
+        sample_metadata = sample_metadata.drop(columns=[data_column])
+    res = _effect_size_by_category(data, sample_metadata,
                                    UnivariateDataHandler, columns, pairwise,
                                    n_jobs, max_levels_per_category,
                                    min_count_per_level)
     return res
 
 
-def beta_effect_size_by_category(
-    beta_diversity: DistanceMatrix,
+def bivariate_effect_size_by_category(
+    data: DistanceMatrix,
     sample_metadata: Metadata,
     columns: List[str],
     pairwise: bool = False,
@@ -85,7 +95,7 @@ def beta_effect_size_by_category(
     max_levels_per_category: int = 5,
     min_count_per_level: int = 3
 ) -> pd.DataFrame:
-    res = _effect_size_by_category(beta_diversity, sample_metadata,
+    res = _effect_size_by_category(data, sample_metadata,
                                    BivariateDataHandler, columns, pairwise,
                                    n_jobs, max_levels_per_category,
                                    min_count_per_level)
@@ -104,8 +114,8 @@ def _effect_size_by_category(data, metadata, handler, columns, pairwise,
     return res.to_dataframe()
 
 
-def alpha_power_analysis_repeated_measures(
-    alpha_diversity: pd.Series,
+def univariate_power_analysis_repeated_measures(
+    data: pd.Series,
     sample_metadata: Metadata,
     individual_id_column: str,
     state_column: str,
@@ -117,7 +127,7 @@ def alpha_power_analysis_repeated_measures(
     max_levels_per_category: int = 5,
     min_count_per_level: int = 3,
 ) -> pd.DataFrame:
-    dh = RDH(alpha_diversity, sample_metadata.to_dataframe(),
+    dh = RDH(data, sample_metadata.to_dataframe(),
              individual_id_column, max_levels_per_category,
              min_count_per_level)
 
