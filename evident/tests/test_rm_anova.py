@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from evident.diversity_handler import RepeatedMeasuresAlphaDiversityHandler
+from evident.diversity_handler import RepeatedMeasuresUnivariateDataHandler
 from evident.stats import calculate_eta_squared, calculate_rm_anova_power
 
 
@@ -34,7 +34,7 @@ def rm_alpha_mock():
         p=[0.25, 0.25, 0.5]
     )
     long_data["bad_col"] = bad_col
-    rmadh = RepeatedMeasuresAlphaDiversityHandler(
+    rmadh = RepeatedMeasuresUnivariateDataHandler(
         data=long_data["diversity"],
         metadata=long_data.drop(columns=["diversity"]),
         individual_id_column="subject",

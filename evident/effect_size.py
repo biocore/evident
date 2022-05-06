@@ -3,13 +3,13 @@ from itertools import combinations, chain
 from joblib import Parallel, delayed
 import pandas as pd
 
-from evident.diversity_handler import _BaseDiversityHandler
+from evident.diversity_handler import _BaseDataHandler
 from evident.stats import calculate_cohens_d
 from evident.results import EffectSizeResults, PairwiseEffectSizeResult
 
 
 def effect_size_by_category(
-    diversity_handler: _BaseDiversityHandler,
+    diversity_handler: _BaseDataHandler,
     columns: list = None,
     n_jobs: int = None,
     parallel_args: dict = None
@@ -22,8 +22,8 @@ def effect_size_by_category(
     numeric effect size. Sorts output first by Cohen's d -> f and then effect
     size in decreasing order.
 
-    :param diversity_handler: Either an alpha or beta DiversityHandler
-    :type diversity_handler: evident.diversity_handler._BaseDiversityHandler
+    :param diversity_handler: Either an alpha or beta DataHandler
+    :type diversity_handler: evident.diversity_handler._BaseDataHandler
 
     :param columns: Columns to use for effect size calculations
     :type columns: List[str]
@@ -55,7 +55,7 @@ def effect_size_by_category(
 
 
 def pairwise_effect_size_by_category(
-    diversity_handler: _BaseDiversityHandler,
+    diversity_handler: _BaseDataHandler,
     columns: list = None,
     n_jobs: int = None,
     parallel_args: dict = None
@@ -69,8 +69,8 @@ def pairwise_effect_size_by_category(
     'column'. 'cohens_d' has the effect size of each comparison. Output is
     sorted by decreasing 'cohens_d'.
 
-    :param diversity_handler: Either an alpha or beta DiversityHandler
-    :type diversity_handler: evident.diversity_handler._BaseDiversityHandler
+    :param diversity_handler: Either an alpha or beta DataHandler
+    :type diversity_handler: evident.diversity_handler._BaseDataHandler
 
     :param columns: Columns to use for effect size calculations
     :type columns: List[str]

@@ -4,7 +4,7 @@
 
 # Evident
 
-Evident is a tool for performing effect size and power calculations on microbiome diversity data.
+Evident is a tool for performing effect size and power calculations on microbiome data.
 
 ## Installation
 
@@ -84,17 +84,17 @@ metadata = pd.read_table("data/metadata.tsv", sep="\t", index_col=0)
 faith_pd = metadata["faith_pd"]
 ```
 
-The main data structure in Evident is the 'DiversityHandler'.
+The main data structure in Evident is the 'DataHandler'.
 This is the way that Evident stores the diversity data and metadata for power calculations.
-For our alpha diversity example, we'll load the `AlphaDiversityHandler` class from Evident.
-`AlphaDiversityHandler` takes as input the pandas Series with the diversity values and the pandas DataFrame containing the sample metadata.
+For our alpha diversity example, we'll load the `UnivariateDataHandler` class from Evident.
+`UnivariateDataHandler` takes as input the pandas Series with the diversity values and the pandas DataFrame containing the sample metadata.
 By default, Evident will only consider metadata columns with, at max, 5 levels.
 To modify this behavior, provide a value for the `max_levels_per_category` argument.
 Additionally, Evident will not consider any category levels represented by fewer than 3 samples.
 To modify this behavior, use the `min_count_per_level` argument.
 
 ```python
-adh = evident.AlphaDiversityHandler(faith_pd, metadata)
+adh = evident.UnivariateDataHandler(faith_pd, metadata)
 ```
 
 Next, let's say we want to get the effect size of the diversity differences between two groups of samples.
@@ -261,15 +261,15 @@ Evident supports limited analysis of repeated measures.
 When your dataset has repeated measures, you can calculate `eta_squared` for alpha diversity differences.
 Note that only alpha diversity is supported with repeated measures.
 Power analysis for repeated measures implements a repeated measures ANOVA.
-Additionally, when performing power analysis *only* power can be calculated (in contrast to `AlphaDiversityHandler` and `BetaDiversityHandler` where alpha, significance, and observations can be calculated).
+Additionally, when performing power analysis *only* power can be calculated (in contrast to `UnivariateDataHandler` and `BivariateDataHandler` where alpha, significance, and observations can be calculated).
 This power analysis assumes that the number of measurements per group is equal.
 
 With Python:
 
 ```python
-from evident.diversity_handler import RepeatedMeasuresAlphaDiversityHandler
+from evident.diversity_handler import RepeatedMeasuresUnivariateDataHandler
 
-rmadh = RepeatedMeasuresAlphaDiversityHandler(
+rmadh = RepeatedMeasuresUnivariateDataHandler(
     faith_pd,
     metadata,
     individual_id_column="subject",

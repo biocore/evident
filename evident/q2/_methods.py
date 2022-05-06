@@ -4,9 +4,9 @@ import pandas as pd
 from qiime2 import CategoricalMetadataColumn, Metadata
 from skbio import DistanceMatrix
 
-from evident import AlphaDiversityHandler, BetaDiversityHandler
+from evident import UnivariateDataHandler, BivariateDataHandler
 from evident.diversity_handler import (
-    RepeatedMeasuresAlphaDiversityHandler as RDH
+    RepeatedMeasuresUnivariateDataHandler as RDH
 )
 from evident.effect_size import (effect_size_by_category,
                                  pairwise_effect_size_by_category)
@@ -23,7 +23,7 @@ def alpha_power_analysis(
     difference: list = None,
 ) -> pd.DataFrame:
     res = _power_analysis(alpha_diversity, sample_metadata,
-                          AlphaDiversityHandler,
+                          UnivariateDataHandler,
                           max_levels_per_category, min_count_per_level,
                           alpha=alpha, power=power,
                           total_observations=total_observations,
@@ -42,7 +42,7 @@ def beta_power_analysis(
     difference: list = None,
 ) -> pd.DataFrame:
     res = _power_analysis(beta_diversity, sample_metadata,
-                          BetaDiversityHandler,
+                          BivariateDataHandler,
                           max_levels_per_category, min_count_per_level,
                           alpha=alpha, power=power,
                           total_observations=total_observations,
@@ -70,7 +70,7 @@ def alpha_effect_size_by_category(
     min_count_per_level: int = 3
 ) -> pd.DataFrame:
     res = _effect_size_by_category(alpha_diversity, sample_metadata,
-                                   AlphaDiversityHandler, columns, pairwise,
+                                   UnivariateDataHandler, columns, pairwise,
                                    n_jobs, max_levels_per_category,
                                    min_count_per_level)
     return res
@@ -86,7 +86,7 @@ def beta_effect_size_by_category(
     min_count_per_level: int = 3
 ) -> pd.DataFrame:
     res = _effect_size_by_category(beta_diversity, sample_metadata,
-                                   BetaDiversityHandler, columns, pairwise,
+                                   BivariateDataHandler, columns, pairwise,
                                    n_jobs, max_levels_per_category,
                                    min_count_per_level)
     return res

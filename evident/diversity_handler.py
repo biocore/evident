@@ -18,7 +18,7 @@ from .stats import (calculate_cohens_d, calculate_cohens_f,
 from .utils import _listify, _check_sample_overlap
 
 
-class _BaseDiversityHandler(ABC):
+class _BaseDataHandler(ABC):
     """Abstract class for handling diversity data and metadata."""
     def __init__(
         self,
@@ -376,7 +376,7 @@ class _BaseDiversityHandler(ABC):
         return power_func
 
 
-class AlphaDiversityHandler(_BaseDiversityHandler):
+class UnivariateDataHandler(_BaseDataHandler):
     def __init__(
         self,
         data: pd.Series,
@@ -426,7 +426,7 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
         return self.data.loc[ids].values
 
 
-class RepeatedMeasuresAlphaDiversityHandler(AlphaDiversityHandler):
+class RepeatedMeasuresUnivariateDataHandler(UnivariateDataHandler):
     def __init__(
         self,
         data: pd.Series,
@@ -546,7 +546,7 @@ class RepeatedMeasuresAlphaDiversityHandler(AlphaDiversityHandler):
         return PowerAnalysisResults(results_list)
 
 
-class BetaDiversityHandler(_BaseDiversityHandler):
+class BivariateDataHandler(_BaseDataHandler):
     def __init__(
         self,
         data: DistanceMatrix,

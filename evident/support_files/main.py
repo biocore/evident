@@ -11,7 +11,7 @@ import pandas as pd
 import seaborn as sns
 from skbio import DistanceMatrix
 
-from evident import AlphaDiversityHandler, BetaDiversityHandler
+from evident import UnivariateDataHandler, BivariateDataHandler
 from evident.effect_size import effect_size_by_category
 
 curr_path = os.path.dirname(__file__)
@@ -30,12 +30,12 @@ data_loc = glob.glob(f"{data_path}/diversity*")[0]
 if "alpha" in data_loc:
     alpha_div_data = pd.read_table(data_loc, sep="\t", index_col=0)
     # Loads as DataFrame. Need to squeeze to Series for ADH.
-    dh = AlphaDiversityHandler(alpha_div_data.squeeze(), md)
+    dh = UnivariateDataHandler(alpha_div_data.squeeze(), md)
     div_type = "Alpha"
     ylabel = "Alpha Diversity"
 elif "beta" in data_loc:
     beta_div_data = DistanceMatrix.read(data_loc)
-    dh = BetaDiversityHandler(beta_div_data, md)
+    dh = BivariateDataHandler(beta_div_data, md)
     div_type = "Beta"
     ylabel = "Within-Group Distances"
 else:
