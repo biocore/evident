@@ -79,7 +79,7 @@ def calculate_cohens_f(*arrays) -> float:
 def calculate_eta_squared(data: pd.DataFrame) -> float:
     """Calculate eta squared for repeated measures ANOVA.
 
-    tinyurl.com/ycktzet3
+    Resource for eta_squared calculations: tinyurl.com/ycktzet3
 
     eta2 = SS_cond / (SS_cond + SS_error)
     SS_error = SS_within - SS_subj
@@ -111,7 +111,7 @@ def calculate_eta_squared(data: pd.DataFrame) -> float:
         axis=1
     ).sum() * k
 
-    subjs_per_cond = (~data.isna()).sum(axis=0)
+    subjs_per_cond = data.sum(axis=0)
     ss_cond = np.dot(
         data.apply(
             lambda x: np.power(np.mean(x) - mu_total, 2),

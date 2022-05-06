@@ -512,7 +512,7 @@ class RepeatedMeasuresAlphaDiversityHandler(AlphaDiversityHandler):
             measurements=measurements,
             epsilon=epsilon,
             correlation=correlation,
-            total_observations=subjects*measurements
+            total_observations=subjects * measurements
         )
         return result
 
