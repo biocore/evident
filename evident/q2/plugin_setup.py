@@ -12,11 +12,13 @@ from ._format import EffectSizeResultsDirectoryFormat as ERsDirFmt
 from ._type import PowerAnalysisResults, EffectSizeResults
 from ._methods import (alpha_power_analysis, beta_power_analysis,
                        alpha_effect_size_by_category,
-                       beta_effect_size_by_category)
+                       beta_effect_size_by_category,
+                       alpha_power_analysis_repeated_measures)
 from ._visualizers import plot_power_curve, visualize_results
 
 
 Probability = Float % Range(0, 1, inclusive_end=False)
+Correlation = Float % Range(-1, 1, inclusive_end=True)
 
 PA_PARAM_DESCS = {
     "sample_metadata": "Categorical sample metadata column.",
@@ -77,7 +79,7 @@ citations = Citations.load("citations.bib", package="evident")
 plugin = Plugin(
     name="evident",
     version=__version__,
-    website="https://github.com/gibsramen/evident",
+    website="https://github.com/biocore/evident",
     citations=[citations["Casals-Pascual2020"]],
     short_description="Plugin for diversity effect size calculations",
     description=(
@@ -131,6 +133,46 @@ plugin.methods.register_function(
     description=(
         "Use sample beta diversity data to perform power calculations "
         "for desired significance level, power, or sample size."
+    )
+)
+
+rm_param_descs = {
+    k: v for k, v in PA_PARAM_DESCS.items()
+    if k not in ["total_observations", "difference", "power"]
+}
+rm_param_descs["individual_id_column"] = (
+    "Metadata column containing IDs for individual subjects."
+)
+rm_param_descs["state_column"] = (
+    "Metadata column containing state (time) variable information."
+)
+rm_param_descs["subjects"] = "Number of subjects."
+rm_param_descs["measurements"] = "Number of measurements per subject."
+rm_param_descs["correlation"] = "Correlation between repeated measurements."
+rm_param_descs["epsilon"] = "Sphericity parameter."
+
+plugin.methods.register_function(
+    function=alpha_power_analysis_repeated_measures,
+    inputs={"alpha_diversity": SampleData[AlphaDiversity]},
+    input_descriptions={"alpha_diversity": "Alpha diversity vector"},
+    parameters={
+        "sample_metadata": Metadata,
+        "individual_id_column": Str,
+        "state_column": Str,
+        "subjects": List[Int],
+        "measurements": List[Int],
+        "alpha": List[Probability],
+        "correlation": List[Correlation],
+        "epsilon": List[Probability],
+        "max_levels_per_category": Int,
+        "min_count_per_level": Int
+    },
+    parameter_descriptions=rm_param_descs,
+    outputs=[("power_analysis_results", PowerAnalysisResults)],
+    name="Alpha diversity power analysis for repeated measures.",
+    description=(
+        "Use sample alpha diversity data to perform power calculations "
+        "for repeated measures."
     )
 )
 

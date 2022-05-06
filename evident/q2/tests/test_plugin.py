@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 import pytest
 from qiime2 import Artifact, Metadata
@@ -161,3 +162,77 @@ def test_plot_power_curve(pa_results):
         target_power=0.6,
         style="alpha"
     )
+
+
+def test_alpha_pa_repeated():
+    data_dict = {
+        "S1": {"T1": 45, "T2": 50, "T3": 55},
+        "S2": {"T1": 42, "T2": 42, "T3": 45},
+        "S3": {"T1": 36, "T2": 41, "T3": 43},
+        "S4": {"T1": 39, "T2": 35, "T3": 40},
+        "S5": {"T1": 51, "T2": 55, "T3": 59},
+        "S6": {"T1": 44, "T2": 49, "T3": 56}
+    }
+    long_data = (
+        pd.DataFrame.from_dict(data_dict)
+        .reset_index()
+        .rename(columns={"index": "group"})
+        .melt(id_vars="group", var_name="subject", value_name="diversity")
+    )
+    long_data.index = [f"SAMP{x}" for x in range(long_data.shape[0])]
+    long_data.index.name = "sampleid"
+    long_data["diversity"] = long_data["diversity"].astype(float)
+
+    rng = np.random.default_rng()
+    num_samples = 6
+    num_groups = 3
+    long_data["cov"] = rng.choice(["A", "B"], size=num_samples*num_groups)
+    bad_col = rng.choice(
+        ["C", "D", np.nan],
+        size=num_samples*num_groups,
+        p=[0.25, 0.25, 0.5]
+    )
+    long_data["bad_col"] = bad_col
+
+    metadata = Metadata(long_data.drop(columns=["diversity"]))
+    alpha_div = Artifact.import_data(
+        "SampleData[AlphaDiversity]", long_data["diversity"],
+    )
+
+    exp_power_dict = {
+        (2, -0.5): 0.11387136147153543,
+        (2, 0): 0.13648071042423104,
+        (2, 0.5): 0.18720958942768118,
+        (4, -0.5): 0.42616026628041437,
+        (4, 0): 0.5662936523912177,
+        (4, 0.5): 0.8221488475653276,
+        (5, -0.5): 0.5891411383898337,
+        (5, 0): 0.7508935036261379,
+        (5, 0.5): 0.9517932434077899
+    }
+
+    results, = evident.methods.alpha_power_analysis_repeated_measures(
+        alpha_diversity=alpha_div,
+        sample_metadata=metadata,
+        individual_id_column="subject",
+        state_column="group",
+        subjects=[2, 4, 5],
+        measurements=[10],
+        correlation=[-0.5, 0, 0.5],
+        epsilon=[0.1],
+        alpha=[0.05]
+    )
+    results_df = results.view(pd.DataFrame)
+    assert set(results_df.columns) == {
+        "alpha", "total_observations", "power", "effect_size", "subjects",
+        "measurements", "epsilon", "correlation", "total_observations",
+        "metric", "column"
+    }
+    for i, row in results_df.iterrows():
+        key = row["subjects"], row["correlation"]
+        np.testing.assert_almost_equal(
+            exp_power_dict[key],
+            row["power"],
+            decimal=5
+        )
+    evident.visualizers.visualize_results(results=results)
