@@ -111,7 +111,7 @@ def calculate_eta_squared(data: pd.DataFrame) -> float:
         axis=1
     ).sum() * k
 
-    subjs_per_cond = data.sum(axis=0)
+    subjs_per_cond = [data.shape[0]]*k
     ss_cond = np.dot(
         data.apply(
             lambda x: np.power(np.mean(x) - mu_total, 2),
