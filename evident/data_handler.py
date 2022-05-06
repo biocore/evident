@@ -19,7 +19,7 @@ from .utils import _listify, _check_sample_overlap
 
 
 class _BaseDataHandler(ABC):
-    """Abstract class for handling diversity data and metadata."""
+    """Abstract class for handling data and metadata."""
     def __init__(
         self,
         data=None,
@@ -96,10 +96,7 @@ class _BaseDataHandler(ABC):
         column: str,
         difference: float = None
     ) -> EffectSizeResult:
-        """Get effect size of diversity differences given column.
-
-        If a subject column was provided, all effect sizes will be calculated
-        as eta squared from a repeated measures ANOVA.
+        """Get effect size of data differences given column.
 
         Otherwise, if two categories, return Cohen's d from t-test. If more
         than two categories, return Cohen's f from ANOVA.
@@ -153,7 +150,7 @@ class _BaseDataHandler(ABC):
         alpha: float = None,
         power: float = None
     ) -> Union[CrossSectionalPowerAnalysisResult, PowerAnalysisResults]:
-        """Perform power analysis using this diversity dataset.
+        """Perform power analysis using this dataset.
 
         Exactly one of total_observations, alpha, or power must be None.
 
@@ -385,9 +382,9 @@ class UnivariateDataHandler(_BaseDataHandler):
         min_count_per_level: int = 3,
         **kwargs
     ):
-        """Handler for alpha diversity data.
+        """Handler for univariate data.
 
-        :param data: Alpha diversity vector
+        :param data: Univariate data vector
         :type data: pd.Series
 
         :param metadata: Sample metadata
@@ -422,7 +419,7 @@ class UnivariateDataHandler(_BaseDataHandler):
         )
 
     def subset_values(self, ids: list) -> np.array:
-        """Get alpha-diversity differences among provided samples."""
+        """Get univariate data differences among provided samples."""
         return self.data.loc[ids].values
 
 
@@ -554,9 +551,9 @@ class BivariateDataHandler(_BaseDataHandler):
         max_levels_per_category: int = 5,
         min_count_per_level: int = 3,
     ):
-        """Handler for beta diversity data.
+        """Handler for bivariate data.
 
-        :param data: Beta diversity distance matrix
+        :param data: Bivariate distance matrix
         :type data: skbio.DistanceMatrix
 
         :param metadata: Sample metadata
@@ -582,5 +579,5 @@ class BivariateDataHandler(_BaseDataHandler):
         )
 
     def subset_values(self, ids: list) -> np.array:
-        """Get beta-diversity differences among provided samples."""
+        """Get bivariate data differences among provided samples."""
         return np.array(self.data.filter(ids).to_series().values)
