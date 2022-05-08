@@ -216,6 +216,7 @@ qiime evident univariate-power-analysis \
 
 We could also perform the same action with the following command. This assumes that the name of the `faith_pd.qza` vector is `faith_pd`.
 
+```bash
 qiime evident univariate-power-analysis \
     --m-sample-metadata-file metadata.qza \
     --m-sample-metadata-file faith_pd.qza \
