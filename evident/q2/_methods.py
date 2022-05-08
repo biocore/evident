@@ -1,7 +1,7 @@
 from typing import List
 
 import pandas as pd
-from qiime2 import CategoricalMetadataColumn, Metadata
+from qiime2 import Metadata
 from skbio import DistanceMatrix
 
 from evident import UnivariateDataHandler, BivariateDataHandler
@@ -66,7 +66,7 @@ def _power_analysis(data, metadata, group_column, handler,
 
 def univariate_effect_size_by_category(
     sample_metadata: Metadata,
-    columns: List[str],
+    group_columns: List[str],
     data: pd.Series = None,
     data_column: str = None,
     pairwise: bool = False,
@@ -74,14 +74,13 @@ def univariate_effect_size_by_category(
     max_levels_per_category: int = 5,
     min_count_per_level: int = 3
 ) -> pd.DataFrame:
-    if data is not None and data_column is not None:
-        data = data.squeeze()
-    else:
+    sample_metadata = sample_metadata.to_dataframe()
+    if data is None:
         data = sample_metadata[data_column]
         sample_metadata = sample_metadata.drop(columns=[data_column])
     res = _effect_size_by_category(data, sample_metadata,
-                                   UnivariateDataHandler, columns, pairwise,
-                                   n_jobs, max_levels_per_category,
+                                   UnivariateDataHandler, group_columns,
+                                   pairwise, n_jobs, max_levels_per_category,
                                    min_count_per_level)
     return res
 
@@ -89,15 +88,16 @@ def univariate_effect_size_by_category(
 def bivariate_effect_size_by_category(
     data: DistanceMatrix,
     sample_metadata: Metadata,
-    columns: List[str],
+    group_columns: List[str],
     pairwise: bool = False,
     n_jobs: int = None,
     max_levels_per_category: int = 5,
     min_count_per_level: int = 3
 ) -> pd.DataFrame:
+    sample_metadata = sample_metadata.to_dataframe()
     res = _effect_size_by_category(data, sample_metadata,
-                                   BivariateDataHandler, columns, pairwise,
-                                   n_jobs, max_levels_per_category,
+                                   BivariateDataHandler, group_columns,
+                                   pairwise, n_jobs, max_levels_per_category,
                                    min_count_per_level)
     return res
 
@@ -115,10 +115,11 @@ def _effect_size_by_category(data, metadata, handler, columns, pairwise,
 
 
 def univariate_power_analysis_repeated_measures(
-    data: pd.Series,
     sample_metadata: Metadata,
     individual_id_column: str,
     state_column: str,
+    data: pd.Series = None,
+    data_column: str = None,
     subjects: list = None,
     measurements: list = None,
     alpha: list = None,
@@ -127,7 +128,11 @@ def univariate_power_analysis_repeated_measures(
     max_levels_per_category: int = 5,
     min_count_per_level: int = 3,
 ) -> pd.DataFrame:
-    dh = RDH(data, sample_metadata.to_dataframe(),
+    sample_metadata = sample_metadata.to_dataframe()
+    if data is None:
+        data = sample_metadata[data_column]
+        sample_metadata = sample_metadata.drop(columns=[data_column])
+    dh = RDH(data, sample_metadata,
              individual_id_column, max_levels_per_category,
              min_count_per_level)
 

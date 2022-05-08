@@ -1,8 +1,7 @@
 import importlib
 
-from qiime2.plugin import (Plugin, MetadataColumn, Categorical, Int, Float,
-                           List, Range, Choices, Str, Citations, Bool,
-                           Metadata, Numeric)
+from qiime2.plugin import (Plugin, Int, Float, List, Range, Choices, Str,
+                           Citations, Bool, Metadata)
 from q2_types.sample_data import SampleData, AlphaDiversity
 from q2_types.distance_matrix import DistanceMatrix
 
@@ -53,7 +52,7 @@ PA_PARAM_DESCS = {
 
 ES_PARAM_DESCS = {
     "sample_metadata": "Sample metadata.",
-    "columns": "List of columns for which to calculate effect size.",
+    "group_columns": "List of columns for which to calculate effect size.",
     "pairwise": (
         "Whether to calculate pairwise effect sizes within groups "
         "with more than 2 levels. If true, computes Cohen's d for all "
@@ -93,12 +92,10 @@ plugin = Plugin(
 
 
 UNIV_PA_PARAM_DESCS = PA_PARAM_DESCS.copy()
-UNIV_PA_PARAM_DESCS.update(
-    {"data_column": "Column in metadata containing data."}
-)
+UNIV_PA_PARAM_DESCS["data_column"] = "Column in metadata containing data."
 
 # QIIME 2 needs an input so we provide SampleData[AlphaDiversity] which is
-# optional. Can't provide just SampleData unfortunately.
+# optional. Can't provide just SampleData, unfortunately.
 plugin.methods.register_function(
     function=univariate_power_analysis,
     inputs={"data": SampleData[AlphaDiversity]},
@@ -153,7 +150,8 @@ plugin.methods.register_function(
 
 rm_param_descs = {
     k: v for k, v in PA_PARAM_DESCS.items()
-    if k not in ["total_observations", "difference", "power"]
+    if k not in ["total_observations", "difference", "power",
+                 "group_column"]
 }
 rm_param_descs["individual_id_column"] = (
     "Metadata column containing IDs for individual subjects."
@@ -165,73 +163,76 @@ rm_param_descs["subjects"] = "Number of subjects."
 rm_param_descs["measurements"] = "Number of measurements per subject."
 rm_param_descs["correlation"] = "Correlation between repeated measurements."
 rm_param_descs["epsilon"] = "Sphericity parameter."
+rm_param_descs["data_column"] = "Column in metadata containing data."
 
-# plugin.methods.register_function(
-#     function=univariate_power_analysis_repeated_measures,
-#     inputs={"group_column": MetadataColumn[Numeric]},
-#     input_descriptions={"alpha_diversity": "Alpha diversity vector"},
-#     parameters={
-#         "sample_metadata": Metadata,
-#         "individual_id_column": Str,
-#         "state_column": Str,
-#         "subjects": List[Int],
-#         "measurements": List[Int],
-#         "alpha": List[Probability],
-#         "correlation": List[Correlation],
-#         "epsilon": List[Probability],
-#         "max_levels_per_category": Int,
-#         "min_count_per_level": Int
-#     },
-#     parameter_descriptions=rm_param_descs,
-#     outputs=[("power_analysis_results", PowerAnalysisResults)],
-#     name="Univariate data power analysis for repeated measures.",
-#     description=(
-#         "Use sample univariate data to perform power calculations "
-#         "for repeated measures."
-#     )
-# )
-# 
-# plugin.methods.register_function(
-#     function=univariate_effect_size_by_category,
-#     inputs={"data": MetadataColumn[Numeric]},
-#     input_descriptions={"data": "Univariate data vector"},
-#     parameters={
-#         "sample_metadata": Metadata,
-#         "columns": List[Str],
-#         "pairwise": Bool,
-#         "n_jobs": Int,
-#         "max_levels_per_category": Int,
-#         "min_count_per_level": Int
-#     },
-#     parameter_descriptions=ES_PARAM_DESCS,
-#     outputs=[("effect_size_results", EffectSizeResults)],
-#     name="Univariate data effect size by category.",
-#     description=(
-#         "Calculate univariate data difference effect size of multiple "
-#         "categories."
-#     )
-# )
-# 
-# plugin.methods.register_function(
-#     function=bivariate_effect_size_by_category,
-#     inputs={"data": DistanceMatrix},
-#     input_descriptions={"data": "Bivariate data distance matrix"},
-#     parameters={
-#         "sample_metadata": Metadata,
-#         "columns": List[Str],
-#         "pairwise": Bool,
-#         "n_jobs": Int,
-#         "max_levels_per_category": Int,
-#         "min_count_per_level": Int
-#     },
-#     parameter_descriptions=ES_PARAM_DESCS,
-#     outputs=[("effect_size_results", EffectSizeResults)],
-#     name="Bivariate data effect size by category.",
-#     description=(
-#         "Calculate bivariate data difference effect size of multiple "
-#         "categories."
-#     )
-# )
+plugin.methods.register_function(
+    function=univariate_power_analysis_repeated_measures,
+    inputs={"data": SampleData[AlphaDiversity]},
+    input_descriptions={"data": "Univariate data vector"},
+    parameters={
+        "sample_metadata": Metadata,
+        "individual_id_column": Str,
+        "data_column": Str,
+        "state_column": Str,
+        "subjects": List[Int],
+        "measurements": List[Int],
+        "alpha": List[Probability],
+        "correlation": List[Correlation],
+        "epsilon": List[Probability],
+        "max_levels_per_category": Int,
+        "min_count_per_level": Int
+    },
+    parameter_descriptions=rm_param_descs,
+    outputs=[("power_analysis_results", PowerAnalysisResults)],
+    name="Univariate data power analysis for repeated measures.",
+    description=(
+        "Use sample univariate data to perform power calculations "
+        "for repeated measures."
+    )
+)
+
+plugin.methods.register_function(
+    function=univariate_effect_size_by_category,
+    inputs={"data": SampleData[AlphaDiversity]},
+    input_descriptions={"data": "Univariate data vector"},
+    parameters={
+        "sample_metadata": Metadata,
+        "data_column": Str,
+        "group_columns": List[Str],
+        "pairwise": Bool,
+        "n_jobs": Int,
+        "max_levels_per_category": Int,
+        "min_count_per_level": Int
+    },
+    parameter_descriptions=ES_PARAM_DESCS,
+    outputs=[("effect_size_results", EffectSizeResults)],
+    name="Univariate data effect size by category.",
+    description=(
+        "Calculate univariate data difference effect size of multiple "
+        "categories."
+    )
+)
+
+plugin.methods.register_function(
+    function=bivariate_effect_size_by_category,
+    inputs={"data": DistanceMatrix},
+    input_descriptions={"data": "Bivariate data distance matrix"},
+    parameters={
+        "sample_metadata": Metadata,
+        "group_columns": List[Str],
+        "pairwise": Bool,
+        "n_jobs": Int,
+        "max_levels_per_category": Int,
+        "min_count_per_level": Int
+    },
+    parameter_descriptions=ES_PARAM_DESCS,
+    outputs=[("effect_size_results", EffectSizeResults)],
+    name="Bivariate data effect size by category.",
+    description=(
+        "Calculate bivariate data difference effect size of multiple "
+        "categories."
+    )
+)
 
 plugin.visualizers.register_function(
     function=plot_power_curve,
