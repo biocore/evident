@@ -28,9 +28,9 @@ def metadata():
 @pytest.fixture(scope="module")
 def es_results(alpha_artifact, metadata):
     res = evident.methods.univariate_effect_size_by_category(
-        alpha_diversity=alpha_artifact,
+        data=alpha_artifact,
         sample_metadata=metadata,
-        columns=["classification", "cd_behavior"]
+        group_columns=["classification", "cd_behavior"]
     ).effect_size_results
     return res
 

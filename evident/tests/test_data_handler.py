@@ -6,7 +6,7 @@ import pytest
 from skbio import DistanceMatrix
 
 from evident.data_handler import (UnivariateDataHandler,
-                                       BivariateDataHandler)
+                                  BivariateDataHandler)
 import evident._exceptions as exc
 
 na_values = ["not applicable"]
