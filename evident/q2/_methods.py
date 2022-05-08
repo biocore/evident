@@ -105,7 +105,7 @@ def bivariate_effect_size_by_category(
 def _effect_size_by_category(data, metadata, handler, columns, pairwise,
                              n_jobs, max_levels_per_category,
                              min_count_per_level):
-    dh = handler(data, metadata.to_dataframe(), max_levels_per_category,
+    dh = handler(data, metadata, max_levels_per_category,
                  min_count_per_level)
     if pairwise:
         res = pairwise_effect_size_by_category(dh, columns, n_jobs=n_jobs)
