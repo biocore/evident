@@ -11,7 +11,7 @@ Evident is a tool for performing effect size and power calculations on microbiom
 You can install the most up-to-date version of Evident from PyPi using the following command:
 
 ```bash
-pip install Evident
+pip install evident
 ```
 
 ## QIIME 2
@@ -30,7 +30,7 @@ You should see something like this if Evident installed correctly:
 ```bash
 Usage: qiime evident [OPTIONS] COMMAND [ARGS]...
 
-  Description: Perform power analysis on microbiome diversity data. Supports
+  Description: Perform power analysis on microbiome data. Supports
   calculation of effect size given metadata covariates and supporting
   visualizations.
 
@@ -46,24 +46,31 @@ Options:
   --help               Show this message and exit.
 
 Commands:
-  alpha-effect-size-by-category   Alpha diversity effect size by category.
-  alpha-power-analysis            Alpha diversity power analysis.
-  alpha-power-analysis-repeated-measures
-                                  Alpha diversity power analysis for repeated
+  multivariate-effect-size-by-category
+                                  Multivariate data effect size by category.
+  multivariate-power-analysis     Multivariate data power analysis.
+  plot-power-curve                Plot power curve.
+  univariate-effect-size-by-category
+                                  Univariate data effect size by category.
+  univariate-power-analysis       Univariate data power analysis.
+  univariate-power-analysis-repeated-measures
+                                  Univariate data power analysis for repeated
                                   measures.
 
-  beta-effect-size-by-category    Beta diversity effect size by category.
-  beta-power-analysis             Beta diversity power analysis.
-  plot-power-curve                Plot power curve.
   visualize-results               Tabulate evident results.
 ```
 
 ## Standalone Usage
 
-Evident requires two input files:
+Evident can operate on two types of data:
 
-1. Either an alpha or beta diversity file
-2. Sample metadata
+* Univariate (vector)
+* Multivariate (distance matrix)
+
+Univariate data can be alpha diversity. log ratios, PCoA coordinates, etc.
+Multivariate data is usually a beta diversity distance matrix.
+
+For this tutorial we will be using alpha diversity values, but the commands are nearly the same for beta diversity distance matrices.
 
 First, open Python and import Evident
 
@@ -72,10 +79,6 @@ import evident
 ```
 
 Next, load your diversity file and sample metadata.
-For alpha diversity, this should be a pandas Series.
-For beta diversity, this should be an scikit-bio DistanceMatrix.
-Sample metadata should be a pandas DataFrame.
-We'll be using an alpha diversity vector for this tutorial but the commands are nearly the same for beta diversity distance matrices.
 
 ```python
 import pandas as pd
@@ -85,7 +88,7 @@ faith_pd = metadata["faith_pd"]
 ```
 
 The main data structure in Evident is the 'DataHandler'.
-This is the way that Evident stores the diversity data and metadata for power calculations.
+This is the way that Evident stores the data and metadata for power calculations.
 For our alpha diversity example, we'll load the `UnivariateDataHandler` class from Evident.
 `UnivariateDataHandler` takes as input the pandas Series with the diversity values and the pandas DataFrame containing the sample metadata.
 By default, Evident will only consider metadata columns with, at max, 5 levels.
@@ -180,9 +183,6 @@ You can also check the "Show scatter points" box to overlay the raw data onto th
 
 ![Bokeh Data Panel](https://raw.githubusercontent.com/biocore/evident/master/imgs/bokeh_panel_2.png)
 
-We provide a command line script to generate an interactive app using some test data.
-You can access this script at `evident/tests/make_interactive.py`.
-
 Note that because evident uses Python to perform the power calculations, it is at the moment *not* possible to embed this interactive app into a standalone webpage.
 
 ## QIIME 2 Usage
@@ -193,16 +193,34 @@ If not, we recommend you read the excellent [documentation](https://docs.qiime2.
 Note that we have only tested Evident on QIIME 2 version 2021.11.
 If you are using a different version and encounter an error please let us know via an issue.
 
-As with the standalone version, Evident requires a diversity file and a sample metadata file.
-These inputs are expected to conform to QIIME 2 standards.
+### A note on univariate data
+
+Because of some design decisions in QIIME 2, we cannot use a generic `SampleData` input artifact for univariate analysis.
+However, we are also required to specify an input, even if it is optional.
+As a result, there are two ways to perform univariate data analysis in the QIIME 2 version of Evident (for both power analysis and effect size calculations).
+
+1. Provide a `SampleData[AlphaDiversity` artifact to `--i-data`.
+2. Do *not* provide an input to `--i-data` and instead provide an input to `--p-data-column`. This way, you can specify that the univariate data you want to use exists as a column in the sample metadata.
 
 To calculate power, we can run the following command:
 
 ```bash
-qiime evident alpha-power-analysis \
-    --i-alpha-diversity faith_pd.qza \
+qiime evident univariate-power-analysis \
+    --i-data faith_pd.qza \
     --m-sample-metadata-file metadata.qza \
-    --m-sample-metadata-column classification \
+    --p-group-column classification \
+    --p-alpha 0.01 0.05 0.1 \
+    --p-total-observations $(seq 10 10 100) \
+    --o-power-analysis-results results.qza
+```
+
+We could also perform the same action with the following command. This assumes that the name of the `faith_pd.qza` vector is `faith_pd`.
+
+qiime evident univariate-power-analysis \
+    --m-sample-metadata-file metadata.qza \
+    --m-sample-metadata-file faith_pd.qza \
+    --p-data-column faith_pd \
+    --p-group-column classification \
     --p-alpha 0.01 0.05 0.1 \
     --p-total-observations $(seq 10 10 100) \
     --o-power-analysis-results results.qza
@@ -247,10 +265,10 @@ effect_size_by_category(
 With QIIME 2:
 
 ```bash
-qiime evident alpha-effect-size-by-category \
-    --i-alpha-diversity faith_pd.qza \
+qiime evident univariate-effect-size-by-category \
+    --i-data faith_pd.qza \
     --m-sample-metadata-file metadata.qza \
-    --p-columns classification sex cd_behavior \
+    --p-group-columns classification sex cd_behavior \
     --p-n-jobs 2 \
     --o-effect-size-results alpha_effect_sizes.qza
 ```
@@ -258,8 +276,8 @@ qiime evident alpha-effect-size-by-category \
 ## Repeated Measures
 
 Evident supports limited analysis of repeated measures.
-When your dataset has repeated measures, you can calculate `eta_squared` for alpha diversity differences.
-Note that only alpha diversity is supported with repeated measures.
+When your dataset has repeated measures, you can calculate `eta_squared` for univariate data.
+Note that multivariate data is not supported for repeated measures analysis.
 Power analysis for repeated measures implements a repeated measures ANOVA.
 Additionally, when performing power analysis *only* power can be calculated (in contrast to `UnivariateDataHandler` and `MultivariateDataHandler` where alpha, significance, and observations can be calculated).
 This power analysis assumes that the number of measurements per group is equal.
@@ -288,8 +306,8 @@ power_analysis_result = rmandh.power_analysis(
 With QIIME 2:
 
 ```
-qiime evident alpha-power-analysis-repeated-measures \
-    --i-alpha-diversity faith_pd.qza \
+qiime evident univariate-power-analysis-repeated-measures \
+    --i-data faith_pd.qza \
     --m-sample-metadata metadata.qza \
     --p-individual-id-column subject \
     --p-state-column group \
