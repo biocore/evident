@@ -26,6 +26,15 @@ def metadata():
 
 
 @pytest.fixture(scope="module")
+def metadata_w_data():
+    fname = os.path.join(os.path.dirname(__file__), "data/test_metadata.qza")
+    metadata = Metadata.load(fname).to_dataframe()
+    fname = os.path.join(os.path.dirname(__file__), "data/test_alpha_div.qza")
+    metadata["alpha_div"] = Artifact.load(fname).view(pd.Series)
+    return Metadata(metadata)
+
+
+@pytest.fixture(scope="module")
 def es_results(alpha_artifact, metadata):
     res = evident.methods.univariate_effect_size_by_category(
         data=alpha_artifact,
@@ -47,14 +56,24 @@ def pa_results(alpha_artifact, metadata):
     return res
 
 
-def test_alpha_pa(alpha_artifact, metadata):
-    evident.methods.univariate_power_analysis(
+def test_alpha_pa(alpha_artifact, metadata, metadata_w_data):
+    df1 = evident.methods.univariate_power_analysis(
         data=alpha_artifact,
         sample_metadata=metadata,
         group_column="classification",
-        alpha=[0.05],
+        alpha=[0.01, 0.05],
         power=[0.8]
-    )
+    ).power_analysis_results.view(pd.DataFrame)
+
+    df2 = evident.methods.univariate_power_analysis(
+        sample_metadata=metadata_w_data,
+        data_column="alpha_div",
+        group_column="classification",
+        alpha=[0.01, 0.05],
+        power=[0.8]
+    ).power_analysis_results.view(pd.DataFrame)
+
+    pd.testing.assert_frame_equal(df1, df2)
 
 
 def test_beta_pa(beta_artifact, metadata):
@@ -67,24 +86,47 @@ def test_beta_pa(beta_artifact, metadata):
     )
 
 
-def test_univariate_effect_size_by_cat(alpha_artifact, metadata):
-    non_pairwise = evident.methods.univariate_effect_size_by_category(
+def test_univariate_effect_size_by_cat(alpha_artifact, metadata,
+                                       metadata_w_data):
+    exp_cols = ["effect_size", "metric", "column"]
+    non_pairwise_1 = evident.methods.univariate_effect_size_by_category(
         data=alpha_artifact,
         sample_metadata=metadata,
         group_columns=["classification", "cd_behavior"]
     ).effect_size_results.view(pd.DataFrame)
-    assert non_pairwise.shape == (2, 3)
-    assert (non_pairwise.columns == ["effect_size", "metric", "column"]).all()
+    assert non_pairwise_1.shape == (2, 3)
+    assert (non_pairwise_1.columns == exp_cols).all()
 
-    pairwise = evident.methods.univariate_effect_size_by_category(
+    non_pairwise_2 = evident.methods.univariate_effect_size_by_category(
+        sample_metadata=metadata_w_data,
+        data_column="alpha_div",
+        group_columns=["classification", "cd_behavior"]
+    ).effect_size_results.view(pd.DataFrame)
+    assert non_pairwise_2.shape == (2, 3)
+    assert (non_pairwise_2.columns == exp_cols).all()
+
+    pd.testing.assert_frame_equal(non_pairwise_1, non_pairwise_2)
+
+    exp_cols = ["effect_size", "metric", "column", "group_1", "group_2"]
+    pairwise_1 = evident.methods.univariate_effect_size_by_category(
         data=alpha_artifact,
         sample_metadata=metadata,
         group_columns=["classification", "cd_behavior"],
         pairwise=True
     ).effect_size_results.view(pd.DataFrame)
-    assert pairwise.shape == (4, 5)
-    exp_cols = ["effect_size", "metric", "column", "group_1", "group_2"]
-    assert (pairwise.columns == exp_cols).all()
+    assert pairwise_1.shape == (4, 5)
+    assert (pairwise_1.columns == exp_cols).all()
+
+    pairwise_2 = evident.methods.univariate_effect_size_by_category(
+        sample_metadata=metadata_w_data,
+        data_column="alpha_div",
+        group_columns=["classification", "cd_behavior"],
+        pairwise=True
+    ).effect_size_results.view(pd.DataFrame)
+    assert pairwise_2.shape == (4, 5)
+    assert (pairwise_2.columns == exp_cols).all()
+
+    pd.testing.assert_frame_equal(pairwise_1, pairwise_2)
 
 
 def test_bivariate_effect_size_by_cat(beta_artifact, metadata):
@@ -214,6 +256,11 @@ def test_alpha_pa_repeated():
         (5, 0.5): 0.9517932434077899
     }
 
+    exp_cols = {
+        "alpha", "total_observations", "power", "effect_size", "subjects",
+        "measurements", "epsilon", "correlation", "total_observations",
+        "metric", "column"
+    }
     results, = evident.methods.univariate_power_analysis_repeated_measures(
         data=alpha_div,
         sample_metadata=metadata,
@@ -225,13 +272,10 @@ def test_alpha_pa_repeated():
         epsilon=[0.1],
         alpha=[0.05]
     )
-    results_df = results.view(pd.DataFrame)
-    assert set(results_df.columns) == {
-        "alpha", "total_observations", "power", "effect_size", "subjects",
-        "measurements", "epsilon", "correlation", "total_observations",
-        "metric", "column"
-    }
-    for i, row in results_df.iterrows():
+    results_df_1 = results.view(pd.DataFrame)
+    assert set(results_df_1.columns) == exp_cols
+
+    for i, row in results_df_1.iterrows():
         key = row["subjects"], row["correlation"]
         np.testing.assert_almost_equal(
             exp_power_dict[key],
@@ -239,3 +283,17 @@ def test_alpha_pa_repeated():
             decimal=5
         )
     evident.visualizers.visualize_results(results=results)
+
+    results_df_2 = evident.methods.univariate_power_analysis_repeated_measures(
+        sample_metadata=Metadata(long_data),
+        data_column="diversity",
+        individual_id_column="subject",
+        state_column="group",
+        subjects=[2, 4, 5],
+        measurements=[10],
+        correlation=[-0.5, 0, 0.5],
+        epsilon=[0.1],
+        alpha=[0.05]
+    ).power_analysis_results.view(pd.DataFrame)
+
+    pd.testing.assert_frame_equal(results_df_1, results_df_2)
