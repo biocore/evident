@@ -3,7 +3,7 @@ import shutil
 
 from evident.data_handler import (_BaseDataHandler,
                                   UnivariateDataHandler,
-                                  BivariateDataHandler)
+                                  MultivariateDataHandler)
 
 
 def create_bokeh_app(
@@ -34,8 +34,8 @@ def create_bokeh_app(
     if isinstance(data_handler, UnivariateDataHandler):
         data_loc = os.path.join(data_dir, "data.univariate.tsv")
         data.to_csv(data_loc, sep="\t", index=True)
-    elif isinstance(data_handler, BivariateDataHandler):
-        data_loc = os.path.join(data_dir, "data.bivariate.lsmat")
+    elif isinstance(data_handler, MultivariateDataHandler):
+        data_loc = os.path.join(data_dir, "data.multivariate.lsmat")
         data.write(data_loc)
     else:
         raise ValueError("No valid data found!")

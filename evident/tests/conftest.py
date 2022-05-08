@@ -5,7 +5,7 @@ import pytest
 from skbio import DistanceMatrix
 
 from evident.data_handler import (UnivariateDataHandler,
-                                  BivariateDataHandler)
+                                  MultivariateDataHandler)
 
 NA_VALS = ["missing: not provided", "not applicable"]
 
@@ -26,5 +26,5 @@ def beta_mock():
     dm_file = os.path.join(os.path.dirname(__file__),
                            "data/distance_matrix.lsmat.gz")
     dm = DistanceMatrix.read(dm_file)
-    bdh = BivariateDataHandler(dm, df)
+    bdh = MultivariateDataHandler(dm, df)
     return bdh

@@ -261,7 +261,7 @@ Evident supports limited analysis of repeated measures.
 When your dataset has repeated measures, you can calculate `eta_squared` for alpha diversity differences.
 Note that only alpha diversity is supported with repeated measures.
 Power analysis for repeated measures implements a repeated measures ANOVA.
-Additionally, when performing power analysis *only* power can be calculated (in contrast to `UnivariateDataHandler` and `BivariateDataHandler` where alpha, significance, and observations can be calculated).
+Additionally, when performing power analysis *only* power can be calculated (in contrast to `UnivariateDataHandler` and `MultivariateDataHandler` where alpha, significance, and observations can be calculated).
 This power analysis assumes that the number of measurements per group is equal.
 
 With Python:

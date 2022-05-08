@@ -9,9 +9,9 @@ from evident import __version__
 from ._format import PowerAnalysisResultsDirectoryFormat as PARsDirFmt
 from ._format import EffectSizeResultsDirectoryFormat as ERsDirFmt
 from ._type import PowerAnalysisResults, EffectSizeResults
-from ._methods import (univariate_power_analysis, bivariate_power_analysis,
+from ._methods import (univariate_power_analysis, multivariate_power_analysis,
                        univariate_effect_size_by_category,
-                       bivariate_effect_size_by_category,
+                       multivariate_effect_size_by_category,
                        univariate_power_analysis_repeated_measures)
 from ._visualizers import plot_power_curve, visualize_results
 
@@ -122,7 +122,7 @@ plugin.methods.register_function(
 )
 
 plugin.methods.register_function(
-    function=bivariate_power_analysis,
+    function=multivariate_power_analysis,
     inputs={
         "data": DistanceMatrix,
     },
@@ -141,9 +141,9 @@ plugin.methods.register_function(
     },
     parameter_descriptions=PA_PARAM_DESCS,
     outputs=[("power_analysis_results", PowerAnalysisResults)],
-    name="Bivariate data power analysis.",
+    name="Multivariate data power analysis.",
     description=(
-        "Use sample Bivariate data data to perform power calculations "
+        "Use sample Multivariate data data to perform power calculations "
         "for desired significance level, power, or sample size."
     )
 )
@@ -214,9 +214,9 @@ plugin.methods.register_function(
 )
 
 plugin.methods.register_function(
-    function=bivariate_effect_size_by_category,
+    function=multivariate_effect_size_by_category,
     inputs={"data": DistanceMatrix},
-    input_descriptions={"data": "Bivariate data distance matrix"},
+    input_descriptions={"data": "Multivariate data distance matrix"},
     parameters={
         "sample_metadata": Metadata,
         "group_columns": List[Str],
@@ -227,9 +227,9 @@ plugin.methods.register_function(
     },
     parameter_descriptions=ES_PARAM_DESCS,
     outputs=[("effect_size_results", EffectSizeResults)],
-    name="Bivariate data effect size by category.",
+    name="Multivariate data effect size by category.",
     description=(
-        "Calculate bivariate data difference effect size of multiple "
+        "Calculate multivariate data difference effect size of multiple "
         "categories."
     )
 )

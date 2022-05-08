@@ -6,7 +6,7 @@ import pytest
 from skbio import DistanceMatrix
 
 from evident.data_handler import (UnivariateDataHandler,
-                                  BivariateDataHandler)
+                                  MultivariateDataHandler)
 import evident._exceptions as exc
 
 na_values = ["not applicable"]
@@ -75,7 +75,7 @@ class TestBetaDiv:
         dm_file = os.path.join(os.path.dirname(__file__),
                                "data/distance_matrix.lsmat.gz")
         dm = DistanceMatrix.read(dm_file)
-        b = BivariateDataHandler(dm, df)
+        b = MultivariateDataHandler(dm, df)
         assert b.metadata.shape == (220, len(exp_cols))
         assert b.data.shape == (220, 220)
 
@@ -95,7 +95,7 @@ class TestBetaDiv:
         data = beta_mock.data.to_data_frame()
 
         with pytest.raises(ValueError) as exc_info:
-            BivariateDataHandler(data, beta_mock.metadata)
+            MultivariateDataHandler(data, beta_mock.metadata)
 
         exp_err_msg = "data must be of type skbio.DistanceMatrix"
         assert str(exc_info.value) == exp_err_msg

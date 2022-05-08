@@ -543,7 +543,7 @@ class RepeatedMeasuresUnivariateDataHandler(UnivariateDataHandler):
         return PowerAnalysisResults(results_list)
 
 
-class BivariateDataHandler(_BaseDataHandler):
+class MultivariateDataHandler(_BaseDataHandler):
     def __init__(
         self,
         data: DistanceMatrix,
@@ -551,9 +551,9 @@ class BivariateDataHandler(_BaseDataHandler):
         max_levels_per_category: int = 5,
         min_count_per_level: int = 3,
     ):
-        """Handler for bivariate data.
+        """Handler for multivariate data.
 
-        :param data: Bivariate distance matrix
+        :param data: Multivariate distance matrix
         :type data: skbio.DistanceMatrix
 
         :param metadata: Sample metadata
@@ -579,5 +579,5 @@ class BivariateDataHandler(_BaseDataHandler):
         )
 
     def subset_values(self, ids: list) -> np.array:
-        """Get bivariate data differences among provided samples."""
+        """Get multivariate data differences among provided samples."""
         return np.array(self.data.filter(ids).to_series().values)

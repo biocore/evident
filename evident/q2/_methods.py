@@ -4,7 +4,7 @@ import pandas as pd
 from qiime2 import Metadata
 from skbio import DistanceMatrix
 
-from evident import UnivariateDataHandler, BivariateDataHandler
+from evident import UnivariateDataHandler, MultivariateDataHandler
 from evident.data_handler import RepeatedMeasuresUnivariateDataHandler as RDH
 from evident.effect_size import (effect_size_by_category,
                                  pairwise_effect_size_by_category)
@@ -59,7 +59,7 @@ def univariate_power_analysis(
     return res
 
 
-def bivariate_power_analysis(
+def multivariate_power_analysis(
     data: DistanceMatrix,
     sample_metadata: Metadata,
     group_column: str,
@@ -72,7 +72,7 @@ def bivariate_power_analysis(
 ) -> pd.DataFrame:
     sample_metadata = sample_metadata.to_dataframe()
     res = _power_analysis(data, sample_metadata, group_column,
-                          BivariateDataHandler,
+                          MultivariateDataHandler,
                           max_levels_per_category, min_count_per_level,
                           alpha=alpha, power=power,
                           total_observations=total_observations,
@@ -111,7 +111,7 @@ def univariate_effect_size_by_category(
     return res
 
 
-def bivariate_effect_size_by_category(
+def multivariate_effect_size_by_category(
     data: DistanceMatrix,
     sample_metadata: Metadata,
     group_columns: List[str],
@@ -122,7 +122,7 @@ def bivariate_effect_size_by_category(
 ) -> pd.DataFrame:
     sample_metadata = sample_metadata.to_dataframe()
     res = _effect_size_by_category(data, sample_metadata,
-                                   BivariateDataHandler, group_columns,
+                                   MultivariateDataHandler, group_columns,
                                    pairwise, n_jobs, max_levels_per_category,
                                    min_count_per_level)
     return res

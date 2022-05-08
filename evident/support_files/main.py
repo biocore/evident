@@ -11,7 +11,7 @@ import pandas as pd
 import seaborn as sns
 from skbio import DistanceMatrix
 
-from evident import UnivariateDataHandler, BivariateDataHandler
+from evident import UnivariateDataHandler, MultivariateDataHandler
 from evident.effect_size import effect_size_by_category
 
 curr_path = os.path.dirname(__file__)
@@ -33,10 +33,10 @@ if "univariate" in data_loc:
     dh = UnivariateDataHandler(univariate_data.squeeze(), md)
     data_type = "Univariate"
     data_name = univariate_data.name
-elif "bivariate" in data_loc:
-    bivariate_data = DistanceMatrix.read(data_loc)
-    dh = BivariateDataHandler(bivariate_data, md)
-    data_type = "Bivariate"
+elif "multivariate" in data_loc:
+    multivariate_data = DistanceMatrix.read(data_loc)
+    dh = MultivariateDataHandler(multivariate_data, md)
+    data_type = "Multivariate"
     data_name = "Within-Group Distances"
 else:
     raise ValueError("No valid data found!")

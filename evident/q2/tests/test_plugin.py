@@ -77,7 +77,7 @@ def test_alpha_pa(alpha_artifact, metadata, metadata_w_data):
 
 
 def test_beta_pa(beta_artifact, metadata):
-    evident.methods.bivariate_power_analysis(
+    evident.methods.multivariate_power_analysis(
         data=beta_artifact,
         sample_metadata=metadata,
         group_column="classification",
@@ -129,8 +129,8 @@ def test_univariate_effect_size_by_cat(alpha_artifact, metadata,
     pd.testing.assert_frame_equal(pairwise_1, pairwise_2)
 
 
-def test_bivariate_effect_size_by_cat(beta_artifact, metadata):
-    non_pairwise = evident.methods.bivariate_effect_size_by_category(
+def test_multivariate_effect_size_by_cat(beta_artifact, metadata):
+    non_pairwise = evident.methods.multivariate_effect_size_by_category(
         data=beta_artifact,
         sample_metadata=metadata,
         group_columns=["classification", "cd_behavior"]
@@ -138,7 +138,7 @@ def test_bivariate_effect_size_by_cat(beta_artifact, metadata):
     assert non_pairwise.shape == (2, 3)
     assert (non_pairwise.columns == ["effect_size", "metric", "column"]).all()
 
-    pairwise = evident.methods.bivariate_effect_size_by_category(
+    pairwise = evident.methods.multivariate_effect_size_by_category(
         data=beta_artifact,
         sample_metadata=metadata,
         group_columns=["classification", "cd_behavior"],
@@ -171,8 +171,8 @@ def test_univariate_effect_size_by_cat_parallel(alpha_artifact, metadata):
     assert (pairwise.columns == exp_cols).all()
 
 
-def test_bivariate_effect_size_by_cat_parallel(beta_artifact, metadata):
-    non_pairwise = evident.methods.bivariate_effect_size_by_category(
+def test_multivariate_effect_size_by_cat_parallel(beta_artifact, metadata):
+    non_pairwise = evident.methods.multivariate_effect_size_by_category(
         data=beta_artifact,
         sample_metadata=metadata,
         group_columns=["classification", "cd_behavior"],
@@ -181,7 +181,7 @@ def test_bivariate_effect_size_by_cat_parallel(beta_artifact, metadata):
     assert non_pairwise.shape == (2, 3)
     assert (non_pairwise.columns == ["effect_size", "metric", "column"]).all()
 
-    pairwise = evident.methods.bivariate_effect_size_by_category(
+    pairwise = evident.methods.multivariate_effect_size_by_category(
         data=beta_artifact,
         sample_metadata=metadata,
         group_columns=["classification", "cd_behavior"],

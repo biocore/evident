@@ -4,7 +4,7 @@ import click
 import pandas as pd
 from skbio import DistanceMatrix
 
-from evident import UnivariateDataHandler, BivariateDataHandler
+from evident import UnivariateDataHandler, MultivariateDataHandler
 from evident.interactive import create_bokeh_app
 
 
@@ -24,7 +24,7 @@ def interactive(output, diversity_type):
     elif diversity_type == "beta":
         dm_loc = os.path.join(curr_path, "data/distance_matrix.lsmat.gz")
         dm = DistanceMatrix.read(dm_loc)
-        dh = BivariateDataHandler(dm, df)
+        dh = MultivariateDataHandler(dm, df)
     else:
         raise ValueError("No valid data!")
 
