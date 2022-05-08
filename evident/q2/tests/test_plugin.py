@@ -297,3 +297,54 @@ def test_alpha_pa_repeated():
     ).power_analysis_results.view(pd.DataFrame)
 
     pd.testing.assert_frame_equal(results_df_1, results_df_2)
+
+
+def test_univariate_bad_data(alpha_artifact, metadata, metadata_w_data):
+    with pytest.raises(ValueError) as exc_info:
+        evident.methods.univariate_power_analysis(
+            data=alpha_artifact,
+            data_column="ampharos",
+            sample_metadata=metadata,
+            group_column="classification",
+            alpha=[0.01, 0.05],
+            power=[0.8]
+        )
+    exp_err_msg = (
+        "Cannot provide a value for data_column if data is provided."
+    )
+    assert str(exc_info.value) == exp_err_msg
+
+    with pytest.raises(ValueError) as exc_info:
+        evident.methods.univariate_power_analysis(
+            sample_metadata=metadata,
+            data_column="greninja",
+            group_column="classification",
+            alpha=[0.01, 0.05],
+            power=[0.8]
+        )
+    exp_err_msg = "greninja not found in sample metadata."
+    assert str(exc_info.value) == exp_err_msg
+
+    with pytest.raises(ValueError) as exc_info:
+        evident.methods.univariate_power_analysis(
+            sample_metadata=metadata_w_data,
+            group_column="classification",
+            alpha=[0.01, 0.05],
+            power=[0.8]
+        )
+    exp_err_msg = (
+        "If not providing an input for data, a value must be provided for "
+        "data_column to use a sample metadata column identifier."
+    )
+    assert str(exc_info.value) == exp_err_msg
+
+    with pytest.raises(ValueError) as exc_info:
+        evident.methods.univariate_power_analysis(
+            sample_metadata=metadata_w_data,
+            data_column="ibd_subtype",
+            group_column="classification",
+            alpha=[0.01, 0.05],
+            power=[0.8]
+        )
+    exp_err_msg = "Values in data_column must be numeric."
+    assert str(exc_info.value) == exp_err_msg

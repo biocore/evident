@@ -10,6 +10,28 @@ from evident.effect_size import (effect_size_by_category,
                                  pairwise_effect_size_by_category)
 
 
+def _check_provided_univariate_data(data, sample_metadata, data_column):
+    """Check if provided univariate data is valid."""
+    if data is not None:
+        if data_column is not None:
+            raise ValueError(
+                "Cannot provide a value for data_column if data is "
+                "provided."
+            )
+    else:
+        if data_column is None:
+            raise ValueError(
+                "If not providing an input for data, a value must be "
+                "provided for data_column to use a sample metadata column "
+                "identifier."
+            )
+        if data_column not in sample_metadata.columns:
+            raise ValueError(f"{data_column} not found in sample metadata.")
+        if sample_metadata[data_column].dtype.kind not in ["i", "f"]:
+            # i = integer, f = float
+            raise ValueError("Values in data_column must be numeric.")
+
+
 def univariate_power_analysis(
     sample_metadata: Metadata,
     group_column: str,
@@ -23,6 +45,8 @@ def univariate_power_analysis(
     difference: list = None,
 ) -> pd.DataFrame:
     sample_metadata = sample_metadata.to_dataframe()
+    _check_provided_univariate_data(data, sample_metadata, data_column)
+
     if data is None:
         data = sample_metadata[data_column]
         sample_metadata = sample_metadata.drop(columns=[data_column])
@@ -75,6 +99,8 @@ def univariate_effect_size_by_category(
     min_count_per_level: int = 3
 ) -> pd.DataFrame:
     sample_metadata = sample_metadata.to_dataframe()
+    _check_provided_univariate_data(data, sample_metadata, data_column)
+
     if data is None:
         data = sample_metadata[data_column]
         sample_metadata = sample_metadata.drop(columns=[data_column])
@@ -129,6 +155,8 @@ def univariate_power_analysis_repeated_measures(
     min_count_per_level: int = 3,
 ) -> pd.DataFrame:
     sample_metadata = sample_metadata.to_dataframe()
+    _check_provided_univariate_data(data, sample_metadata, data_column)
+
     if data is None:
         data = sample_metadata[data_column]
         sample_metadata = sample_metadata.drop(columns=[data_column])
