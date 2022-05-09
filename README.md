@@ -195,7 +195,7 @@ If you are using a different version and encounter an error please let us know v
 
 To calculate power, we can run the following command:
 
-```
+```bash
 qiime evident univariate-power-analysis \
     --m-sample-metadata-file metadata.qza \
     --m-sample-metadata-file faith_pd.qza \
