@@ -14,8 +14,7 @@ def _check_provided_univariate_data(sample_metadata, data_column):
     """Check if provided univariate data is valid."""
     if data_column not in sample_metadata.columns:
         raise ValueError(f"{data_column} not found in sample metadata.")
-    if sample_metadata[data_column].dtype.kind not in ["i", "f"]:
-        # i = integer, f = float
+    if data_column not in sample_metadata.select_dtypes("number"):
         raise ValueError("Values in data_column must be numeric.")
 
 
