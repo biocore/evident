@@ -12,11 +12,6 @@ from evident.effect_size import (effect_size_by_category,
 
 def _check_provided_univariate_data(sample_metadata, data_column):
     """Check if provided univariate data is valid."""
-    if data_column is None:
-        raise ValueError(
-            "A value must be provided for data_column to use a sample "
-            "metadata column identifier."
-        )
     if data_column not in sample_metadata.columns:
         raise ValueError(f"{data_column} not found in sample metadata.")
     if sample_metadata[data_column].dtype.kind not in ["i", "f"]:
@@ -27,7 +22,7 @@ def _check_provided_univariate_data(sample_metadata, data_column):
 def univariate_power_analysis(
     sample_metadata: Metadata,
     group_column: str,
-    data_column: str = None,
+    data_column: str,
     max_levels_per_category: int = 5,
     min_count_per_level: int = 3,
     alpha: list = None,
@@ -81,7 +76,7 @@ def _power_analysis(data, metadata, group_column, handler,
 def univariate_effect_size_by_category(
     sample_metadata: Metadata,
     group_columns: List[str],
-    data_column: str = None,
+    data_column: str,
     pairwise: bool = False,
     n_jobs: int = None,
     max_levels_per_category: int = 5,
@@ -132,7 +127,7 @@ def univariate_power_analysis_repeated_measures(
     sample_metadata: Metadata,
     individual_id_column: str,
     state_column: str,
-    data_column: str = None,
+    data_column: str,
     subjects: list = None,
     measurements: list = None,
     alpha: list = None,

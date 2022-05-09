@@ -265,19 +265,6 @@ def test_univariate_bad_data(alpha_artifact, metadata, metadata_w_data):
     with pytest.raises(ValueError) as exc_info:
         evident.methods.univariate_power_analysis(
             sample_metadata=metadata_w_data,
-            group_column="classification",
-            alpha=[0.01, 0.05],
-            power=[0.8]
-        )
-    exp_err_msg = (
-        "A value must be provided for data_column to use a sample metadata "
-        "column identifier."
-    )
-    assert str(exc_info.value) == exp_err_msg
-
-    with pytest.raises(ValueError) as exc_info:
-        evident.methods.univariate_power_analysis(
-            sample_metadata=metadata_w_data,
             data_column="ibd_subtype",
             group_column="classification",
             alpha=[0.01, 0.05],
