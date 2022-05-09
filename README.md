@@ -193,28 +193,7 @@ If not, we recommend you read the excellent [documentation](https://docs.qiime2.
 Note that we have only tested Evident on QIIME 2 version 2021.11.
 If you are using a different version and encounter an error please let us know via an issue.
 
-### A note on univariate data
-
-Because of some design decisions in QIIME 2, we cannot use a generic `SampleData` input artifact for univariate analysis.
-However, we are also required to specify an input, even if it is optional.
-As a result, there are two ways to perform univariate data analysis in the QIIME 2 version of Evident (for both power analysis and effect size calculations).
-
-1. Provide a `SampleData[AlphaDiversity` artifact to `--i-data`.
-2. Do *not* provide an input to `--i-data` and instead provide an input to `--p-data-column`. This way, you can specify that the univariate data you want to use exists as a column in the sample metadata.
-
 To calculate power, we can run the following command:
-
-```bash
-qiime evident univariate-power-analysis \
-    --i-data faith_pd.qza \
-    --m-sample-metadata-file metadata.qza \
-    --p-group-column classification \
-    --p-alpha 0.01 0.05 0.1 \
-    --p-total-observations $(seq 10 10 100) \
-    --o-power-analysis-results results.qza
-```
-
-We could also perform the same action with the following command. This assumes that the name of the `faith_pd.qza` vector is `faith_pd`.
 
 qiime evident univariate-power-analysis \
     --m-sample-metadata-file metadata.qza \
@@ -225,6 +204,10 @@ qiime evident univariate-power-analysis \
     --p-total-observations $(seq 10 10 100) \
     --o-power-analysis-results results.qza
 ```
+
+We provide multiple sample metadata files to QIIME 2 because they are internally merged.
+You should provide a value for `--p-data-column` so Evident knows which column in the merged metadata contains the numeric values.
+In this case, the name of the `faith_pd.qza` vector is `faith_pd` so we use that as input.
 
 Notice how we used `$(seq 10 10 100)` to provide input into the `--p-total-observations` argument.
 `seq` is a command on UNIX-like systems that generates a sequence of numbers.
@@ -266,8 +249,9 @@ With QIIME 2:
 
 ```bash
 qiime evident univariate-effect-size-by-category \
-    --i-data faith_pd.qza \
     --m-sample-metadata-file metadata.qza \
+    --m-sample-metadata-file faith_pd.qza \
+    --p-data-column faith_pd \
     --p-group-columns classification sex cd_behavior \
     --p-n-jobs 2 \
     --o-effect-size-results alpha_effect_sizes.qza
@@ -307,8 +291,9 @@ With QIIME 2:
 
 ```
 qiime evident univariate-power-analysis-repeated-measures \
-    --i-data faith_pd.qza \
-    --m-sample-metadata metadata.qza \
+    --m-sample-metadata-file metadata.qza \
+    --m-sample-metadata-file faith_pd.qza \
+    --p-data-column faith_pd \
     --p-individual-id-column subject \
     --p-state-column group \
     --p-subjects 2 4 5 \
