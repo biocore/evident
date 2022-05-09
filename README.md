@@ -195,6 +195,7 @@ If you are using a different version and encounter an error please let us know v
 
 To calculate power, we can run the following command:
 
+```
 qiime evident univariate-power-analysis \
     --m-sample-metadata-file metadata.qza \
     --m-sample-metadata-file faith_pd.qza \
@@ -206,7 +207,7 @@ qiime evident univariate-power-analysis \
 ```
 
 We provide multiple sample metadata files to QIIME 2 because they are internally merged.
-You should provide a value for `--p-data-column` so Evident knows which column in the merged metadata contains the numeric values.
+You should provide a value for `--p-data-column` so Evident knows which column in the merged metadata contains the numeric values (this is only necessary for univariate analysis).
 In this case, the name of the `faith_pd.qza` vector is `faith_pd` so we use that as input.
 
 Notice how we used `$(seq 10 10 100)` to provide input into the `--p-total-observations` argument.
