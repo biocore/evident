@@ -10,32 +10,23 @@ from evident.effect_size import (effect_size_by_category,
                                  pairwise_effect_size_by_category)
 
 
-def _check_provided_univariate_data(data, sample_metadata, data_column):
+def _check_provided_univariate_data(sample_metadata, data_column):
     """Check if provided univariate data is valid."""
-    if data is not None:
-        if data_column is not None:
-            raise ValueError(
-                "Cannot provide a value for data_column if data is "
-                "provided."
-            )
-    else:
-        if data_column is None:
-            raise ValueError(
-                "If not providing an input for data, a value must be "
-                "provided for data_column to use a sample metadata column "
-                "identifier."
-            )
-        if data_column not in sample_metadata.columns:
-            raise ValueError(f"{data_column} not found in sample metadata.")
-        if sample_metadata[data_column].dtype.kind not in ["i", "f"]:
-            # i = integer, f = float
-            raise ValueError("Values in data_column must be numeric.")
+    if data_column is None:
+        raise ValueError(
+            "A value must be provided for data_column to use a sample "
+            "metadata column identifier."
+        )
+    if data_column not in sample_metadata.columns:
+        raise ValueError(f"{data_column} not found in sample metadata.")
+    if sample_metadata[data_column].dtype.kind not in ["i", "f"]:
+        # i = integer, f = float
+        raise ValueError("Values in data_column must be numeric.")
 
 
 def univariate_power_analysis(
     sample_metadata: Metadata,
     group_column: str,
-    data: pd.Series = None,
     data_column: str = None,
     max_levels_per_category: int = 5,
     min_count_per_level: int = 3,
@@ -45,11 +36,10 @@ def univariate_power_analysis(
     difference: list = None,
 ) -> pd.DataFrame:
     sample_metadata = sample_metadata.to_dataframe()
-    _check_provided_univariate_data(data, sample_metadata, data_column)
+    _check_provided_univariate_data(sample_metadata, data_column)
+    data = sample_metadata[data_column]
+    sample_metadata = sample_metadata.drop(columns=[data_column])
 
-    if data is None:
-        data = sample_metadata[data_column]
-        sample_metadata = sample_metadata.drop(columns=[data_column])
     res = _power_analysis(data, sample_metadata, group_column,
                           UnivariateDataHandler,
                           max_levels_per_category, min_count_per_level,
@@ -91,7 +81,6 @@ def _power_analysis(data, metadata, group_column, handler,
 def univariate_effect_size_by_category(
     sample_metadata: Metadata,
     group_columns: List[str],
-    data: pd.Series = None,
     data_column: str = None,
     pairwise: bool = False,
     n_jobs: int = None,
@@ -99,11 +88,10 @@ def univariate_effect_size_by_category(
     min_count_per_level: int = 3
 ) -> pd.DataFrame:
     sample_metadata = sample_metadata.to_dataframe()
-    _check_provided_univariate_data(data, sample_metadata, data_column)
+    _check_provided_univariate_data(sample_metadata, data_column)
+    data = sample_metadata[data_column]
+    sample_metadata = sample_metadata.drop(columns=[data_column])
 
-    if data is None:
-        data = sample_metadata[data_column]
-        sample_metadata = sample_metadata.drop(columns=[data_column])
     res = _effect_size_by_category(data, sample_metadata,
                                    UnivariateDataHandler, group_columns,
                                    pairwise, n_jobs, max_levels_per_category,
@@ -144,7 +132,6 @@ def univariate_power_analysis_repeated_measures(
     sample_metadata: Metadata,
     individual_id_column: str,
     state_column: str,
-    data: pd.Series = None,
     data_column: str = None,
     subjects: list = None,
     measurements: list = None,
@@ -155,11 +142,10 @@ def univariate_power_analysis_repeated_measures(
     min_count_per_level: int = 3,
 ) -> pd.DataFrame:
     sample_metadata = sample_metadata.to_dataframe()
-    _check_provided_univariate_data(data, sample_metadata, data_column)
+    _check_provided_univariate_data(sample_metadata, data_column)
+    data = sample_metadata[data_column]
+    sample_metadata = sample_metadata.drop(columns=[data_column])
 
-    if data is None:
-        data = sample_metadata[data_column]
-        sample_metadata = sample_metadata.drop(columns=[data_column])
     dh = RDH(data, sample_metadata,
              individual_id_column, max_levels_per_category,
              min_count_per_level)

@@ -2,7 +2,6 @@ import importlib
 
 from qiime2.plugin import (Plugin, Int, Float, List, Range, Choices, Str,
                            Citations, Bool, Metadata)
-from q2_types.sample_data import SampleData, AlphaDiversity
 from q2_types.distance_matrix import DistanceMatrix
 
 from evident import __version__
@@ -98,8 +97,7 @@ UNIV_PA_PARAM_DESCS["data_column"] = "Column in metadata containing data."
 # optional. Can't provide just SampleData, unfortunately.
 plugin.methods.register_function(
     function=univariate_power_analysis,
-    inputs={"data": SampleData[AlphaDiversity]},
-    input_descriptions={"data": "Sample data"},
+    inputs={},
     parameters={
         "group_column": Str,
         "data_column": Str,
@@ -123,12 +121,8 @@ plugin.methods.register_function(
 
 plugin.methods.register_function(
     function=multivariate_power_analysis,
-    inputs={
-        "data": DistanceMatrix,
-    },
-    input_descriptions={
-        "data": "Sample distance matrix",
-    },
+    inputs={"data": DistanceMatrix},
+    input_descriptions={"data": "Sample distance matrix"},
     parameters={
         "group_column": Str,
         "sample_metadata": Metadata,
@@ -167,8 +161,8 @@ rm_param_descs["data_column"] = "Column in metadata containing data."
 
 plugin.methods.register_function(
     function=univariate_power_analysis_repeated_measures,
-    inputs={"data": SampleData[AlphaDiversity]},
-    input_descriptions={"data": "Univariate data vector"},
+    inputs={},
+    input_descriptions={},
     parameters={
         "sample_metadata": Metadata,
         "individual_id_column": Str,
@@ -193,8 +187,7 @@ plugin.methods.register_function(
 
 plugin.methods.register_function(
     function=univariate_effect_size_by_category,
-    inputs={"data": SampleData[AlphaDiversity]},
-    input_descriptions={"data": "Univariate data vector"},
+    inputs={},
     parameters={
         "sample_metadata": Metadata,
         "data_column": Str,
