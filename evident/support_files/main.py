@@ -32,7 +32,7 @@ if "univariate" in data_loc:
     # Loads as DataFrame. Need to squeeze to Series for UDH.
     dh = UnivariateDataHandler(univariate_data.squeeze(), md)
     data_type = "Univariate"
-    data_name = univariate_data.name
+    data_name = univariate_data.squeeze().name
 elif "multivariate" in data_loc:
     multivariate_data = DistanceMatrix.read(data_loc)
     dh = MultivariateDataHandler(multivariate_data, md)
