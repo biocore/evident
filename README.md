@@ -278,7 +278,7 @@ rmadh = RepeatedMeasuresUnivariateDataHandler(
     individual_id_column="subject",
 )
 effect_size_result = rmadh.calculate_effect_size(state_column="group")
-power_analysis_result = rmandh.power_analysis(
+power_analysis_result = rmadh.power_analysis(
     state_column="group",
     subjects=[2, 4, 5],
     measurements=10,
