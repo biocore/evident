@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from evident import utils
-from evident.diversity_handler import AlphaDiversityHandler
+from evident.data_handler import UnivariateDataHandler
 
 
 def test_listify():
@@ -32,7 +32,7 @@ def test_check_sample_overlap():
         index=[f"S{i+2}" for i in range(5)]
     )
     with pytest.warns(UserWarning) as warn_info:
-        AlphaDiversityHandler(alpha_div, md)
+        UnivariateDataHandler(alpha_div, md)
     exp_msg = (
         "Data and metadata do not have the same sample IDs. Using 4 samples "
         "common to both."

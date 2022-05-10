@@ -4,14 +4,14 @@
 
 # Evident
 
-Evident is a tool for performing effect size and power calculations on microbiome diversity data.
+Evident is a tool for performing effect size and power calculations on microbiome data.
 
 ## Installation
 
 You can install the most up-to-date version of Evident from PyPi using the following command:
 
 ```bash
-pip install Evident
+pip install evident
 ```
 
 ## QIIME 2
@@ -30,7 +30,7 @@ You should see something like this if Evident installed correctly:
 ```bash
 Usage: qiime evident [OPTIONS] COMMAND [ARGS]...
 
-  Description: Perform power analysis on microbiome diversity data. Supports
+  Description: Perform power analysis on microbiome data. Supports
   calculation of effect size given metadata covariates and supporting
   visualizations.
 
@@ -46,24 +46,31 @@ Options:
   --help               Show this message and exit.
 
 Commands:
-  alpha-effect-size-by-category   Alpha diversity effect size by category.
-  alpha-power-analysis            Alpha diversity power analysis.
-  alpha-power-analysis-repeated-measures
-                                  Alpha diversity power analysis for repeated
+  multivariate-effect-size-by-category
+                                  Multivariate data effect size by category.
+  multivariate-power-analysis     Multivariate data power analysis.
+  plot-power-curve                Plot power curve.
+  univariate-effect-size-by-category
+                                  Univariate data effect size by category.
+  univariate-power-analysis       Univariate data power analysis.
+  univariate-power-analysis-repeated-measures
+                                  Univariate data power analysis for repeated
                                   measures.
 
-  beta-effect-size-by-category    Beta diversity effect size by category.
-  beta-power-analysis             Beta diversity power analysis.
-  plot-power-curve                Plot power curve.
   visualize-results               Tabulate evident results.
 ```
 
 ## Standalone Usage
 
-Evident requires two input files:
+Evident can operate on two types of data:
 
-1. Either an alpha or beta diversity file
-2. Sample metadata
+* Univariate (vector)
+* Multivariate (distance matrix)
+
+Univariate data can be alpha diversity. log ratios, PCoA coordinates, etc.
+Multivariate data is usually a beta diversity distance matrix.
+
+For this tutorial we will be using alpha diversity values, but the commands are nearly the same for beta diversity distance matrices.
 
 First, open Python and import Evident
 
@@ -72,10 +79,6 @@ import evident
 ```
 
 Next, load your diversity file and sample metadata.
-For alpha diversity, this should be a pandas Series.
-For beta diversity, this should be an scikit-bio DistanceMatrix.
-Sample metadata should be a pandas DataFrame.
-We'll be using an alpha diversity vector for this tutorial but the commands are nearly the same for beta diversity distance matrices.
 
 ```python
 import pandas as pd
@@ -84,17 +87,17 @@ metadata = pd.read_table("data/metadata.tsv", sep="\t", index_col=0)
 faith_pd = metadata["faith_pd"]
 ```
 
-The main data structure in Evident is the 'DiversityHandler'.
-This is the way that Evident stores the diversity data and metadata for power calculations.
-For our alpha diversity example, we'll load the `AlphaDiversityHandler` class from Evident.
-`AlphaDiversityHandler` takes as input the pandas Series with the diversity values and the pandas DataFrame containing the sample metadata.
+The main data structure in Evident is the 'DataHandler'.
+This is the way that Evident stores the data and metadata for power calculations.
+For our alpha diversity example, we'll load the `UnivariateDataHandler` class from Evident.
+`UnivariateDataHandler` takes as input the pandas Series with the diversity values and the pandas DataFrame containing the sample metadata.
 By default, Evident will only consider metadata columns with, at max, 5 levels.
 To modify this behavior, provide a value for the `max_levels_per_category` argument.
 Additionally, Evident will not consider any category levels represented by fewer than 3 samples.
 To modify this behavior, use the `min_count_per_level` argument.
 
 ```python
-adh = evident.AlphaDiversityHandler(faith_pd, metadata)
+adh = evident.UnivariateDataHandler(faith_pd, metadata)
 ```
 
 Next, let's say we want to get the effect size of the diversity differences between two groups of samples.
@@ -180,9 +183,6 @@ You can also check the "Show scatter points" box to overlay the raw data onto th
 
 ![Bokeh Data Panel](https://raw.githubusercontent.com/biocore/evident/master/imgs/bokeh_panel_2.png)
 
-We provide a command line script to generate an interactive app using some test data.
-You can access this script at `evident/tests/make_interactive.py`.
-
 Note that because evident uses Python to perform the power calculations, it is at the moment *not* possible to embed this interactive app into a standalone webpage.
 
 ## QIIME 2 Usage
@@ -193,20 +193,22 @@ If not, we recommend you read the excellent [documentation](https://docs.qiime2.
 Note that we have only tested Evident on QIIME 2 version 2021.11.
 If you are using a different version and encounter an error please let us know via an issue.
 
-As with the standalone version, Evident requires a diversity file and a sample metadata file.
-These inputs are expected to conform to QIIME 2 standards.
-
 To calculate power, we can run the following command:
 
 ```bash
-qiime evident alpha-power-analysis \
-    --i-alpha-diversity faith_pd.qza \
+qiime evident univariate-power-analysis \
     --m-sample-metadata-file metadata.qza \
-    --m-sample-metadata-column classification \
+    --m-sample-metadata-file faith_pd.qza \
+    --p-data-column faith_pd \
+    --p-group-column classification \
     --p-alpha 0.01 0.05 0.1 \
     --p-total-observations $(seq 10 10 100) \
     --o-power-analysis-results results.qza
 ```
+
+We provide multiple sample metadata files to QIIME 2 because they are internally merged.
+You should provide a value for `--p-data-column` so Evident knows which column in the merged metadata contains the numeric values (this is only necessary for univariate analysis).
+In this case, the name of the `faith_pd.qza` vector is `faith_pd` so we use that as input.
 
 Notice how we used `$(seq 10 10 100)` to provide input into the `--p-total-observations` argument.
 `seq` is a command on UNIX-like systems that generates a sequence of numbers.
@@ -247,10 +249,11 @@ effect_size_by_category(
 With QIIME 2:
 
 ```bash
-qiime evident alpha-effect-size-by-category \
-    --i-alpha-diversity faith_pd.qza \
+qiime evident univariate-effect-size-by-category \
     --m-sample-metadata-file metadata.qza \
-    --p-columns classification sex cd_behavior \
+    --m-sample-metadata-file faith_pd.qza \
+    --p-data-column faith_pd \
+    --p-group-columns classification sex cd_behavior \
     --p-n-jobs 2 \
     --o-effect-size-results alpha_effect_sizes.qza
 ```
@@ -258,18 +261,18 @@ qiime evident alpha-effect-size-by-category \
 ## Repeated Measures
 
 Evident supports limited analysis of repeated measures.
-When your dataset has repeated measures, you can calculate `eta_squared` for alpha diversity differences.
-Note that only alpha diversity is supported with repeated measures.
+When your dataset has repeated measures, you can calculate `eta_squared` for univariate data.
+Note that multivariate data is not supported for repeated measures analysis.
 Power analysis for repeated measures implements a repeated measures ANOVA.
-Additionally, when performing power analysis *only* power can be calculated (in contrast to `AlphaDiversityHandler` and `BetaDiversityHandler` where alpha, significance, and observations can be calculated).
+Additionally, when performing power analysis *only* power can be calculated (in contrast to `UnivariateDataHandler` and `MultivariateDataHandler` where alpha, significance, and observations can be calculated).
 This power analysis assumes that the number of measurements per group is equal.
 
 With Python:
 
 ```python
-from evident.diversity_handler import RepeatedMeasuresAlphaDiversityHandler
+from evident.data_handler import RepeatedMeasuresUnivariateDataHandler
 
-rmadh = RepeatedMeasuresAlphaDiversityHandler(
+rmadh = RepeatedMeasuresUnivariateDataHandler(
     faith_pd,
     metadata,
     individual_id_column="subject",
@@ -288,9 +291,10 @@ power_analysis_result = rmandh.power_analysis(
 With QIIME 2:
 
 ```
-qiime evident alpha-power-analysis-repeated-measures \
-    --i-alpha-diversity faith_pd.qza \
-    --m-sample-metadata metadata.qza \
+qiime evident univariate-power-analysis-repeated-measures \
+    --m-sample-metadata-file metadata.qza \
+    --m-sample-metadata-file faith_pd.qza \
+    --p-data-column faith_pd \
     --p-individual-id-column subject \
     --p-state-column group \
     --p-subjects 2 4 5 \

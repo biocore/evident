@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from evident.diversity_handler import RepeatedMeasuresAlphaDiversityHandler
+from evident.data_handler import RepeatedMeasuresUnivariateDataHandler
 from evident.stats import calculate_eta_squared, calculate_rm_anova_power
 
 
@@ -21,7 +21,7 @@ def rm_alpha_mock():
         pd.DataFrame.from_dict(data_dict)
         .reset_index()
         .rename(columns={"index": "group"})
-        .melt(id_vars="group", var_name="subject", value_name="diversity")
+        .melt(id_vars="group", var_name="subject", value_name="values")
     )
 
     rng = np.random.default_rng()
@@ -34,9 +34,9 @@ def rm_alpha_mock():
         p=[0.25, 0.25, 0.5]
     )
     long_data["bad_col"] = bad_col
-    rmadh = RepeatedMeasuresAlphaDiversityHandler(
-        data=long_data["diversity"],
-        metadata=long_data.drop(columns=["diversity"]),
+    rmadh = RepeatedMeasuresUnivariateDataHandler(
+        data=long_data["values"],
+        metadata=long_data.drop(columns=["values"]),
         individual_id_column="subject",
     )
     return rmadh
@@ -47,7 +47,7 @@ def test_calc_eta_squared(rm_alpha_mock):
         pd.concat([rm_alpha_mock.metadata, rm_alpha_mock.data], axis=1),
         index="subject",
         columns="group",
-        values="diversity"
+        values="values"
     )
     calc_eta_sq = calculate_eta_squared(wide_data)
     np.testing.assert_almost_equal(calc_eta_sq, 0.715, decimal=3)

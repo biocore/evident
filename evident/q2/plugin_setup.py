@@ -1,19 +1,17 @@
 import importlib
 
-from qiime2.plugin import (Plugin, MetadataColumn, Categorical, Int, Float,
-                           List, Range, Choices, Str, Citations, Bool,
-                           Metadata)
-from q2_types.sample_data import SampleData, AlphaDiversity
+from qiime2.plugin import (Plugin, Int, Float, List, Range, Choices, Str,
+                           Citations, Bool, Metadata)
 from q2_types.distance_matrix import DistanceMatrix
 
 from evident import __version__
 from ._format import PowerAnalysisResultsDirectoryFormat as PARsDirFmt
 from ._format import EffectSizeResultsDirectoryFormat as ERsDirFmt
 from ._type import PowerAnalysisResults, EffectSizeResults
-from ._methods import (alpha_power_analysis, beta_power_analysis,
-                       alpha_effect_size_by_category,
-                       beta_effect_size_by_category,
-                       alpha_power_analysis_repeated_measures)
+from ._methods import (univariate_power_analysis, multivariate_power_analysis,
+                       univariate_effect_size_by_category,
+                       multivariate_effect_size_by_category,
+                       univariate_power_analysis_repeated_measures)
 from ._visualizers import plot_power_curve, visualize_results
 
 
@@ -21,7 +19,8 @@ Probability = Float % Range(0, 1, inclusive_end=False)
 Correlation = Float % Range(-1, 1, inclusive_end=True)
 
 PA_PARAM_DESCS = {
-    "sample_metadata": "Categorical sample metadata column.",
+    "group_column": "Column to use for groupings.",
+    "sample_metadata": "Sample metadata.",
     "alpha": "Significance level.",
     "power": (
         "Probability of rejecting the null hypothesis given that the "
@@ -52,7 +51,7 @@ PA_PARAM_DESCS = {
 
 ES_PARAM_DESCS = {
     "sample_metadata": "Sample metadata.",
-    "columns": "List of columns for which to calculate effect size.",
+    "group_columns": "List of columns for which to calculate effect size.",
     "pairwise": (
         "Whether to calculate pairwise effect sizes within groups "
         "with more than 2 levels. If true, computes Cohen's d for all "
@@ -81,9 +80,9 @@ plugin = Plugin(
     version=__version__,
     website="https://github.com/biocore/evident",
     citations=[citations["Casals-Pascual2020"]],
-    short_description="Plugin for diversity effect size calculations",
+    short_description="Plugin for effect size calculations",
     description=(
-        "Perform power analysis on microbiome diversity data. Supports "
+        "Perform power analysis on microbiome data. Supports "
         "calculation of effect size given metadata covariates and supporting "
         "visualizations."
     ),
@@ -91,12 +90,16 @@ plugin = Plugin(
 )
 
 
+UNIV_PA_PARAM_DESCS = PA_PARAM_DESCS.copy()
+UNIV_PA_PARAM_DESCS["data_column"] = "Column in metadata containing data."
+
 plugin.methods.register_function(
-    function=alpha_power_analysis,
-    inputs={"alpha_diversity": SampleData[AlphaDiversity]},
-    input_descriptions={"alpha_diversity": "Alpha diversity vector"},
+    function=univariate_power_analysis,
+    inputs={},
     parameters={
-        "sample_metadata": MetadataColumn[Categorical],
+        "group_column": Str,
+        "data_column": Str,
+        "sample_metadata": Metadata,
         "alpha": List[Probability],
         "power": List[Probability],
         "total_observations": List[Int],
@@ -104,22 +107,23 @@ plugin.methods.register_function(
         "max_levels_per_category": Int,
         "min_count_per_level": Int
     },
-    parameter_descriptions=PA_PARAM_DESCS,
+    parameter_descriptions=UNIV_PA_PARAM_DESCS,
     outputs=[("power_analysis_results", PowerAnalysisResults)],
-    name="Alpha diversity power analysis.",
+    name="Univariate data power analysis.",
     description=(
-        "Use sample alpha diversity data to perform power calculations "
+        "Use sample univariate data to perform power calculations "
         "for desired significance level, power, or sample size. Exactly one "
         "of alpha, power, or sample size must be excluded."
     )
 )
 
 plugin.methods.register_function(
-    function=beta_power_analysis,
-    inputs={"beta_diversity": DistanceMatrix},
-    input_descriptions={"beta_diversity": "Beta diversity distance matrix"},
+    function=multivariate_power_analysis,
+    inputs={"data": DistanceMatrix},
+    input_descriptions={"data": "Sample distance matrix"},
     parameters={
-        "sample_metadata": MetadataColumn[Categorical],
+        "group_column": Str,
+        "sample_metadata": Metadata,
         "alpha": List[Probability],
         "power": List[Probability],
         "total_observations": List[Int],
@@ -129,16 +133,17 @@ plugin.methods.register_function(
     },
     parameter_descriptions=PA_PARAM_DESCS,
     outputs=[("power_analysis_results", PowerAnalysisResults)],
-    name="Beta diversity power analysis.",
+    name="Multivariate data power analysis.",
     description=(
-        "Use sample beta diversity data to perform power calculations "
+        "Use sample Multivariate data data to perform power calculations "
         "for desired significance level, power, or sample size."
     )
 )
 
 rm_param_descs = {
     k: v for k, v in PA_PARAM_DESCS.items()
-    if k not in ["total_observations", "difference", "power"]
+    if k not in ["total_observations", "difference", "power",
+                 "group_column"]
 }
 rm_param_descs["individual_id_column"] = (
     "Metadata column containing IDs for individual subjects."
@@ -150,14 +155,16 @@ rm_param_descs["subjects"] = "Number of subjects."
 rm_param_descs["measurements"] = "Number of measurements per subject."
 rm_param_descs["correlation"] = "Correlation between repeated measurements."
 rm_param_descs["epsilon"] = "Sphericity parameter."
+rm_param_descs["data_column"] = "Column in metadata containing data."
 
 plugin.methods.register_function(
-    function=alpha_power_analysis_repeated_measures,
-    inputs={"alpha_diversity": SampleData[AlphaDiversity]},
-    input_descriptions={"alpha_diversity": "Alpha diversity vector"},
+    function=univariate_power_analysis_repeated_measures,
+    inputs={},
+    input_descriptions={},
     parameters={
         "sample_metadata": Metadata,
         "individual_id_column": Str,
+        "data_column": Str,
         "state_column": Str,
         "subjects": List[Int],
         "measurements": List[Int],
@@ -169,20 +176,20 @@ plugin.methods.register_function(
     },
     parameter_descriptions=rm_param_descs,
     outputs=[("power_analysis_results", PowerAnalysisResults)],
-    name="Alpha diversity power analysis for repeated measures.",
+    name="Univariate data power analysis for repeated measures.",
     description=(
-        "Use sample alpha diversity data to perform power calculations "
+        "Use sample univariate data to perform power calculations "
         "for repeated measures."
     )
 )
 
 plugin.methods.register_function(
-    function=alpha_effect_size_by_category,
-    inputs={"alpha_diversity": SampleData[AlphaDiversity]},
-    input_descriptions={"alpha_diversity": "Alpha diversity vector"},
+    function=univariate_effect_size_by_category,
+    inputs={},
     parameters={
         "sample_metadata": Metadata,
-        "columns": List[Str],
+        "data_column": Str,
+        "group_columns": List[Str],
         "pairwise": Bool,
         "n_jobs": Int,
         "max_levels_per_category": Int,
@@ -190,20 +197,20 @@ plugin.methods.register_function(
     },
     parameter_descriptions=ES_PARAM_DESCS,
     outputs=[("effect_size_results", EffectSizeResults)],
-    name="Alpha diversity effect size by category.",
+    name="Univariate data effect size by category.",
     description=(
-        "Calculate alpha diversity difference effect size of multiple "
+        "Calculate univariate data difference effect size of multiple "
         "categories."
     )
 )
 
 plugin.methods.register_function(
-    function=beta_effect_size_by_category,
-    inputs={"beta_diversity": DistanceMatrix},
-    input_descriptions={"beta_diversity": "Beta diversity distance matrix"},
+    function=multivariate_effect_size_by_category,
+    inputs={"data": DistanceMatrix},
+    input_descriptions={"data": "Multivariate data distance matrix"},
     parameters={
         "sample_metadata": Metadata,
-        "columns": List[Str],
+        "group_columns": List[Str],
         "pairwise": Bool,
         "n_jobs": Int,
         "max_levels_per_category": Int,
@@ -211,9 +218,9 @@ plugin.methods.register_function(
     },
     parameter_descriptions=ES_PARAM_DESCS,
     outputs=[("effect_size_results", EffectSizeResults)],
-    name="Beta diversity effect size by category.",
+    name="Multivariate data effect size by category.",
     description=(
-        "Calculate beta diversity difference effect size of multiple "
+        "Calculate multivariate data difference effect size of multiple "
         "categories."
     )
 )

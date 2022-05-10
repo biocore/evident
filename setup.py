@@ -30,7 +30,7 @@ classes = """
 """
 classifiers = [s.strip() for s in classes.split("\n") if s]
 
-description = "Effect size calculations for microbiome diversity data."
+description = "Effect size calculations for microbiome data."
 
 setup(
     name="evident",
