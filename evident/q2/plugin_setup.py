@@ -93,8 +93,6 @@ plugin = Plugin(
 UNIV_PA_PARAM_DESCS = PA_PARAM_DESCS.copy()
 UNIV_PA_PARAM_DESCS["data_column"] = "Column in metadata containing data."
 
-# QIIME 2 needs an input so we provide SampleData[AlphaDiversity] which is
-# optional. Can't provide just SampleData, unfortunately.
 plugin.methods.register_function(
     function=univariate_power_analysis,
     inputs={},
