@@ -301,7 +301,8 @@ qiime evident univariate-power-analysis-repeated-measures \
     --p-measurements 10 \
     --p-alpha 0.05 \
     --p-correlation -0.5 0 0.5 \
-    --p-epsilon 0.1
+    --p-epsilon 0.1 \
+    --o-power-analysis-results power.qza
 ```
 
 ## Help with Evident
@@ -311,3 +312,7 @@ We welcome any ideas or documentation updates/fixes so please submit an issue an
 
 If your question is regarding the QIIME 2 version of Evident, consider posting to the [QIIME 2 forum](https://forum.qiime2.org/).
 You can open an issue on the [Community Plugin Support](https://forum.qiime2.org/c/community-plugin-support/24) board and tag [@gibsramen](https://forum.qiime2.org/u/gibsramen) if required.
+
+## Citation
+
+If you use Evident in your work, please cite our [preprint](https://www.biorxiv.org/content/10.1101/2022.05.19.492684v1) on bioRxiv.
