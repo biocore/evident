@@ -10,22 +10,31 @@ from skbio import DistanceMatrix
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
 from . import _exceptions as exc
-from .results import (PowerAnalysisResult, PowerAnalysisResults,
-                      EffectSizeResult)
+from .results import (CrossSectionalPowerAnalysisResult, PowerAnalysisResults,
+                      RepeatedMeasuresPowerAnalysisResult, EffectSizeResult)
 from .stats import (calculate_cohens_d, calculate_cohens_f,
-                    calculate_pooled_stdev)
+                    calculate_pooled_stdev, calculate_eta_squared,
+                    calculate_rm_anova_power)
 from .utils import _listify, _check_sample_overlap
 
 
-class _BaseDiversityHandler(ABC):
-    """Abstract class for handling diversity data and metadata."""
+class _BaseDataHandler(ABC):
+    """Abstract class for handling data and metadata."""
     def __init__(
         self,
         data=None,
         metadata: pd.DataFrame = None,
         max_levels_per_category: int = 5,
-        min_count_per_level: int = 3
+        min_count_per_level: int = 3,
+        individual_id_column: str = None
     ):
+        cat_columns = metadata.columns
+        if individual_id_column is not None:
+            if individual_id_column not in cat_columns:
+                raise ValueError(f"{individual_id_column} not in metadata!")
+            cat_columns = cat_columns.drop(individual_id_column)
+            self.individual_id_column = individual_id_column
+
         self.data = data
         metadata = metadata.copy()
 
@@ -34,7 +43,7 @@ class _BaseDiversityHandler(ABC):
 
         warn_msg_num_levels = False
         warn_msg_level_count = False
-        for col in metadata.columns:
+        for col in cat_columns:
             # Drop non-categorical columns
             if metadata[col].dtype != np.dtype("object"):
                 cols_to_drop.append(col)
@@ -87,10 +96,10 @@ class _BaseDiversityHandler(ABC):
         column: str,
         difference: float = None
     ) -> EffectSizeResult:
-        """Get effect size of diversity differences given column.
+        """Get effect size of data differences given column.
 
-        If two categories, return Cohen's d from t-test. If more than two
-        categories, return Cohen's f from ANOVA.
+        Otherwise, if two categories, return Cohen's d from t-test. If more
+        than two categories, return Cohen's f from ANOVA.
 
         :param column: Column containing categories
         :type column: str
@@ -140,8 +149,8 @@ class _BaseDiversityHandler(ABC):
         difference: float = None,
         alpha: float = None,
         power: float = None
-    ) -> Union[PowerAnalysisResult, PowerAnalysisResults]:
-        """Perform power analysis using this diversity dataset.
+    ) -> Union[CrossSectionalPowerAnalysisResult, PowerAnalysisResults]:
+        """Perform power analysis using this dataset.
 
         Exactly one of total_observations, alpha, or power must be None.
 
@@ -168,7 +177,8 @@ class _BaseDiversityHandler(ABC):
         :type power: float or np.array[float]
 
         :returns: Results from power analysis
-        :rtype: Either PowerAnalysisResult or PowerAnalysisResults
+        :rtype: Either CrossSectionalPowerAnalysisResult or
+            PowerAnalysisResults
         """
         args = [alpha, power, total_observations]
         none_args = [x is None for x in args]
@@ -200,7 +210,7 @@ class _BaseDiversityHandler(ABC):
         difference: float = None,
         alpha: float = None,
         power: float = None
-    ) -> PowerAnalysisResult:
+    ) -> CrossSectionalPowerAnalysisResult:
         """Compute the power analysis for a single value.
 
         :param column: Name of column in metadata to consider
@@ -221,7 +231,7 @@ class _BaseDiversityHandler(ABC):
         :type power: float
 
         :returns: Collection of values from power analysis
-        :rtype: evident.results.PowerAnalysisResult
+        :rtype: evident.results.CrossSectionalPowerAnalysisResult
         """
         power_func = self._create_partial_power_func(
             column=column,
@@ -251,7 +261,7 @@ class _BaseDiversityHandler(ABC):
         else:
             total_observations = val_to_solve
 
-        results = PowerAnalysisResult(
+        results = CrossSectionalPowerAnalysisResult(
             alpha=alpha,
             total_observations=total_observations,
             power=power,
@@ -363,17 +373,18 @@ class _BaseDiversityHandler(ABC):
         return power_func
 
 
-class AlphaDiversityHandler(_BaseDiversityHandler):
+class UnivariateDataHandler(_BaseDataHandler):
     def __init__(
         self,
         data: pd.Series,
         metadata: pd.DataFrame,
         max_levels_per_category: int = 5,
-        min_count_per_level: int = 3
+        min_count_per_level: int = 3,
+        **kwargs
     ):
-        """Handler for alpha diversity data.
+        """Handler for univariate data.
 
-        :param data: Alpha diversity vector
+        :param data: Univariate data vector
         :type data: pd.Series
 
         :param metadata: Sample metadata
@@ -403,25 +414,146 @@ class AlphaDiversityHandler(_BaseDiversityHandler):
             data=data.loc[samps_in_common],
             metadata=metadata.loc[samps_in_common],
             max_levels_per_category=max_levels_per_category,
-            min_count_per_level=min_count_per_level
+            min_count_per_level=min_count_per_level,
+            **kwargs
         )
 
     def subset_values(self, ids: list) -> np.array:
-        """Get alpha-diversity differences among provided samples."""
+        """Get univariate data differences among provided samples."""
         return self.data.loc[ids].values
 
 
-class BetaDiversityHandler(_BaseDiversityHandler):
+class RepeatedMeasuresUnivariateDataHandler(UnivariateDataHandler):
+    def __init__(
+        self,
+        data: pd.Series,
+        metadata: pd.DataFrame,
+        individual_id_column: str,
+        max_levels_per_category: int = 5,
+        min_count_per_level: int = 3,
+    ):
+        super().__init__(
+            data=data,
+            metadata=metadata,
+            max_levels_per_category=max_levels_per_category,
+            min_count_per_level=min_count_per_level,
+            individual_id_column=individual_id_column
+        )
+
+    @lru_cache()
+    def calculate_effect_size(self, state_column: str) -> EffectSizeResult:
+        if self.data.name not in self.metadata.columns:
+            long_data = pd.concat([self.data, self.metadata], axis=1)
+        else:
+            long_data = self.metadata
+        wide_data = pd.pivot_table(
+            data=long_data,
+            index=self.individual_id_column,
+            columns=state_column,
+            values=self.data.name
+        )
+        result = calculate_eta_squared(wide_data)
+
+        return EffectSizeResult(effect_size=result, metric="eta_squared",
+                                column=state_column)
+
+    def power_analysis(
+        self,
+        state_column: str,
+        subjects: int,
+        measurements: int,
+        alpha: float,
+        correlation: float,
+        epsilon: float,
+    ):
+        effect_size_res = self.calculate_effect_size(state_column)
+        args = [subjects, measurements, alpha, correlation, epsilon]
+        vector_args = map(lambda x: isinstance(x, Iterable), args)
+        if any(vector_args):
+            power_analysis_func = self._bulk_power_analysis
+        else:
+            power_analysis_func = self._single_power_analysis
+
+        results = power_analysis_func(
+            effect_size_result=effect_size_res,
+            subjects=subjects,
+            measurements=measurements,
+            alpha=alpha,
+            correlation=correlation,
+            epsilon=epsilon
+        )
+        return results
+
+    def _single_power_analysis(
+        self,
+        effect_size_result: EffectSizeResult,
+        subjects: int,
+        measurements: int,
+        alpha: float = 0.05,
+        correlation: float = 0.5,
+        epsilon: float = 1.0
+    ) -> RepeatedMeasuresPowerAnalysisResult:
+        power = calculate_rm_anova_power(
+            subjects=subjects,
+            measurements=measurements,
+            threshold=alpha,
+            correlation=correlation,
+            epsilon=epsilon,
+            effect_size=effect_size_result.effect_size
+        )
+        result = RepeatedMeasuresPowerAnalysisResult(
+            alpha=alpha,
+            power=power,
+            effect_size_result=effect_size_result,
+            subjects=subjects,
+            measurements=measurements,
+            epsilon=epsilon,
+            correlation=correlation,
+            total_observations=subjects * measurements
+        )
+        return result
+
+    def _bulk_power_analysis(
+        self,
+        effect_size_result: EffectSizeResult,
+        subjects=None,
+        measurements=None,
+        alpha=None,
+        correlation=float,
+        epsilon=float
+    ) -> PowerAnalysisResults:
+        alpha = _listify(alpha)
+        subjects = _listify(subjects)
+        measurements = _listify(measurements)
+        correlation = _listify(correlation)
+        epsilon = _listify(epsilon)
+        power_args = [alpha, subjects, measurements, correlation, epsilon]
+
+        power_arg_products = product(*power_args)
+        results_list = []
+        for _alpha, _subj, _meas, _corr, _eps in power_arg_products:
+            results_list.append(self._single_power_analysis(
+                effect_size_result,
+                _subj,
+                _meas,
+                _alpha,
+                _corr,
+                _eps
+            ))
+        return PowerAnalysisResults(results_list)
+
+
+class MultivariateDataHandler(_BaseDataHandler):
     def __init__(
         self,
         data: DistanceMatrix,
         metadata: pd.DataFrame,
         max_levels_per_category: int = 5,
-        min_count_per_level: int = 3
+        min_count_per_level: int = 3,
     ):
-        """Handler for beta diversity data.
+        """Handler for multivariate data.
 
-        :param data: Beta diversity distance matrix
+        :param data: Multivariate distance matrix
         :type data: skbio.DistanceMatrix
 
         :param metadata: Sample metadata
@@ -431,11 +563,6 @@ class BetaDiversityHandler(_BaseDiversityHandler):
             keep. Any categorical columns that have more than this number of
             unique levels will not be saved, defaults to 5.
         :type max_levels_per_category: int
-
-        :param min_count_per_level: Min number of samples in a given category
-            level to keep. Any levels that have fewer than this many samples
-            will not be saved, defaults to 3.
-        :type min_count_per_level: int
         """
         if not isinstance(data, DistanceMatrix):
             raise ValueError("data must be of type skbio.DistanceMatrix")
@@ -448,9 +575,9 @@ class BetaDiversityHandler(_BaseDiversityHandler):
             data=data.filter(samps_in_common),
             metadata=metadata.loc[samps_in_common],
             max_levels_per_category=max_levels_per_category,
-            min_count_per_level=min_count_per_level
+            min_count_per_level=min_count_per_level,
         )
 
     def subset_values(self, ids: list) -> np.array:
-        """Get beta-diversity differences among provided samples."""
+        """Get multivariate data differences among provided samples."""
         return np.array(self.data.filter(ids).to_series().values)

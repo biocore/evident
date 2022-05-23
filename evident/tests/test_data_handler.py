@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 from skbio import DistanceMatrix
 
-from evident.diversity_handler import (AlphaDiversityHandler,
-                                       BetaDiversityHandler)
+from evident.data_handler import (UnivariateDataHandler,
+                                  MultivariateDataHandler)
 import evident._exceptions as exc
 
 na_values = ["not applicable"]
@@ -20,7 +20,7 @@ class TestAlphaDiv:
             "cd_behavior", "cd_location", "cd_resection", "ibd_subtype",
             "perianal_disease", "sex", "classification"
         ]
-        a = AlphaDiversityHandler(df["faith_pd"], df)
+        a = UnivariateDataHandler(df["faith_pd"], df)
         assert a.metadata.shape == (220, len(exp_cols))
         assert a.data.shape == (220, )
 
@@ -40,7 +40,7 @@ class TestAlphaDiv:
         data = alpha_mock.data.to_frame()
 
         with pytest.raises(ValueError) as exc_info:
-            AlphaDiversityHandler(data, alpha_mock.metadata)
+            UnivariateDataHandler(data, alpha_mock.metadata)
 
         exp_err_msg = "data must be of type pandas.Series"
         assert str(exc_info.value) == exp_err_msg
@@ -50,7 +50,7 @@ class TestAlphaDiv:
         data[0] = np.nan
         data[-1] = np.nan
         with pytest.warns(UserWarning) as warn_info:
-            AlphaDiversityHandler(data, alpha_mock.metadata)
+            UnivariateDataHandler(data, alpha_mock.metadata)
 
         warn_msg_1 = warn_info[0].message.args[0]
         warn_msg_2 = warn_info[1].message.args[0]
@@ -75,7 +75,7 @@ class TestBetaDiv:
         dm_file = os.path.join(os.path.dirname(__file__),
                                "data/distance_matrix.lsmat.gz")
         dm = DistanceMatrix.read(dm_file)
-        b = BetaDiversityHandler(dm, df)
+        b = MultivariateDataHandler(dm, df)
         assert b.metadata.shape == (220, len(exp_cols))
         assert b.data.shape == (220, 220)
 
@@ -95,7 +95,7 @@ class TestBetaDiv:
         data = beta_mock.data.to_data_frame()
 
         with pytest.raises(ValueError) as exc_info:
-            BetaDiversityHandler(data, beta_mock.metadata)
+            MultivariateDataHandler(data, beta_mock.metadata)
 
         exp_err_msg = "data must be of type skbio.DistanceMatrix"
         assert str(exc_info.value) == exp_err_msg
@@ -170,7 +170,7 @@ class TestPower:
         assert str(exc_info.value) == exp_err_msg
 
     def test_alpha_power_f(self, alpha_mock, monkeypatch):
-        # Monkey patch Cohen's f calculation directly in diversity_handler
+        # Monkey patch Cohen's f calculation directly in data_handler
         #     instead of in _utils. Doesn't really make sense that it has
         #     to be done this way but whatever.
         # https://stackoverflow.com/a/45466846
@@ -178,7 +178,7 @@ class TestPower:
             return 0.4
 
         monkeypatch.setattr(
-            "evident.diversity_handler.calculate_cohens_f",
+            "evident.data_handler.calculate_cohens_f",
             mock_cohens_f
         )
         calc_power = alpha_mock.power_analysis(

@@ -33,9 +33,9 @@ def test_interactive(mock, request, tmpdir):
         "data/metadata.tsv"
     }
     if mock == "alpha_mock":
-        exp_files.add("data/diversity.alpha.tsv")
+        exp_files.add("data/data.univariate.tsv")
     else:
-        exp_files.add("data/diversity.beta.lsmat")
+        exp_files.add("data/data.multivariate.lsmat")
     assert files == exp_files
 
     md = pd.read_table(os.path.join(outdir, "data/metadata.tsv"), sep="\t",

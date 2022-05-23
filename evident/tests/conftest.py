@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 from skbio import DistanceMatrix
 
-from evident.diversity_handler import (AlphaDiversityHandler,
-                                       BetaDiversityHandler)
+from evident.data_handler import (UnivariateDataHandler,
+                                  MultivariateDataHandler)
 
 NA_VALS = ["missing: not provided", "not applicable"]
 
@@ -15,7 +15,7 @@ NA_VALS = ["missing: not provided", "not applicable"]
 def alpha_mock():
     fname = os.path.join(os.path.dirname(__file__), "data/metadata.tsv")
     df = pd.read_table(fname, sep="\t", index_col=0, na_values=NA_VALS)
-    adh = AlphaDiversityHandler(df["faith_pd"], df)
+    adh = UnivariateDataHandler(df["faith_pd"], df)
     return adh
 
 
@@ -26,5 +26,5 @@ def beta_mock():
     dm_file = os.path.join(os.path.dirname(__file__),
                            "data/distance_matrix.lsmat.gz")
     dm = DistanceMatrix.read(dm_file)
-    bdh = BetaDiversityHandler(dm, df)
+    bdh = MultivariateDataHandler(dm, df)
     return bdh

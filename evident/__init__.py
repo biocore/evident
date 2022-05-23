@@ -1,6 +1,6 @@
-from .diversity_handler import AlphaDiversityHandler, BetaDiversityHandler
+from .data_handler import UnivariateDataHandler, MultivariateDataHandler
 
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
-__all__ = ["AlphaDiversityHandler", "BetaDiversityHandler"]
+__all__ = ["UnivariateDataHandler", "MultivariateDataHandler"]
