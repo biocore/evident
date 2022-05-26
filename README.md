@@ -93,8 +93,9 @@ For our alpha diversity example, we'll load the `UnivariateDataHandler` class fr
 `UnivariateDataHandler` takes as input the pandas Series with the diversity values and the pandas DataFrame containing the sample metadata.
 By default, Evident will only consider metadata columns with, at max, 5 levels.
 To modify this behavior, provide a value for the `max_levels_per_category` argument.
+You can set this value to -1 to not provide an upper limit of levels at which to drop a column.
 Additionally, Evident will not consider any category levels represented by fewer than 3 samples.
-To modify this behavior, use the `min_count_per_level` argument.
+To modify this behavior, use the `min_count_per_level` argument (must be >1).
 
 ```python
 adh = evident.UnivariateDataHandler(faith_pd, metadata)
