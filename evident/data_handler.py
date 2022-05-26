@@ -28,6 +28,9 @@ class _BaseDataHandler(ABC):
         min_count_per_level: int = 3,
         individual_id_column: str = None
     ):
+        if min_count_per_level <= 1:
+            raise ValueError("min_count_per_level must be > 1.")
+
         cat_columns = metadata.columns
         if individual_id_column is not None:
             if individual_id_column not in cat_columns:
@@ -64,16 +67,15 @@ class _BaseDataHandler(ABC):
 
             # Drop levels that have fewer than min_count_per_level samples
             level_count = metadata[col].value_counts()
-            if min_count_per_level != -1:
-                under_thresh = level_count[level_count < min_count_per_level]
-                if not under_thresh.empty:
-                    levels_under_thresh = list(under_thresh.index)
-                    metadata[col].replace(
-                        {x: np.nan for x in levels_under_thresh},
-                        inplace=True
-                    )
-                    levels_to_drop[col] = levels_under_thresh
-                    warn_msg_level_count = True
+            under_thresh = level_count[level_count < min_count_per_level]
+            if not under_thresh.empty:
+                levels_under_thresh = list(under_thresh.index)
+                metadata[col].replace(
+                    {x: np.nan for x in levels_under_thresh},
+                    inplace=True
+                )
+                levels_to_drop[col] = levels_under_thresh
+                warn_msg_level_count = True
 
         if warn_msg_num_levels:
             warn(
@@ -399,12 +401,13 @@ class UnivariateDataHandler(_BaseDataHandler):
 
         :param max_levels_per_category: Max number of levels in a category to
             keep. Any categorical columns that have more than this number of
-            unique levels will not be saved, defaults to 5.
+            unique levels will not be saved, defaults to 5. Set this value to
+            -1 to not drop anything.
         :type max_levels_per_category: int
 
         :param min_count_per_level: Min number of samples in a given category
             level to keep. Any levels that have fewer than this many samples
-            will not be saved, defaults to 3.
+            will not be saved, defaults to 3. Must be > 1.
         :type min_count_per_level: int
         """
         if not isinstance(data, pd.Series):
@@ -459,8 +462,7 @@ class RepeatedMeasuresUnivariateDataHandler(UnivariateDataHandler):
 
         :param min_count_per_level: Min number of samples in a given category
             level to keep. Any levels that have fewer than this many samples
-            will not be saved, defaults to 3. Set this value to -1 to not drop
-            anything.
+            will not be saved, defaults to 3. Must be > 1.
         :type min_count_per_level: int
         """
         super().__init__(
@@ -598,8 +600,7 @@ class MultivariateDataHandler(_BaseDataHandler):
 
         :param min_count_per_level: Min number of samples in a given category
             level to keep. Any levels that have fewer than this many samples
-            will not be saved, defaults to 3. Set this value to -1 to not drop
-            anything.
+            will not be saved, defaults to 3. Must be > 1.
         :type min_count_per_level: int
         """
         if not isinstance(data, DistanceMatrix):
