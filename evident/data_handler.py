@@ -439,6 +439,30 @@ class RepeatedMeasuresUnivariateDataHandler(UnivariateDataHandler):
         max_levels_per_category: int = 5,
         min_count_per_level: int = 3,
     ):
+        """Handler for univariate repeated measures data.
+
+        :param data: Univariate data vector
+        :type data: pd.Series
+
+        :param metadata: Sample metadata
+        :type metadata: pd.DataFrame
+
+        :param individual_id_column: Column to group each sample to an
+            individual
+        :type individual_id_column: str
+
+        :param max_levels_per_category: Max number of levels in a category to
+            keep. Any categorical columns that have more than this number of
+            unique levels will not be saved, defaults to 5. Set this value to
+            -1 to not drop anything.
+        :type max_levels_per_category: int
+
+        :param min_count_per_level: Min number of samples in a given category
+            level to keep. Any levels that have fewer than this many samples
+            will not be saved, defaults to 3. Set this value to -1 to not drop
+            anything.
+        :type min_count_per_level: int
+        """
         super().__init__(
             data=data,
             metadata=metadata,
@@ -568,8 +592,15 @@ class MultivariateDataHandler(_BaseDataHandler):
 
         :param max_levels_per_category: Max number of levels in a category to
             keep. Any categorical columns that have more than this number of
-            unique levels will not be saved, defaults to 5.
+            unique levels will not be saved, defaults to 5. Set this value to
+            -1 to not drop anything.
         :type max_levels_per_category: int
+
+        :param min_count_per_level: Min number of samples in a given category
+            level to keep. Any levels that have fewer than this many samples
+            will not be saved, defaults to 3. Set this value to -1 to not drop
+            anything.
+        :type min_count_per_level: int
         """
         if not isinstance(data, DistanceMatrix):
             raise ValueError("data must be of type skbio.DistanceMatrix")
