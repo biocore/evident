@@ -51,22 +51,29 @@ class _BaseDataHandler(ABC):
 
             # Drop columns with only one level or more than max
             num_uniq_cols = len(metadata[col].dropna().unique())
-            if not (1 < num_uniq_cols <= max_levels_per_category):
-                cols_to_drop.append(col)
-                warn_msg_num_levels = True
-                continue
+            if max_levels_per_category != -1:
+                if not (1 < num_uniq_cols <= max_levels_per_category):
+                    cols_to_drop.append(col)
+                    warn_msg_num_levels = True
+                    continue
+            else:
+                if not (1 < num_uniq_cols):
+                    cols_to_drop.append(col)
+                    warn_msg_num_levels = True
+                    continue
 
             # Drop levels that have fewer than min_count_per_level samples
             level_count = metadata[col].value_counts()
-            under_thresh = level_count[level_count < min_count_per_level]
-            if not under_thresh.empty:
-                levels_under_thresh = list(under_thresh.index)
-                metadata[col].replace(
-                    {x: np.nan for x in levels_under_thresh},
-                    inplace=True
-                )
-                levels_to_drop[col] = levels_under_thresh
-                warn_msg_level_count = True
+            if min_count_per_level != -1:
+                under_thresh = level_count[level_count < min_count_per_level]
+                if not under_thresh.empty:
+                    levels_under_thresh = list(under_thresh.index)
+                    metadata[col].replace(
+                        {x: np.nan for x in levels_under_thresh},
+                        inplace=True
+                    )
+                    levels_to_drop[col] = levels_under_thresh
+                    warn_msg_level_count = True
 
         if warn_msg_num_levels:
             warn(
