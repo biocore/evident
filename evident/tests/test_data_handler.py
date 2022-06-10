@@ -27,7 +27,10 @@ class TestAlphaDiv:
     def test_no_max_levels(self):
         fname = os.path.join(os.path.dirname(__file__), "data/metadata.tsv")
         df = pd.read_table(fname, sep="\t", index_col=0, na_values=na_values)
-        obj_cols = [col for col in df.columns if df[col].dtype == np.dtype("object")]
+        obj_cols = [
+            col for col in df.columns
+            if df[col].dtype == np.dtype("object")
+        ]
         col_level_counts = np.array(
             [len(df[col].dropna().unique()) for col in df]
         )
@@ -44,10 +47,10 @@ class TestAlphaDiv:
         df = pd.read_table(fname, sep="\t", index_col=0, na_values=na_values)
 
         with pytest.raises(ValueError) as exc_info:
-            UnivariateDataHandler(df["faith_pd"], df, min_count_per_level=val)
+            UnivariateDataHandler(df["faith_pd"], df,
+                                  min_count_per_level=val)
         exp_err_msg = "min_count_per_level must be > 1."
         assert str(exc_info.value) == exp_err_msg
-
 
     def test_subset_alpha_values(self, alpha_mock):
         md = alpha_mock.metadata
