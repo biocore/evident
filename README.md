@@ -92,10 +92,12 @@ This is the way that Evident stores the data and metadata for power calculations
 For our alpha diversity example, we'll load the `UnivariateDataHandler` class from Evident.
 `UnivariateDataHandler` takes as input the pandas Series with the diversity values and the pandas DataFrame containing the sample metadata.
 By default, Evident will only consider metadata columns with, at max, 5 levels.
+We choose 5 samples as the default value because columns with more than 5 groups may be indicative of technical columns (e.g. subject ID).
 To modify this behavior, provide a value for the `max_levels_per_category` argument.
 You can set this value to -1 to not provide an upper limit of levels at which to drop a column.
 Additionally, Evident will not consider any category levels represented by fewer than 3 samples.
-To modify this behavior, use the `min_count_per_level` argument (must be >1).
+We choose 3 samples as the default value because levels with fewer than 3 samples may exhibit high variances.
+To modify this behavior, use the `min_count_per_level` argument (must be > 1).
 
 ```python
 adh = evident.UnivariateDataHandler(faith_pd, metadata)
