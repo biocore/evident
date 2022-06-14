@@ -28,6 +28,9 @@ class _BaseDataHandler(ABC):
         min_count_per_level: int = 3,
         individual_id_column: str = None
     ):
+        if min_count_per_level <= 1:
+            raise ValueError("min_count_per_level must be > 1.")
+
         cat_columns = metadata.columns
         if individual_id_column is not None:
             if individual_id_column not in cat_columns:
@@ -51,10 +54,16 @@ class _BaseDataHandler(ABC):
 
             # Drop columns with only one level or more than max
             num_uniq_cols = len(metadata[col].dropna().unique())
-            if not (1 < num_uniq_cols <= max_levels_per_category):
-                cols_to_drop.append(col)
-                warn_msg_num_levels = True
-                continue
+            if max_levels_per_category != -1:
+                if not (1 < num_uniq_cols <= max_levels_per_category):
+                    cols_to_drop.append(col)
+                    warn_msg_num_levels = True
+                    continue
+            else:
+                if not (1 < num_uniq_cols):
+                    cols_to_drop.append(col)
+                    warn_msg_num_levels = True
+                    continue
 
             # Drop levels that have fewer than min_count_per_level samples
             level_count = metadata[col].value_counts()
@@ -392,12 +401,13 @@ class UnivariateDataHandler(_BaseDataHandler):
 
         :param max_levels_per_category: Max number of levels in a category to
             keep. Any categorical columns that have more than this number of
-            unique levels will not be saved, defaults to 5.
+            unique levels will not be saved, defaults to 5. Set this value to
+            -1 to not drop anything.
         :type max_levels_per_category: int
 
         :param min_count_per_level: Min number of samples in a given category
             level to keep. Any levels that have fewer than this many samples
-            will not be saved, defaults to 3.
+            will not be saved, defaults to 3. Must be > 1.
         :type min_count_per_level: int
         """
         if not isinstance(data, pd.Series):
@@ -432,6 +442,29 @@ class RepeatedMeasuresUnivariateDataHandler(UnivariateDataHandler):
         max_levels_per_category: int = 5,
         min_count_per_level: int = 3,
     ):
+        """Handler for univariate repeated measures data.
+
+        :param data: Univariate data vector
+        :type data: pd.Series
+
+        :param metadata: Sample metadata
+        :type metadata: pd.DataFrame
+
+        :param individual_id_column: Column to group each sample to an
+            individual
+        :type individual_id_column: str
+
+        :param max_levels_per_category: Max number of levels in a category to
+            keep. Any categorical columns that have more than this number of
+            unique levels will not be saved, defaults to 5. Set this value to
+            -1 to not drop anything.
+        :type max_levels_per_category: int
+
+        :param min_count_per_level: Min number of samples in a given category
+            level to keep. Any levels that have fewer than this many samples
+            will not be saved, defaults to 3. Must be > 1.
+        :type min_count_per_level: int
+        """
         super().__init__(
             data=data,
             metadata=metadata,
@@ -561,8 +594,14 @@ class MultivariateDataHandler(_BaseDataHandler):
 
         :param max_levels_per_category: Max number of levels in a category to
             keep. Any categorical columns that have more than this number of
-            unique levels will not be saved, defaults to 5.
+            unique levels will not be saved, defaults to 5. Set this value to
+            -1 to not drop anything.
         :type max_levels_per_category: int
+
+        :param min_count_per_level: Min number of samples in a given category
+            level to keep. Any levels that have fewer than this many samples
+            will not be saved, defaults to 3. Must be > 1.
+        :type min_count_per_level: int
         """
         if not isinstance(data, DistanceMatrix):
             raise ValueError("data must be of type skbio.DistanceMatrix")
