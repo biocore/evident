@@ -100,13 +100,50 @@ class _BaseDataHandler(ABC):
         """Get represented samples."""
         return self.metadata.index.to_list()
 
+    def calculate_bootstrapped_effect_size(
+        self,
+        column: str,
+        difference: float = None,
+        iterations: int = 1000
+    ):
+        result = self.calculate_effect_size(column, difference)
+
+        metadata_iter = iter(
+            self.metadata.sample(frac=1, replace=True)
+            for i in range(iterations)
+        )
+
+        def _bootstrap(metadata):
+            values = self._get_values(metadata, column)
+
+            arrays = values["arrays"]
+            effect_size_func = values["effect_size_func"]
+
+            if difference is None:
+                boot_result = effect_size_func(*arrays)
+            else:
+                pooled_stdev = calculate_pooled_stdev(*arrays)
+                boot_result = difference / pooled_stdev
+
+            return boot_result
+
+        boot = Parallel()(
+            delayed(_bootstrap)(metadata)
+            for metadata in metadata_iter
+        )
+
+        lower, upper = np.quantile(boot, [0.025, 0.975])
+        result.lower = lower
+        result.upper = upper
+        result.iterations = iterations
+
+        return result
+
     @lru_cache()
     def calculate_effect_size(
         self,
         column: str,
         difference: float = None,
-        bootstrap: bool = False,
-        iterations: int = 1000
     ) -> EffectSizeResult:
         """Get effect size of data differences given column.
 
@@ -123,49 +160,21 @@ class _BaseDataHandler(ABC):
         :returns: Effect size
         :rtype: evident.results.EffectSizeResult
         """
-        result = self._calculate_single_effect_size(
-            column=column,
-            metadata=self.metadata,
-            difference=difference
-        )
-        if not bootstrap:
-            return result
+        values = self._get_values(self.metadata, column)
+        arrays = values["arrays"]
+        metric = values["metric"]
+        effect_size_func = values["effect_size_func"]
+
+        if difference is None:
+            result = effect_size_func(*arrays)
         else:
-            metadata = self.metadata.sample(frac=1, replace=True)
-            boot = Parallel()(
-                delayed(self._calculate_single_effect_size)(
-                    column=column, metadata=metadata, difference=difference
-                )
-                for i in range(iterations)
-            )
-            values = [x.effect_size for x in boot]
-            lower, upper = np.quantile(values, [0.025, 0.975])
-            result.lower = lower
-            result.upper = upper
-            result.iterations = iterations
-            return result
+            pooled_stdev = calculate_pooled_stdev(*arrays)
+            result = difference / pooled_stdev
 
-    def _calculate_single_effect_size(
-        self,
-        column: str,
-        metadata: pd.DataFrame,
-        difference: float = None,
-    ) -> EffectSizeResult:
-        """Get effect size of data differences given column.
+        return EffectSizeResult(effect_size=result, metric=metric,
+                                column=column)
 
-        Otherwise, if two categories, return Cohen's d from t-test. If more
-        than two categories, return Cohen's f from ANOVA.
-
-        :param column: Column containing categories
-        :type column: str
-
-        :param difference: If provided, used as the numerator in effect size
-            calculation rather than the difference in means, defaults to None
-        :type difference: float
-
-        :returns: Effect size
-        :rtype: evident.results.EffectSizeResult
-        """
+    def _get_values(self, metadata: pd.DataFrame, column: str):
         if metadata[column].dtype != np.dtype("object"):
             raise exc.NonCategoricalColumnError(metadata[column])
 
@@ -188,14 +197,12 @@ class _BaseDataHandler(ABC):
             values = self.subset_values(ids)
             arrays.append(values)
 
-        if difference is None:
-            result = effect_size_func(*arrays)
-        else:
-            pooled_stdev = calculate_pooled_stdev(*arrays)
-            result = difference / pooled_stdev
-
-        return EffectSizeResult(effect_size=result, metric=metric,
-                                column=column)
+        values = {
+            "arrays": arrays,
+            "metric": metric,
+            "effect_size_func": effect_size_func
+        }
+        return values
 
     def power_analysis(
         self,
@@ -294,9 +301,8 @@ class _BaseDataHandler(ABC):
             total_observations=total_observations
         )
         effect_size_result = (
-            self._calculate_single_effect_size(column=column,
-                                               metadata=self.metadata,
-                                               difference=difference)
+            self.calculate_effect_size(column=column,
+                                       difference=difference)
         )
 
         val_to_solve = power_func(power=power, alpha=alpha,
