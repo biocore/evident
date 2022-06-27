@@ -123,6 +123,7 @@ def _pw_column(dh, col):
         vals1 = values_dict[grp1]
         vals2 = values_dict[grp2]
         effect_size = calculate_cohens_d(vals1, vals2)
-        res = PairwiseEffectSizeResult(effect_size, col, grp1, grp2)
+        res = PairwiseEffectSizeResult(effect_size, "cohens_d", col,
+                                       group_1=grp1, group_2=grp2)
         col_results.append(res)
     return col_results

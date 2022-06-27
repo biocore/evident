@@ -4,6 +4,7 @@ from itertools import product
 from typing import Callable, Iterable, Union
 from warnings import warn
 
+from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 from skbio import DistanceMatrix
@@ -103,7 +104,9 @@ class _BaseDataHandler(ABC):
     def calculate_effect_size(
         self,
         column: str,
-        difference: float = None
+        difference: float = None,
+        bootstrap: bool = False,
+        iterations: int = 1000
     ) -> EffectSizeResult:
         """Get effect size of data differences given column.
 
@@ -120,14 +123,57 @@ class _BaseDataHandler(ABC):
         :returns: Effect size
         :rtype: evident.results.EffectSizeResult
         """
-        if self.metadata[column].dtype != np.dtype("object"):
-            raise exc.NonCategoricalColumnError(self.metadata[column])
+        result = self._calculate_single_effect_size(
+            column=column,
+            metadata=self.metadata,
+            difference=difference
+        )
+        if not bootstrap:
+            return result
+        else:
+            metadata = self.metadata.sample(frac=1, replace=True)
+            boot = Parallel()(
+                delayed(self._calculate_single_effect_size)(
+                    column=column, metadata=metadata, difference=difference
+                )
+                for i in range(iterations)
+            )
+            values = [x.effect_size for x in boot]
+            lower, upper = np.quantile(values, [0.025, 0.975])
+            result.lower = lower
+            result.upper = upper
+            result.iterations = iterations
+            return result
 
-        column_choices = self.metadata[column].dropna().unique()
+    def _calculate_single_effect_size(
+        self,
+        column: str,
+        metadata: pd.DataFrame,
+        difference: float = None,
+    ) -> EffectSizeResult:
+        """Get effect size of data differences given column.
+
+        Otherwise, if two categories, return Cohen's d from t-test. If more
+        than two categories, return Cohen's f from ANOVA.
+
+        :param column: Column containing categories
+        :type column: str
+
+        :param difference: If provided, used as the numerator in effect size
+            calculation rather than the difference in means, defaults to None
+        :type difference: float
+
+        :returns: Effect size
+        :rtype: evident.results.EffectSizeResult
+        """
+        if metadata[column].dtype != np.dtype("object"):
+            raise exc.NonCategoricalColumnError(metadata[column])
+
+        column_choices = metadata[column].dropna().unique()
         num_choices = len(column_choices)
 
         if num_choices == 1:
-            raise exc.OnlyOneCategoryError(self.metadata[column])
+            raise exc.OnlyOneCategoryError(metadata[column])
         elif num_choices == 2:
             effect_size_func = calculate_cohens_d
             metric = "cohens_d"
@@ -138,7 +184,7 @@ class _BaseDataHandler(ABC):
         # Create list of arrays for effect size calculation
         arrays = []
         for choice in column_choices:
-            ids = self.metadata[self.metadata[column] == choice].index
+            ids = metadata[metadata[column] == choice].index
             values = self.subset_values(ids)
             arrays.append(values)
 
@@ -212,6 +258,7 @@ class _BaseDataHandler(ABC):
         )
         return result
 
+    @lru_cache()
     def _single_power_analysis(
         self,
         column: str,
@@ -246,7 +293,11 @@ class _BaseDataHandler(ABC):
             column=column,
             total_observations=total_observations
         )
-        effect_size_result = self.calculate_effect_size(column, difference)
+        effect_size_result = (
+            self._calculate_single_effect_size(column=column,
+                                               metadata=self.metadata,
+                                               difference=difference)
+        )
 
         val_to_solve = power_func(power=power, alpha=alpha,
                                   effect_size=effect_size_result.effect_size)
@@ -328,7 +379,6 @@ class _BaseDataHandler(ABC):
     def subset_values(self, ids: list):
         """Get subset of data given list of indices"""
 
-    @lru_cache()
     def _create_partial_power_func(
         self,
         column: str,

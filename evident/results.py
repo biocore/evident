@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field, asdict
 from typing import Any, List
 
 import pandas as pd
@@ -9,27 +9,20 @@ class EffectSizeResult:
     effect_size: float
     metric: str
     column: str
+    lower: float = field(default=None, init=False)
+    upper: float = field(default=None, init=False)
+    iterations: int = field(default=None, init=False)
 
     def to_dict(self) -> dict:
-        res_dict = {
-            "effect_size": self.effect_size,
-            "metric": self.metric,
-            "column": self.column,
-        }
-        return res_dict
+        d = asdict(self)
+        d = {k: v for k, v in d.items() if v is not None}
+        return d
 
 
+@dataclass
 class PairwiseEffectSizeResult(EffectSizeResult):
-    def __init__(self, value: float, column: str, group_1: str, group_2: str):
-        self.group_1 = group_1
-        self.group_2 = group_2
-        super().__init__(value, "cohens_d", column)
-
-    def to_dict(self) -> dict:
-        res_dict = super().to_dict()
-        res_dict["group_1"] = self.group_1
-        res_dict["group_2"] = self.group_2
-        return res_dict
+    group_1: str
+    group_2: str
 
 
 @dataclass
