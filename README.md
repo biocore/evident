@@ -10,7 +10,7 @@ Evident is a tool for performing effect size and power calculations on microbiom
 
 You can install the most up-to-date version of Evident from PyPi using the following command:
 
-```bash
+```
 pip install evident
 ```
 
@@ -21,13 +21,13 @@ Make sure you have activated a QIIME 2 environment and run the same installation
 
 To check that Evident installed correctly, run the following from the command line:
 
-```bash
+```
 qiime evident --help
 ```
 
 You should see something like this if Evident installed correctly:
 
-```bash
+```
 Usage: qiime evident [OPTIONS] COMMAND [ARGS]...
 
   Description: Perform power analysis on microbiome data. Supports
@@ -167,7 +167,7 @@ create_bokeh_app(adh, "app")
 This will save the necessary files into a new directory `app/`.
 Navigate to the directory containing `app/` (**not** `app/` itself) and execute this command from your terminal:
 
-```bash
+```
 bokeh serve --show app
 ```
 
@@ -198,7 +198,7 @@ If you are using a different version and encounter an error please let us know v
 
 To calculate power, we can run the following command:
 
-```bash
+```
 qiime evident univariate-power-analysis \
     --m-sample-metadata-file metadata.qza \
     --m-sample-metadata-file faith_pd.qza \
@@ -220,7 +220,7 @@ In our example, we used `seq` to generate the values from 10 to 100 in intervals
 With this results artifact, we can visualize the power curve to get a sense of how power varies with number of observations and significance level.
 Run the following command:
 
-```bash
+```
 qiime evident plot-power-curve \
     --i-power-analysis-results results.qza \
     --p-target-power 0.8 \
@@ -251,7 +251,7 @@ effect_size_by_category(
 
 With QIIME 2:
 
-```bash
+```
 qiime evident univariate-effect-size-by-category \
     --m-sample-metadata-file metadata.qza \
     --m-sample-metadata-file faith_pd.qza \
@@ -259,6 +259,21 @@ qiime evident univariate-effect-size-by-category \
     --p-group-columns classification sex cd_behavior \
     --p-n-jobs 2 \
     --o-effect-size-results alpha_effect_sizes.qza
+```
+
+## Bootstrapped Effect Sizes
+
+Evident also allows calculation of bootstrapped effect sizes intervals.
+By providing the `bootstrap_iterations` parameter, you can shuffle the metadata with replacement and calculate the 2.5% and 97.5% quantiles.
+
+```python
+adh.calculate_effect_size("classification", bootstrap_iterations=1000)
+```
+
+This will return a result that includes `lower_es`, `upper_es`, and `iterations`.
+
+```
+EffectSizeResult(effect_size=1.0311033633149995, metric='cohens_d', column='classification', difference=None, lower_es=0.7960440465305569, upper_es=1.2986795949364291, iterations=1000)
 ```
 
 ## Repeated Measures
