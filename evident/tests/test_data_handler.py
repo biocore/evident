@@ -217,7 +217,7 @@ class TestPower:
         exp_power = 0.775732
         np.testing.assert_almost_equal(calc_power, exp_power, decimal=6)
 
-    def test_beta_power_power_t(self, beta_mock):
+    def test_beta_power_t(self, beta_mock):
         calc_power = beta_mock.power_analysis(
             "classification",
             total_observations=40,
