@@ -70,6 +70,11 @@ ES_PARAM_DESCS = {
         "Min number of samples in a given category level to keep. Any levels "
         "that have fewer than this many samples will not be saved, defaults "
         "to 3."
+    ),
+    "bootstrap_iterations": (
+        "Number of reshuffles of the data to use to generate confidence "
+        "interval of effect size(s). By default does not do any "
+        "bootstrapping."
     )
 }
 
@@ -193,7 +198,8 @@ plugin.methods.register_function(
         "pairwise": Bool,
         "n_jobs": Int,
         "max_levels_per_category": Int,
-        "min_count_per_level": Int
+        "min_count_per_level": Int,
+        "bootstrap_iterations": Int
     },
     parameter_descriptions=ES_PARAM_DESCS,
     outputs=[("effect_size_results", EffectSizeResults)],
@@ -214,7 +220,8 @@ plugin.methods.register_function(
         "pairwise": Bool,
         "n_jobs": Int,
         "max_levels_per_category": Int,
-        "min_count_per_level": Int
+        "min_count_per_level": Int,
+        "bootstrap_iterations": Int
     },
     parameter_descriptions=ES_PARAM_DESCS,
     outputs=[("effect_size_results", EffectSizeResults)],

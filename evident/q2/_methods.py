@@ -79,7 +79,8 @@ def univariate_effect_size_by_category(
     pairwise: bool = False,
     n_jobs: int = None,
     max_levels_per_category: int = 5,
-    min_count_per_level: int = 3
+    min_count_per_level: int = 3,
+    bootstrap_iterations: int = None
 ) -> pd.DataFrame:
     sample_metadata = sample_metadata.to_dataframe()
     _check_provided_univariate_data(sample_metadata, data_column)
@@ -89,7 +90,8 @@ def univariate_effect_size_by_category(
     res = _effect_size_by_category(data, sample_metadata,
                                    UnivariateDataHandler, group_columns,
                                    pairwise, n_jobs, max_levels_per_category,
-                                   min_count_per_level)
+                                   min_count_per_level,
+                                   bootstrap_iterations)
     return res
 
 
@@ -100,25 +102,31 @@ def multivariate_effect_size_by_category(
     pairwise: bool = False,
     n_jobs: int = None,
     max_levels_per_category: int = 5,
-    min_count_per_level: int = 3
+    min_count_per_level: int = 3,
+    bootstrap_iterations: int = None
 ) -> pd.DataFrame:
     sample_metadata = sample_metadata.to_dataframe()
     res = _effect_size_by_category(data, sample_metadata,
                                    MultivariateDataHandler, group_columns,
                                    pairwise, n_jobs, max_levels_per_category,
-                                   min_count_per_level)
+                                   min_count_per_level,
+                                   bootstrap_iterations)
     return res
 
 
 def _effect_size_by_category(data, metadata, handler, columns, pairwise,
                              n_jobs, max_levels_per_category,
-                             min_count_per_level):
+                             min_count_per_level,
+                             bootstrap_iterations):
     dh = handler(data, metadata, max_levels_per_category,
                  min_count_per_level)
     if pairwise:
-        res = pairwise_effect_size_by_category(dh, columns, n_jobs=n_jobs)
+        func = pairwise_effect_size_by_category
     else:
-        res = effect_size_by_category(dh, columns, n_jobs=n_jobs)
+        func = effect_size_by_category
+
+    res = func(dh, columns, n_jobs=n_jobs,
+               bootstrap_iterations=bootstrap_iterations)
     return res.to_dataframe()
 
 
