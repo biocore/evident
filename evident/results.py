@@ -10,8 +10,8 @@ class EffectSizeResult:
     metric: str
     column: str
     difference: float
-    lower: float = field(default=None, init=False)
-    upper: float = field(default=None, init=False)
+    lower_es: float = field(default=None, init=False)
+    upper_es: float = field(default=None, init=False)
     iterations: int = field(default=None, init=False)
 
     def to_dict(self) -> dict:

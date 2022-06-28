@@ -112,8 +112,12 @@ class _BaseDataHandler(ABC):
         if bootstrap_iterations is None:
             return result
 
+        # Assign original index so we can properly index distance matrix
         metadata_iter = iter(
-            self.metadata.sample(frac=1, replace=True)
+            (
+                self.metadata
+                .sample(frac=1, replace=True)
+            )
             for i in range(bootstrap_iterations)
         )
 
@@ -134,8 +138,8 @@ class _BaseDataHandler(ABC):
         )
 
         lower, upper = np.quantile(boot, [0.025, 0.975])
-        result.lower = lower
-        result.upper = upper
+        result.lower_es = lower
+        result.upper_es = upper
         result.iterations = bootstrap_iterations
 
         return result
@@ -190,7 +194,8 @@ class _BaseDataHandler(ABC):
         # Create list of arrays for effect size calculation
         arrays = []
         for choice in column_choices:
-            ids = metadata[metadata[column] == choice].index
+            # Set-ify so bootstrapping doesn't result in duplicate IDs
+            ids = list(set(metadata[metadata[column] == choice].index))
             values = self.subset_values(ids)
             arrays.append(values)
 

@@ -48,4 +48,5 @@ def plot_power_curve(
     ax.set_axisbelow(True)
     ax.set_ylabel(r"Power (1 - $\beta$)", fontsize="large")
     ax.set_xlabel("Total Observations", fontsize="large")
+
     return ax

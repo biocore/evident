@@ -1,6 +1,7 @@
 from itertools import combinations, chain
 
 from joblib import Parallel, delayed
+import numpy as np
 import pandas as pd
 
 from evident.data_handler import _BaseDataHandler
@@ -11,6 +12,7 @@ from evident.results import EffectSizeResults, PairwiseEffectSizeResult
 def effect_size_by_category(
     data_handler: _BaseDataHandler,
     columns: list = None,
+    bootstrap_iterations: int = None,
     n_jobs: int = None,
     parallel_args: dict = None
 ) -> pd.DataFrame:
@@ -47,7 +49,9 @@ def effect_size_by_category(
         parallel_args = dict()
 
     results = Parallel(n_jobs=n_jobs, **parallel_args)(
-        delayed(dh.calculate_effect_size)(col)
+        delayed(dh.calculate_effect_size)(
+            col, bootstrap_iterations=bootstrap_iterations
+        )
         for col in columns
     )
 
@@ -57,6 +61,7 @@ def effect_size_by_category(
 def pairwise_effect_size_by_category(
     data_handler: _BaseDataHandler,
     columns: list = None,
+    bootstrap_iterations: int = None,
     n_jobs: int = None,
     parallel_args: dict = None
 ) -> pd.DataFrame:
@@ -94,7 +99,7 @@ def pairwise_effect_size_by_category(
         parallel_args = dict()
 
     results = Parallel(n_jobs=n_jobs, **parallel_args)(
-        delayed(_pw_column)(dh, col)
+        delayed(_pw_column)(dh, col, bootstrap_iterations)
         for col in columns
     )
     # Above results in list of lists - want to combine into one list
@@ -109,13 +114,21 @@ def _check_columns(columns) -> None:
         raise ValueError("Must provide list of columns!")
 
 
-def _pw_column(dh, col):
+def _pw_column(dh, col, bootstrap_iterations=None):
     """Compute pairwise effect sizes on a single column."""
     col_results = []
     values_dict = dict()
 
+    if bootstrap_iterations is not None:
+        metadata_iter = [
+            dh.metadata.sample(frac=1, replace=True)
+            for i in range(bootstrap_iterations)
+        ]
+    else:
+        metadata_iter = []
+
     # Get all index sets here to avoid redundant computation
-    grp_dfs = (dh.metadata .groupby(col))
+    grp_dfs = dh.metadata.groupby(col)
     for grp, _df in grp_dfs:
         values_dict[grp] = dh.subset_values(_df.index)
 
@@ -126,5 +139,21 @@ def _pw_column(dh, col):
         res = PairwiseEffectSizeResult(effect_size, "cohens_d", col,
                                        difference=None,
                                        group_1=grp1, group_2=grp2)
+
+        if bootstrap_iterations is not None:
+            bootstrapped_es = []
+            for metadata in metadata_iter:
+                repl_dict = {grp1: "A", grp2: "B"}
+                metadata["_tmp"] = metadata[col].map(repl_dict)
+                arrays, _, _ = dh._get_values(metadata, "_tmp")
+                boot_es = calculate_cohens_d(*arrays)
+                bootstrapped_es.append(boot_es)
+
+            lower_es, upper_es = np.quantile(bootstrapped_es, [0.025, 0.975])
+            res.lower_es = lower_es
+            res.upper_es = upper_es
+            res.iterations = bootstrap_iterations
+
         col_results.append(res)
+
     return col_results
