@@ -104,20 +104,50 @@ class _BaseDataHandler(ABC):
         self,
         column: str,
         difference: float = None,
-        bootstrap_iterations: int = None
+        bootstrap_iterations: int = None,
+        n_jobs: int = 1,
+        parallel_args: dict = None
     ):
+        """Get effect size of data differences given column.
+
+        Otherwise, if two categories, return Cohen's d from t-test. If more
+        than two categories, return Cohen's f from ANOVA.
+
+        :param column: Column containing categories
+        :type column: str
+
+        :param difference: If provided, used as the numerator in effect size
+            calculation rather than the difference in means, defaults to None
+        :type difference: float
+
+        :param bootstrap_iterations: Number of iterations to shuffle data
+            for generating confidence interval. By default does not perform
+            bootstrapping.
+        :type bootstrap_iterations: int
+
+        :param n_jobs: Number of jobs to run in parallel for bootstrapping,
+            defaults to None (single CPU)
+        :type n_jobs: int
+
+        :param parallel_args: Dictionary of arguments to be passed into
+            joblib.Parallel. See the documentation for this class at
+            joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html
+        :type parallel_args: dict
+
+        :returns: Effect size
+        :rtype: evident.results.EffectSizeResult
+        """
+        if parallel_args is None:
+            parallel_args = dict()
+
         es, metric = self._calculate_effect_size(column, difference)
         result = EffectSizeResult(effect_size=es, metric=metric, column=column,
                                   difference=difference)
         if bootstrap_iterations is None:
             return result
 
-        # Assign original index so we can properly index distance matrix
         metadata_iter = iter(
-            (
-                self.metadata
-                .sample(frac=1, replace=True)
-            )
+            self.metadata.sample(frac=1, replace=True)
             for i in range(bootstrap_iterations)
         )
 
@@ -132,7 +162,7 @@ class _BaseDataHandler(ABC):
 
             return boot_result
 
-        boot = Parallel()(
+        boot = Parallel(n_jobs=n_jobs, **parallel_args)(
             delayed(_bootstrap)(metadata)
             for metadata in metadata_iter
         )
@@ -235,6 +265,11 @@ class _BaseDataHandler(ABC):
         :param power: Power level to use in power calculation, defaults to
             None. Can be either float or sequence of floats.
         :type power: float or np.array[float]
+
+        :param bootstrap_iterations: Number of iterations to shuffle data
+            for generating confidence interval. By default does not perform
+            bootstrapping.
+        :type bootstrap_iterations: int
 
         :returns: Results from power analysis
         :rtype: evident.results.PowerAnalysisResults
@@ -364,6 +399,11 @@ class _BaseDataHandler(ABC):
         :param power: Power levels to use in power calculation, defaults to
             None.
         :type power: sequence of floats
+
+        :param bootstrap_iterations: Number of iterations to shuffle data
+            for generating confidence interval. By default does not perform
+            bootstrapping.
+        :type bootstrap_iterations: int
 
         :returns: Collection of values from power analyses
         :rtype: evident.results.PowerAnalysisResults

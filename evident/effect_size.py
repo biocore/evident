@@ -30,6 +30,11 @@ def effect_size_by_category(
     :param columns: Columns to use for effect size calculations
     :type columns: List[str]
 
+    :param bootstrap_iterations: Number of iterations to shuffle data
+        for generating confidence interval. By default does not perform
+        bootstrapping.
+    :type bootstrap_iterations: int
+
     :param n_jobs: Number of jobs to run in parallel, defaults to None (single
         CPU)
     :type n_jobs: int
@@ -79,6 +84,11 @@ def pairwise_effect_size_by_category(
 
     :param columns: Columns to use for effect size calculations
     :type columns: List[str]
+
+    :param bootstrap_iterations: Number of iterations to shuffle data
+        for generating confidence interval. By default does not perform
+        bootstrapping.
+    :type bootstrap_iterations: int
 
     :param n_jobs: Number of jobs to run in parallel, defaults to None (single
         CPU)
