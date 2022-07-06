@@ -162,6 +162,19 @@ def test_multivariate_effect_size_by_cat_parallel(beta_artifact, metadata):
     assert (pairwise.columns == exp_cols).all()
 
 
+def test_bootstrap(alpha_artifact, metadata_w_data):
+    non_pairwise = evident.methods.univariate_effect_size_by_category(
+        sample_metadata=metadata_w_data,
+        data_column="alpha_div",
+        group_columns=["classification", "cd_behavior"],
+        n_jobs=2,
+        bootstrap_iterations=100
+    ).effect_size_results.view(pd.DataFrame)
+    for i, row in non_pairwise.iterrows():
+        assert row["lower_es"] < row["effect_size"] < row["upper_es"]
+        assert row["iterations"] == 100
+
+
 def test_visualize_es_results(es_results):
     evident.visualizers.visualize_results(results=es_results)
 

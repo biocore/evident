@@ -4,13 +4,14 @@ from itertools import product
 from typing import Callable, Iterable, Union
 from warnings import warn
 
+from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 from skbio import DistanceMatrix
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
 from . import _exceptions as exc
-from .results import (CrossSectionalPowerAnalysisResult, PowerAnalysisResults,
+from .results import (PowerAnalysisResult, PowerAnalysisResults,
                       RepeatedMeasuresPowerAnalysisResult, EffectSizeResult)
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev, calculate_eta_squared,
@@ -99,11 +100,85 @@ class _BaseDataHandler(ABC):
         """Get represented samples."""
         return self.metadata.index.to_list()
 
-    @lru_cache()
     def calculate_effect_size(
         self,
         column: str,
-        difference: float = None
+        difference: float = None,
+        bootstrap_iterations: int = None,
+        n_jobs: int = 1,
+        parallel_args: dict = None
+    ):
+        """Get effect size of data differences given column.
+
+        Otherwise, if two categories, return Cohen's d from t-test. If more
+        than two categories, return Cohen's f from ANOVA.
+
+        :param column: Column containing categories
+        :type column: str
+
+        :param difference: If provided, used as the numerator in effect size
+            calculation rather than the difference in means, defaults to None
+        :type difference: float
+
+        :param bootstrap_iterations: Number of iterations to shuffle data
+            for generating confidence interval. By default does not perform
+            bootstrapping.
+        :type bootstrap_iterations: int
+
+        :param n_jobs: Number of jobs to run in parallel for bootstrapping,
+            defaults to None (single CPU)
+        :type n_jobs: int
+
+        :param parallel_args: Dictionary of arguments to be passed into
+            joblib.Parallel. See the documentation for this class at
+            joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html
+        :type parallel_args: dict
+
+        :returns: Effect size
+        :rtype: evident.results.EffectSizeResult
+        """
+        if parallel_args is None:
+            parallel_args = dict()
+
+        es, metric = self._calculate_effect_size(column, difference)
+        result = EffectSizeResult(effect_size=es, metric=metric, column=column,
+                                  difference=difference)
+        if bootstrap_iterations is None:
+            return result
+
+        metadata_iter = iter(
+            self.metadata.sample(frac=1, replace=True)
+            for i in range(bootstrap_iterations)
+        )
+
+        def _bootstrap(metadata):
+            arrays, _, es_func = self._get_values(metadata, column)
+
+            if difference is None:
+                boot_result = es_func(*arrays)
+            else:
+                pooled_stdev = calculate_pooled_stdev(*arrays)
+                boot_result = difference / pooled_stdev
+
+            return boot_result
+
+        boot = Parallel(n_jobs=n_jobs, **parallel_args)(
+            delayed(_bootstrap)(metadata)
+            for metadata in metadata_iter
+        )
+
+        lower, upper = np.quantile(boot, [0.025, 0.975])
+        result.lower_es = lower
+        result.upper_es = upper
+        result.iterations = bootstrap_iterations
+
+        return result
+
+    @lru_cache()
+    def _calculate_effect_size(
+        self,
+        column: str,
+        difference: float = None,
     ) -> EffectSizeResult:
         """Get effect size of data differences given column.
 
@@ -120,14 +195,25 @@ class _BaseDataHandler(ABC):
         :returns: Effect size
         :rtype: evident.results.EffectSizeResult
         """
-        if self.metadata[column].dtype != np.dtype("object"):
-            raise exc.NonCategoricalColumnError(self.metadata[column])
+        arrays, metric, es_func = self._get_values(self.metadata, column)
 
-        column_choices = self.metadata[column].dropna().unique()
+        if difference is None:
+            result = es_func(*arrays)
+        else:
+            pooled_stdev = calculate_pooled_stdev(*arrays)
+            result = difference / pooled_stdev
+
+        return result, metric
+
+    def _get_values(self, metadata: pd.DataFrame, column: str):
+        if metadata[column].dtype != np.dtype("object"):
+            raise exc.NonCategoricalColumnError(metadata[column])
+
+        column_choices = metadata[column].dropna().unique()
         num_choices = len(column_choices)
 
         if num_choices == 1:
-            raise exc.OnlyOneCategoryError(self.metadata[column])
+            raise exc.OnlyOneCategoryError(metadata[column])
         elif num_choices == 2:
             effect_size_func = calculate_cohens_d
             metric = "cohens_d"
@@ -138,18 +224,12 @@ class _BaseDataHandler(ABC):
         # Create list of arrays for effect size calculation
         arrays = []
         for choice in column_choices:
-            ids = self.metadata[self.metadata[column] == choice].index
+            # Set-ify so bootstrapping doesn't result in duplicate IDs
+            ids = list(set(metadata[metadata[column] == choice].index))
             values = self.subset_values(ids)
             arrays.append(values)
 
-        if difference is None:
-            result = effect_size_func(*arrays)
-        else:
-            pooled_stdev = calculate_pooled_stdev(*arrays)
-            result = difference / pooled_stdev
-
-        return EffectSizeResult(effect_size=result, metric=metric,
-                                column=column)
+        return arrays, metric, effect_size_func
 
     def power_analysis(
         self,
@@ -157,8 +237,9 @@ class _BaseDataHandler(ABC):
         total_observations: int = None,
         difference: float = None,
         alpha: float = None,
-        power: float = None
-    ) -> Union[CrossSectionalPowerAnalysisResult, PowerAnalysisResults]:
+        power: float = None,
+        bootstrap_iterations: int = None
+    ) -> Union[PowerAnalysisResult, PowerAnalysisResults]:
         """Perform power analysis using this dataset.
 
         Exactly one of total_observations, alpha, or power must be None.
@@ -185,9 +266,13 @@ class _BaseDataHandler(ABC):
             None. Can be either float or sequence of floats.
         :type power: float or np.array[float]
 
+        :param bootstrap_iterations: Number of iterations to shuffle data
+            for generating confidence interval. By default does not perform
+            bootstrapping.
+        :type bootstrap_iterations: int
+
         :returns: Results from power analysis
-        :rtype: Either CrossSectionalPowerAnalysisResult or
-            PowerAnalysisResults
+        :rtype: evident.results.PowerAnalysisResults
         """
         args = [alpha, power, total_observations]
         none_args = [x is None for x in args]
@@ -199,27 +284,41 @@ class _BaseDataHandler(ABC):
         #     power analysis to solve for the non-provided argument.
         vector_args = map(lambda x: isinstance(x, Iterable), args)
         if any(vector_args):
-            power_analysis_func = self._bulk_power_analysis
+            result = self._bulk_power_analysis(
+                column=column,
+                total_observations=total_observations,
+                difference=difference,
+                alpha=alpha,
+                power=power,
+                bootstrap_iterations=bootstrap_iterations
+            )
         else:
-            power_analysis_func = self._single_power_analysis
+            effect_size_result = self.calculate_effect_size(
+                column=column,
+                difference=difference,
+                bootstrap_iterations=bootstrap_iterations
+            )
+            power_func = self._create_partial_power_func(
+                column=column, total_observations=total_observations
+            )
+            result = self._single_power_analysis(
+                power_func=power_func,
+                effect_size_result=effect_size_result,
+                total_observations=total_observations,
+                alpha=alpha,
+                power=power
+            )
 
-        result = power_analysis_func(
-            column=column,
-            total_observations=total_observations,
-            difference=difference,
-            alpha=alpha,
-            power=power
-        )
         return result
 
     def _single_power_analysis(
         self,
-        column: str,
+        power_func: Callable,
+        effect_size_result: EffectSizeResult,
         total_observations: int = None,
-        difference: float = None,
         alpha: float = None,
-        power: float = None
-    ) -> CrossSectionalPowerAnalysisResult:
+        power: float = None,
+    ) -> PowerAnalysisResult:
         """Compute the power analysis for a single value.
 
         :param column: Name of column in metadata to consider
@@ -240,14 +339,8 @@ class _BaseDataHandler(ABC):
         :type power: float
 
         :returns: Collection of values from power analysis
-        :rtype: evident.results.CrossSectionalPowerAnalysisResult
+        :rtype: evident.results.PowerAnalysisResult
         """
-        power_func = self._create_partial_power_func(
-            column=column,
-            total_observations=total_observations
-        )
-        effect_size_result = self.calculate_effect_size(column, difference)
-
         val_to_solve = power_func(power=power, alpha=alpha,
                                   effect_size=effect_size_result.effect_size)
 
@@ -270,13 +363,13 @@ class _BaseDataHandler(ABC):
         else:
             total_observations = val_to_solve
 
-        results = CrossSectionalPowerAnalysisResult(
+        results = PowerAnalysisResult(
             alpha=alpha,
             total_observations=total_observations,
             power=power,
             effect_size_result=effect_size_result,
-            difference=difference
         )
+
         return results
 
     def _bulk_power_analysis(
@@ -285,7 +378,8 @@ class _BaseDataHandler(ABC):
         total_observations: int = None,
         difference: float = None,
         alpha: float = None,
-        power: float = None
+        power: float = None,
+        bootstrap_iterations: int = None
     ) -> PowerAnalysisResults:
         """Compute the power analysis for a multiple values.
 
@@ -306,6 +400,11 @@ class _BaseDataHandler(ABC):
             None.
         :type power: sequence of floats
 
+        :param bootstrap_iterations: Number of iterations to shuffle data
+            for generating confidence interval. By default does not perform
+            bootstrapping.
+        :type bootstrap_iterations: int
+
         :returns: Collection of values from power analyses
         :rtype: evident.results.PowerAnalysisResults
         """
@@ -314,21 +413,36 @@ class _BaseDataHandler(ABC):
         total_observations = _listify(total_observations)
         alpha = _listify(alpha)
         power = _listify(power)
-        power_args = [difference, total_observations, alpha, power]
+        power_args = [alpha, power]
 
-        power_arg_products = product(*power_args)
+        # Since we re-use the products, convert to list instead of generator
+        power_arg_products = list(product(*power_args))
         results_list = []
-        for _diff, _obs, _alpha, _power in power_arg_products:
-            results_list.append(self._single_power_analysis(
-                column, _obs, _diff, _alpha, _power
-            ))
+        for _diff in difference:
+            effect_size_result = self.calculate_effect_size(
+                column=column,
+                difference=_diff,
+                bootstrap_iterations=bootstrap_iterations
+            )
+            for _obs in total_observations:
+                power_func = self._create_partial_power_func(
+                    column=column, total_observations=_obs
+                )
+                for _alpha, _power in power_arg_products:
+                    res = self._single_power_analysis(
+                        power_func=power_func,
+                        effect_size_result=effect_size_result,
+                        alpha=_alpha, power=_power,
+                        total_observations=_obs
+                    )
+                    results_list.append(res)
+
         return PowerAnalysisResults(results_list)
 
     @abstractmethod
     def subset_values(self, ids: list):
         """Get subset of data given list of indices"""
 
-    @lru_cache()
     def _create_partial_power_func(
         self,
         column: str,
@@ -488,7 +602,8 @@ class RepeatedMeasuresUnivariateDataHandler(UnivariateDataHandler):
         result = calculate_eta_squared(wide_data)
 
         return EffectSizeResult(effect_size=result, metric="eta_squared",
-                                column=state_column)
+                                column=state_column,
+                                difference=None)
 
     def power_analysis(
         self,
