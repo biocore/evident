@@ -1,4 +1,5 @@
 from typing import List
+from functools import partial
 
 import pandas as pd
 from qiime2 import Metadata
@@ -99,6 +100,7 @@ def multivariate_effect_size_by_category(
     data: DistanceMatrix,
     sample_metadata: Metadata,
     group_columns: List[str],
+    permanova: bool = False,
     pairwise: bool = False,
     n_jobs: int = None,
     max_levels_per_category: int = 5,
@@ -109,21 +111,28 @@ def multivariate_effect_size_by_category(
     res = _effect_size_by_category(data, sample_metadata,
                                    MultivariateDataHandler, group_columns,
                                    pairwise, n_jobs, max_levels_per_category,
-                                   min_count_per_level,
-                                   bootstrap_iterations)
+                                   min_count_per_level, bootstrap_iterations,
+                                   permanova)
     return res
 
 
 def _effect_size_by_category(data, metadata, handler, columns, pairwise,
                              n_jobs, max_levels_per_category,
                              min_count_per_level,
-                             bootstrap_iterations):
+                             bootstrap_iterations, permanova=False):
     dh = handler(data, metadata, max_levels_per_category,
                  min_count_per_level)
     if pairwise:
+        if permanova:
+            msg = (
+                "Currently PERMANOVA is not supported for pairwise "
+                "comparisons."
+            )
+            raise ValueError(msg)
+
         func = pairwise_effect_size_by_category
     else:
-        func = effect_size_by_category
+        func = partial(effect_size_by_category, permanova=True)
 
     res = func(dh, columns, n_jobs=n_jobs,
                bootstrap_iterations=bootstrap_iterations)

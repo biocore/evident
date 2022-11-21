@@ -60,8 +60,9 @@ def effect_size_by_category(
                 "Ignoring for provided univariate data."
             )
             warn(warn_msg, UserWarning)
+            func = dh.calculate_effect_size
         else:
-            func = partial(dh.calculate_effect_size, permanova=True)
+            func = partial(dh.calculate_effect_size, permanova=permanova)
     else:
         func = dh.calculate_effect_size
 

@@ -117,6 +117,18 @@ def test_multivariate_effect_size_by_cat(beta_artifact, metadata):
     assert (pairwise.columns == exp_cols).all()
 
 
+def test_multivariate_effect_size_by_cat_perm(beta_artifact, metadata):
+    non_pairwise = evident.methods.multivariate_effect_size_by_category(
+        data=beta_artifact,
+        sample_metadata=metadata,
+        permanova=True,
+        group_columns=["classification", "cd_behavior"]
+    ).effect_size_results.view(pd.DataFrame)
+    assert (non_pairwise["metric"] == "omega_squared").all()
+    assert non_pairwise.shape == (2, 3)
+    assert (non_pairwise.columns == ["effect_size", "metric", "column"]).all()
+
+
 def test_univariate_effect_size_by_cat_parallel(alpha_artifact,
                                                 metadata_w_data):
     non_pairwise = evident.methods.univariate_effect_size_by_category(

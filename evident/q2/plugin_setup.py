@@ -210,6 +210,11 @@ plugin.methods.register_function(
     )
 )
 
+mult_es_params = ES_PARAM_DESCS.copy()
+mult_es_params["permanova"] = (
+    "Whether to evaluate differences in within-group distances (default) "
+    "or PERMANOVA."
+)
 plugin.methods.register_function(
     function=multivariate_effect_size_by_category,
     inputs={"data": DistanceMatrix},
@@ -218,12 +223,13 @@ plugin.methods.register_function(
         "sample_metadata": Metadata,
         "group_columns": List[Str],
         "pairwise": Bool,
+        "permanova": Bool,
         "n_jobs": Int,
         "max_levels_per_category": Int,
         "min_count_per_level": Int,
         "bootstrap_iterations": Int
     },
-    parameter_descriptions=ES_PARAM_DESCS,
+    parameter_descriptions=mult_es_params,
     outputs=[("effect_size_results", EffectSizeResults)],
     name="Multivariate data effect size by category.",
     description=(
