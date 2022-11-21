@@ -8,6 +8,7 @@ from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 from skbio import DistanceMatrix
+from skbio.stats.distance._base import _preprocess_input
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
 from . import _exceptions as exc
@@ -15,7 +16,7 @@ from .results import (PowerAnalysisResult, PowerAnalysisResults,
                       RepeatedMeasuresPowerAnalysisResult, EffectSizeResult)
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev, calculate_eta_squared,
-                    calculate_rm_anova_power)
+                    calculate_rm_anova_power, _calculate_permanova_omsq)
 from .utils import _listify, _check_sample_overlap
 
 
@@ -735,3 +736,42 @@ class MultivariateDataHandler(_BaseDataHandler):
     def subset_values(self, ids: list) -> np.array:
         """Get multivariate data differences among provided samples."""
         return np.array(self.data.filter(ids).to_series().values)
+
+    def calculate_effect_size(
+        self,
+        column: str,
+        difference: float = None,
+        permanova: bool = False,
+        bootstrap_iterations: int = None,
+        n_jobs: int = 1,
+        parallel_args: dict = None
+    ):
+        if not permanova:
+            return super().calculate_effect_size(
+                column=column,
+                difference=difference,
+                bootstrap_iterations=bootstrap_iterations,
+                n_jobs=n_jobs,
+                parallel_args=parallel_args
+            )
+
+        sample_size, num_groups, grouping, tri_idxs, distances = (
+            _preprocess_input(
+                self.data,
+                self.metadata,
+                column
+            )
+        )
+
+        es = _calculate_permanova_omsq(
+            sample_size,
+            num_groups,
+            tri_idxs,
+            distances,
+            grouping
+        )
+        metric = "omega_squared"
+        result = EffectSizeResult(effect_size=es, metric=metric, column=column,
+                                  difference=None)
+
+        return result

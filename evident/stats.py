@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy import stats
+from skbio.stats.distance._permanova import _index_combinations
 
 
 def calculate_pooled_stdev(*arrays) -> float:
@@ -167,3 +168,41 @@ def calculate_rm_anova_power(
     q = stats.f.ppf(1 - threshold, dm, ds)
     power = stats.ncf.sf(q, dm, ds, location)
     return power
+
+
+def _calculate_permanova_omsq(
+    sample_size: int,
+    num_groups: int,
+    tri_idxs: np.ndarray,
+    distances: np.ndarray,
+    grouping: np.ndarray
+) -> float:
+    """Calculate omega-squared for PERMANOVA.
+
+    Code adapted from scikit-bio.
+    Calculation adapted from
+        https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4514928/
+    """
+    group_sizes = np.bincount(grouping)
+    s_T = (distances ** 2).sum() / sample_size
+    grouping_matrix = -1 * np.ones((sample_size, sample_size), dtype=int)
+    for group_idx in range(num_groups):
+        within_indices = _index_combinations(
+            np.where(grouping == group_idx)[0]
+        )
+        grouping_matrix[within_indices] = group_idx
+
+    # Extract upper triangle (in same order as distances were extracted
+    # from full distance matrix).
+    grouping_tri = grouping_matrix[tri_idxs]
+
+    # Calculate s_W for each group, accounting for different group sizes.
+    s_W = 0
+    for i in range(num_groups):
+        s_W += (distances[grouping_tri == i] ** 2).sum() / group_sizes[i]
+
+    s_A = s_T - s_W
+    numerator = s_A - (num_groups - 1) * s_W / (sample_size - num_groups)
+    denominator = s_T + s_W / (sample_size - num_groups)
+
+    return numerator / denominator
