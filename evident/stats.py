@@ -173,7 +173,7 @@ def calculate_rm_anova_power(
 def _calculate_permanova_omsq(
     sample_size: int,
     num_groups: int,
-    tri_idxs: np.ndarray,
+    tri_idxs: tuple,
     distances: np.ndarray,
     grouping: np.ndarray
 ) -> float:
@@ -182,6 +182,24 @@ def _calculate_permanova_omsq(
     Code adapted from scikit-bio.
     Calculation adapted from
         https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4514928/
+
+    :param sample_size: Number of samples
+    :type sample_size: int
+
+    :param num_groups: Number of factors
+    :type num_groups: int
+
+    :param_tri_idxs: Indices for upper-triangle
+    :type tri_idxs: (np.ndarray, np.ndarray)
+
+    :param distances: Vector of distances (condensed)
+    :type distances: np.ndarray
+
+    :param grouping: Mapping of groups
+    :type grouping: np.ndarray
+
+    :returns: Omega squared value
+    :rtype: float
     """
     group_sizes = np.bincount(grouping)
     s_T = (distances ** 2).sum() / sample_size

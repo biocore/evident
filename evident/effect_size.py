@@ -1,10 +1,12 @@
+from functools import partial
 from itertools import combinations, chain
+from warnings import warn
 
 from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 
-from evident.data_handler import _BaseDataHandler
+from evident.data_handler import _BaseDataHandler, MultivariateDataHandler
 from evident.stats import calculate_cohens_d
 from evident.results import EffectSizeResults, PairwiseEffectSizeResult
 
@@ -12,6 +14,7 @@ from evident.results import EffectSizeResults, PairwiseEffectSizeResult
 def effect_size_by_category(
     data_handler: _BaseDataHandler,
     columns: list = None,
+    permanova: bool = False,
     bootstrap_iterations: int = None,
     n_jobs: int = None,
     parallel_args: dict = None
@@ -50,11 +53,23 @@ def effect_size_by_category(
     _check_columns(columns)
     dh = data_handler
 
+    if permanova:
+        if not isinstance(dh, MultivariateDataHandler):
+            warn_msg = (
+                "Argument 'permanova' is only valid for multivariate data. "
+                "Ignoring for provided univariate data."
+            )
+            warn(warn_msg, UserWarning)
+        else:
+            func = partial(dh.calculate_effect_size, permanova=True)
+    else:
+        func = dh.calculate_effect_size
+
     if parallel_args is None:
         parallel_args = dict()
 
     results = Parallel(n_jobs=n_jobs, **parallel_args)(
-        delayed(dh.calculate_effect_size)(
+        delayed(func)(
             col, bootstrap_iterations=bootstrap_iterations
         )
         for col in columns

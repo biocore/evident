@@ -8,7 +8,6 @@ from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 from skbio import DistanceMatrix
-from skbio.stats.distance._base import _preprocess_input
 from statsmodels.stats.power import tt_ind_solve_power, FTestAnovaPower
 
 from . import _exceptions as exc
@@ -17,7 +16,7 @@ from .results import (PowerAnalysisResult, PowerAnalysisResults,
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev, calculate_eta_squared,
                     calculate_rm_anova_power, _calculate_permanova_omsq)
-from .utils import _listify, _check_sample_overlap
+from .utils import _listify, _check_sample_overlap, _preprocess_input
 
 
 class _BaseDataHandler(ABC):
@@ -755,9 +754,14 @@ class MultivariateDataHandler(_BaseDataHandler):
                 parallel_args=parallel_args
             )
 
+        # Convert here so bootstrap is easier for duplicate samples
+        # As dm.filter doesn't allow duplicates
+        dm = self.data.to_data_frame()
+        distances = self.data.condensed_form()
+
         sample_size, num_groups, grouping, tri_idxs, distances = (
             _preprocess_input(
-                self.data,
+                dm,
                 self.metadata,
                 column
             )
@@ -773,5 +777,44 @@ class MultivariateDataHandler(_BaseDataHandler):
         metric = "omega_squared"
         result = EffectSizeResult(effect_size=es, metric=metric, column=column,
                                   difference=None)
+
+        if bootstrap_iterations is None:
+            return result
+
+        metadata_iter = iter(
+            self.metadata.sample(frac=1, replace=True)
+            for i in range(bootstrap_iterations)
+        )
+
+        def _bootstrap(metadata):
+            sample_size, num_groups, grouping, tri_idxs, distances = (
+                _preprocess_input(
+                    dm,
+                    metadata,
+                    column
+                )
+            )
+
+            boot_es = _calculate_permanova_omsq(
+                sample_size,
+                num_groups,
+                tri_idxs,
+                distances,
+                grouping
+            )
+            return boot_es
+
+        if parallel_args is None:
+            parallel_args = dict()
+
+        boot = Parallel(n_jobs=n_jobs, **parallel_args)(
+            delayed(_bootstrap)(metadata)
+            for metadata in metadata_iter
+        )
+
+        lower, upper = np.quantile(boot, [0.025, 0.975])
+        result.lower_es = lower
+        result.upper_es = upper
+        result.iterations = bootstrap_iterations
 
         return result
