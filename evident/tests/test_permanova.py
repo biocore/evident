@@ -13,6 +13,8 @@ def test_permanova(beta_mock):
     exp_2 = 0.081102
     np.testing.assert_approx_equal(exp_2, result_2.effect_size, 5)
 
+    assert 0
+
 
 def test_boot_permanova(beta_mock):
     mdh = beta_mock
@@ -65,3 +67,28 @@ def test_permanova_es_by_cat_boot(beta_mock):
     np.testing.assert_approx_equal(exp_2, res_2["effect_size"], 5)
     assert res_2.upper_es.item() > res_2.effect_size.item()
     assert res_2.lower_es.item() < res_2.effect_size.item()
+
+
+def test_permanova2(beta_mock):
+    mdh = beta_mock
+    result_1 = mdh.calculate_effect_size("sex", permanova=True)
+    print(result_1)
+
+    from skbio.stats.distance import permanova
+    result_2 = permanova(mdh.data, mdh.metadata, "sex")
+    print(result_2)
+
+    assert 0
+
+
+def test_permanova3(beta_mock):
+    mdh = beta_mock
+    # result_1 = mdh.calculate_effect_size("sex", permanova=True)
+    result_1 = mdh.power_analysis_permanova(
+        "cd_behavior",
+        total_observations=30,
+        alpha=0.01
+    )
+    print(result_1)
+
+    assert 0
