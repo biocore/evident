@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from functools import lru_cache, partial
+from functools import lru_cache, partial, reduce
 from itertools import product
 from typing import Callable, Iterable, Union
 from warnings import warn
@@ -759,23 +759,14 @@ class MultivariateDataHandler(_BaseDataHandler):
         dm = self.data.to_data_frame()
         distances = self.data.condensed_form()
 
-        sample_size, num_groups, grouping, tri_idxs, distances = (
-            _preprocess_input(
-                dm,
-                self.metadata,
-                column
-            )
-        )
-
-        es = _calculate_permanova_omsq(
-            sample_size,
-            num_groups,
-            tri_idxs,
-            distances,
-            grouping
+        pnova_vals = self._calculate_permanova_vals(
+            dm,
+            column,
+            self.metadata,
         )
         metric = "omega_squared"
-        result = EffectSizeResult(effect_size=es, metric=metric, column=column,
+        result = EffectSizeResult(effect_size=pnova_vals["omega_sq"],
+                                  metric=metric, column=column,
                                   difference=None)
 
         if bootstrap_iterations is None:
@@ -787,22 +778,12 @@ class MultivariateDataHandler(_BaseDataHandler):
         )
 
         def _bootstrap(metadata):
-            sample_size, num_groups, grouping, tri_idxs, distances = (
-                _preprocess_input(
-                    dm,
-                    metadata,
-                    column
-                )
+            boot_es = self._calculate_permanova_vals(
+                dm,
+                metadata,
+                column,
             )
-
-            boot_es = _calculate_permanova_omsq(
-                sample_size,
-                num_groups,
-                tri_idxs,
-                distances,
-                grouping
-            )
-            return boot_es
+            return boot_es["omega_sq"]
 
         if parallel_args is None:
             parallel_args = dict()
@@ -818,3 +799,83 @@ class MultivariateDataHandler(_BaseDataHandler):
         result.iterations = bootstrap_iterations
 
         return result
+
+    def _calculate_permanova_vals(
+        self,
+        distance_matrix: pd.DataFrame,
+        column: str,
+        metadata: pd.DataFrame,
+    ):
+        sample_size, num_groups, grouping, tri_idxs, distances = (
+            _preprocess_input(
+                distance_matrix,
+                metadata,
+                column
+            )
+        )
+        results = _calculate_permanova_omsq(sample_size, num_groups, tri_idxs,
+                                            distances, grouping)
+        return results
+
+    def power_analysis_permanova(
+        self,
+        column: str,
+        total_observations: int,
+        alpha: float = 0.05,
+        permutations: int = 999
+    ):
+        num_groups = len(self.metadata[column].unique())
+        group_size = total_observations // num_groups
+
+        # In case total_observations is not evenly divisible
+        total_observations = num_groups * group_size
+        print(total_observations, group_size, num_groups)
+
+        full_samples = []
+        strt_samples = []
+        for i in range(permutations):
+            boot_metadata_full = (
+                self.metadata
+                .sample(n=total_observations, replace=True)
+            )
+            _vals = [
+                [x for i in range(group_size)]
+                for x in range(num_groups)
+            ]
+            _vals = np.concatenate(_vals)
+            boot_metadata_full["_vals"] = _vals
+
+            boot_metadata_strat = (
+                self.metadata
+                .groupby(column)
+                .sample(n=group_size, replace=True)
+            )
+
+            sample_size, num_groups, grouping, tri_idxs, distances = (
+                _preprocess_input(
+                    self.data.to_data_frame(),
+                    boot_metadata_full,
+                    "_vals"
+                )
+            )
+            results = _calculate_permanova_omsq(sample_size, num_groups, tri_idxs,
+                                                distances, grouping)
+            full_samples.append(results["omega_sq"])
+
+            sample_size, num_groups, grouping, tri_idxs, distances = (
+                _preprocess_input(
+                    self.data.to_data_frame(),
+                    boot_metadata_strat,
+                    column
+                )
+            )
+            results = _calculate_permanova_omsq(sample_size, num_groups, tri_idxs,
+                                                distances, grouping)
+            strt_samples.append(results["omega_sq"])
+
+        crit_pct = 1 - alpha
+        h0_crit_value = np.quantile(full_samples, crit_pct)
+        h1_gt_h0_crit, = np.where(strt_samples > h0_crit_value)
+        h1_power = len(h1_gt_h0_crit) / permutations
+
+        return h1_power
