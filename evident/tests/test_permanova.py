@@ -13,8 +13,6 @@ def test_permanova(beta_mock):
     exp_2 = 0.081102
     np.testing.assert_approx_equal(exp_2, result_2.effect_size, 5)
 
-    assert 0
-
 
 def test_boot_permanova(beta_mock):
     mdh = beta_mock
@@ -74,11 +72,11 @@ def test_permanova_power(beta_mock):
     result_1 = mdh.power_analysis_permanova(
         "sex",
         total_observations=[25, 50, 75, 100],
-        alpha=0.01,
+        alpha=[0.01, 0.05],
         permutations=999
     ).to_dataframe()
 
-    power_vec = result_1["effect_size"].to_list()
-    power_vec_sorted = sorted(power_vec)
-
-    assert power_vec == power_vec_sorted
+    for alpha, _df in result_1.groupby("alpha"):
+        power_vec = _df["effect_size"].to_list()
+        power_vec_sorted = sorted(power_vec)
+        assert power_vec == power_vec_sorted

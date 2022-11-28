@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from functools import lru_cache, partial, reduce
+from functools import lru_cache, partial
 from itertools import product
 from typing import Callable, Iterable, Union
 from warnings import warn
@@ -23,7 +23,7 @@ class _BaseDataHandler(ABC):
     """Abstract class for handling data and metadata."""
     def __init__(
         self,
-        data = None,
+        data=None,
         metadata: pd.DataFrame = None,
         max_levels_per_category: int = 5,
         min_count_per_level: int = 3,
@@ -762,7 +762,6 @@ class MultivariateDataHandler(_BaseDataHandler):
         # Convert here so bootstrap is easier for duplicate samples
         # As dm.filter doesn't allow duplicates
         dm = self.data.to_data_frame()
-        distances = self.data.condensed_form()
 
         pnova_vals = self._calculate_permanova_vals(
             dm,
@@ -785,8 +784,8 @@ class MultivariateDataHandler(_BaseDataHandler):
         def _bootstrap(metadata):
             boot_es = self._calculate_permanova_vals(
                 dm,
-                metadata,
                 column,
+                metadata
             )
             return boot_es["omega_sq"]
 
@@ -866,34 +865,20 @@ class MultivariateDataHandler(_BaseDataHandler):
             difference=None,
         )
 
+        param_combos = product(_listify(alpha), _listify(total_observations))
         pa_results = []
-        if isinstance(total_observations, int):
-            power = self._power_analysis_permanova_single(
-                column,
-                num_groups,
-                total_observations,
-                alpha,
-                permutations
-            )
-            pa_result = PowerAnalysisResult(
-                alpha=alpha,
-                total_observations=total_observations,
-                power=power,
-                effect_size_result=es_result
-            )
-            return pa_result
 
-        for obs in total_observations:
+        for _alpha, _obs in param_combos:
             power = self._power_analysis_permanova_single(
                 column,
                 num_groups,
-                obs,
-                alpha,
+                _obs,
+                _alpha,
                 permutations
             )
             pa_result = PowerAnalysisResult(
-                alpha=alpha,
-                total_observations=obs,
+                alpha=_alpha,
+                total_observations=_obs,
                 power=power,
                 effect_size_result=es_result
             )
@@ -901,7 +886,6 @@ class MultivariateDataHandler(_BaseDataHandler):
 
         pa_results = PowerAnalysisResults(pa_results)
         return pa_results
-
 
     def _power_analysis_permanova_single(
         self,
@@ -945,8 +929,8 @@ class MultivariateDataHandler(_BaseDataHandler):
                     "_vals"
                 )
             )
-            results = _calculate_permanova_omsq(sample_size, num_groups, tri_idxs,
-                                                distances, grouping)
+            results = _calculate_permanova_omsq(sample_size, num_groups,
+                                                tri_idxs, distances, grouping)
             full_samples.append(results["omega_sq"])
 
             sample_size, num_groups, grouping, tri_idxs, distances = (
@@ -956,8 +940,8 @@ class MultivariateDataHandler(_BaseDataHandler):
                     column
                 )
             )
-            results = _calculate_permanova_omsq(sample_size, num_groups, tri_idxs,
-                                                distances, grouping)
+            results = _calculate_permanova_omsq(sample_size, num_groups,
+                                                tri_idxs, distances, grouping)
             strt_samples.append(results["omega_sq"])
 
         crit_pct = 1 - alpha

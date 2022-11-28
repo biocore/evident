@@ -65,6 +65,28 @@ def multivariate_power_analysis(
     return res
 
 
+def multivariate_power_analysis_permanova(
+    data: DistanceMatrix,
+    sample_metadata: Metadata,
+    group_column: str,
+    total_observations: list = None,
+    max_levels_per_category: int = 5,
+    min_count_per_level: int = 3,
+    alpha: list = [0.05],
+    permutations: int = 999
+) -> pd.DataFrame:
+    sample_metadata = sample_metadata.to_dataframe()
+    mdh = MultivariateDataHandler(data, sample_metadata,
+                                  max_levels_per_category, min_count_per_level)
+    res = mdh.power_analysis_permanova(
+        group_column,
+        total_observations,
+        alpha,
+        permutations
+    )
+    return res.to_dataframe()
+
+
 def _power_analysis(data, metadata, group_column, handler,
                     max_levels_per_category, min_count_per_level, **kwargs):
     dh = handler(data, metadata, max_levels_per_category,

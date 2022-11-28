@@ -11,6 +11,7 @@ from ._type import PowerAnalysisResults, EffectSizeResults
 from ._methods import (univariate_power_analysis, multivariate_power_analysis,
                        univariate_effect_size_by_category,
                        multivariate_effect_size_by_category,
+                       multivariate_power_analysis_permanova,
                        univariate_power_analysis_repeated_measures)
 from ._visualizers import plot_power_curve, visualize_results
 
@@ -235,6 +236,34 @@ plugin.methods.register_function(
     description=(
         "Calculate multivariate data difference effect size of multiple "
         "categories."
+    )
+)
+
+perm_pa_param_descs = {
+    k: v for k, v in PA_PARAM_DESCS.items()
+    if k not in ["power", "difference"]
+}
+perm_pa_param_descs["permutations"] = (
+    "Bootstrap permutations to use when calculating power."
+)
+plugin.methods.register_function(
+    function=multivariate_power_analysis_permanova,
+    inputs={"data": DistanceMatrix},
+    input_descriptions={"data": "Multivariate data distance matrix"},
+    parameters={
+        "sample_metadata": Metadata,
+        "group_column": Str,
+        "max_levels_per_category": Int,
+        "min_count_per_level": Int,
+        "permutations": Int,
+        "alpha": List[Probability],
+        "total_observations": List[Int],
+    },
+    parameter_descriptions=perm_pa_param_descs,
+    outputs=[("power_analysis_results", PowerAnalysisResults)],
+    name="Multivariate PERMANOVA power analysis.",
+    description=(
+        "Calculate multivariate PERMANOVA power analysis using bootstrapping."
     )
 )
 
