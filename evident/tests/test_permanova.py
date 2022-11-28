@@ -69,26 +69,16 @@ def test_permanova_es_by_cat_boot(beta_mock):
     assert res_2.lower_es.item() < res_2.effect_size.item()
 
 
-def test_permanova2(beta_mock):
+def test_permanova_power(beta_mock):
     mdh = beta_mock
-    result_1 = mdh.calculate_effect_size("sex", permanova=True)
-    print(result_1)
-
-    from skbio.stats.distance import permanova
-    result_2 = permanova(mdh.data, mdh.metadata, "sex")
-    print(result_2)
-
-    assert 0
-
-
-def test_permanova3(beta_mock):
-    mdh = beta_mock
-    # result_1 = mdh.calculate_effect_size("sex", permanova=True)
     result_1 = mdh.power_analysis_permanova(
-        "cd_behavior",
-        total_observations=30,
-        alpha=0.01
-    )
-    print(result_1)
+        "sex",
+        total_observations=[25, 50, 75, 100],
+        alpha=0.01,
+        permutations=999
+    ).to_dataframe()
 
-    assert 0
+    power_vec = result_1["effect_size"].to_list()
+    power_vec_sorted = sorted(power_vec)
+
+    assert power_vec == power_vec_sorted

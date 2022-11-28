@@ -252,6 +252,11 @@ class _BaseDataHandler(ABC):
         :param column: Name of column in metadata to consider
         :type column: str
 
+        :param total_observations: Total number of observations in experimental
+            design. Samples are assumed to be equally distributed among
+            column levels. Can be either int or sequence of ints.
+        :type total_observations: int or np.array[int]
+
         :param difference: Difference between groups to consider, defaults to
             None. If provided, uses the pooled standard deviation as the
             denominator to calculate the effect size with the difference as the
@@ -820,19 +825,101 @@ class MultivariateDataHandler(_BaseDataHandler):
     def power_analysis_permanova(
         self,
         column: str,
-        total_observations: int,
+        total_observations: Union[int, Iterable[int]],
         alpha: float = 0.05,
         permutations: int = 999
-    ):
+    ) -> Union[PowerAnalysisResult, PowerAnalysisResults]:
+        """Calculate power of PERMANOVA test using bootstrapping.
+
+        Creates a null distribution and alternative distribution corresponding
+            to resampling with replacement with (1) no regard for class labels
+            and (2) within class labels respectively. Power is calculated by
+            evaluating percentage of permutations in which the null hypothesis
+            is falsely rejected.
+
+        :param column: Column containing categories
+        :type column: str
+
+        :param total_observations: Total number of observations in experimental
+            design. Samples are assumed to be equally distributed among
+            column levels. Can be either int or sequence of ints.
+        :type total_observations: int or np.array[int]
+
+        :param alpha: Significant level to use in power calculation, defaults
+            to None. Can be either float or sequence of floats.
+        :type alpha: float or np.array[float]
+
+        :param permutations: Number of bootstrap permutations to perform.
+        :type permuations: int
+        """
         num_groups = len(self.metadata[column].unique())
+
+        omega_sq = self._calculate_permanova_vals(
+            self.data.to_data_frame(),
+            column,
+            self.metadata
+        )["omega_sq"]
+        es_result = EffectSizeResult(
+            effect_size=omega_sq,
+            metric="omega_sq",
+            column=column,
+            difference=None,
+        )
+
+        pa_results = []
+        if isinstance(total_observations, int):
+            power = self._power_analysis_permanova_single(
+                column,
+                num_groups,
+                total_observations,
+                alpha,
+                permutations
+            )
+            pa_result = PowerAnalysisResult(
+                alpha=alpha,
+                total_observations=total_observations,
+                power=power,
+                effect_size_result=es_result
+            )
+            return pa_result
+
+        for obs in total_observations:
+            power = self._power_analysis_permanova_single(
+                column,
+                num_groups,
+                obs,
+                alpha,
+                permutations
+            )
+            pa_result = PowerAnalysisResult(
+                alpha=alpha,
+                total_observations=obs,
+                power=power,
+                effect_size_result=es_result
+            )
+            pa_results.append(pa_result)
+
+        pa_results = PowerAnalysisResults(pa_results)
+        return pa_results
+
+
+    def _power_analysis_permanova_single(
+        self,
+        column: str,
+        num_groups: int,
+        total_observations: int,
+        alpha: float,
+        permutations: int
+    ) -> float:
         group_size = total_observations // num_groups
 
         # In case total_observations is not evenly divisible
         total_observations = num_groups * group_size
-        print(total_observations, group_size, num_groups)
 
-        full_samples = []
-        strt_samples = []
+        condensed_distances = self.data.to_data_frame()
+
+        full_samples = []  # Naive resampling (null)
+        strt_samples = []  # Within-group resampling (alternative)
         for i in range(permutations):
             boot_metadata_full = (
                 self.metadata
@@ -853,7 +940,7 @@ class MultivariateDataHandler(_BaseDataHandler):
 
             sample_size, num_groups, grouping, tri_idxs, distances = (
                 _preprocess_input(
-                    self.data.to_data_frame(),
+                    condensed_distances,
                     boot_metadata_full,
                     "_vals"
                 )
@@ -864,7 +951,7 @@ class MultivariateDataHandler(_BaseDataHandler):
 
             sample_size, num_groups, grouping, tri_idxs, distances = (
                 _preprocess_input(
-                    self.data.to_data_frame(),
+                    condensed_distances,
                     boot_metadata_strat,
                     column
                 )
