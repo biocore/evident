@@ -23,7 +23,7 @@ class _BaseDataHandler(ABC):
     """Abstract class for handling data and metadata."""
     def __init__(
         self,
-        data=None,
+        data = None,
         metadata: pd.DataFrame = None,
         max_levels_per_category: int = 5,
         min_count_per_level: int = 3,
