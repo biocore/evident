@@ -897,9 +897,8 @@ class MultivariateDataHandler(_BaseDataHandler):
         alpha: float,
         permutations: int
     ) -> float:
-        group_size = total_observations // num_groups
-
         # In case total_observations is not evenly divisible
+        group_size = round(total_observations / num_groups)
         total_observations = num_groups * group_size
 
         condensed_distances = self.data.to_data_frame()
