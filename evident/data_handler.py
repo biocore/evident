@@ -16,7 +16,8 @@ from .results import (PowerAnalysisResult, PowerAnalysisResults,
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev, calculate_eta_squared,
                     calculate_rm_anova_power, _calculate_permanova_omsq)
-from .utils import _listify, _check_sample_overlap, _preprocess_input
+from .utils import (_listify, _check_sample_overlap, _preprocess_input,
+                    _check_total_observations)
 
 
 class _BaseDataHandler(ABC):
@@ -283,6 +284,9 @@ class _BaseDataHandler(ABC):
         none_args = [x is None for x in args]
         if sum(none_args) != 1:  # Check to make sure exactly one arg is None
             raise exc.WrongPowerArguments(*args)
+        if total_observations is not None:
+            for obs in _listify(total_observations):
+                _check_total_observations(self.metadata, column, obs)
 
         # If any of the arguments are iterable, perform power analysis on
         #     all possible argument combinations. Otherwise, perform a single
@@ -897,6 +901,8 @@ class MultivariateDataHandler(_BaseDataHandler):
         alpha: float,
         permutations: int
     ) -> float:
+        _check_total_observations(self.metadata, column, total_observations)
+
         # In case total_observations is not evenly divisible
         group_size = round(total_observations / num_groups)
         total_observations = num_groups * group_size

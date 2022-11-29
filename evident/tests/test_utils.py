@@ -38,3 +38,32 @@ def test_check_sample_overlap():
         "common to both."
     )
     assert warn_info[0].message.args[0] == exp_msg
+
+
+def test_check_total_obs():
+    md = pd.DataFrame.from_dict({
+        "a": [1, 2, 3, 4, 5, 6],
+        "b": ["A", "A", "B", "B", "C", "C"]
+    })
+    md.index = [f"S{i+1}" for i in range(len(md))]
+
+    args = (md, "b")
+
+    utils._check_total_observations(*args, 10.0)
+    with pytest.raises(ValueError) as exc_info:
+        utils._check_total_observations(*args, 3.5)
+    exp_err_msg = "total_observations must be an integer!"
+    assert str(exc_info.value) == exp_err_msg
+
+    with pytest.raises(ValueError) as exc_info:
+        utils._check_total_observations(*args, 2)
+    exp_err_msg = (
+        "total_observations must be greater than the number of groups!"
+    )
+    assert str(exc_info.value) == exp_err_msg
+
+    exp_err_msg = "total_observations must be positive!"
+    with pytest.raises(ValueError) as exc_info:
+        for i in [0, -1]:
+            utils._check_total_observations(*args, i)
+            assert str(exc_info.value) == exp_err_msg

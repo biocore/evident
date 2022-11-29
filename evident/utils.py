@@ -47,3 +47,22 @@ def _preprocess_input(
     distances = squareform(dm.values, force="tovector", checks=False)
 
     return sample_size, num_groups, grouping, tri_idxs, distances
+
+
+def _check_total_observations(
+    metadata: pd.DataFrame,
+    column: str,
+    total_observations: int
+):
+    if not isinstance(total_observations, int):
+        if total_observations % 1 != 0:  # 10.0 should work - check fraction
+            raise ValueError("total_observations must be an integer!")
+    if total_observations <= 0:
+        raise ValueError("total_observations must be positive!")
+
+    num_groups = len(metadata[column].unique())
+
+    if total_observations < num_groups:
+        raise ValueError(
+            "total_observations must be greater than the number of groups!"
+        )
