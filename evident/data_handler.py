@@ -859,6 +859,7 @@ class MultivariateDataHandler(_BaseDataHandler):
         """
         num_groups = len(self.metadata[column].unique())
 
+        # Convert DM to DataFrame to handle duplicate IDs
         omega_sq = self._calculate_permanova_vals(
             self.data.to_data_frame(),
             column,
