@@ -810,6 +810,8 @@ class MultivariateDataHandler(_BaseDataHandler):
         column: str,
         metadata: pd.DataFrame,
     ):
+        # Take distance_matrix as DataFrame so we can have repeated IDs that
+        # arise from subsampling with replacement.
         sample_size, num_groups, grouping, tri_idxs, distances = (
             _preprocess_input(
                 distance_matrix,

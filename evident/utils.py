@@ -30,14 +30,10 @@ def _preprocess_input(
     metadata: pd.DataFrame,
     column: str
 ):
-    """Compute intermediate results not affected by permutations.
-    These intermediate results can be computed a single time for efficiency,
-    regardless of grouping vector permutations (i.e., when calculating the
-    p-value). These intermediate results are used by both ANOSIM and PERMANOVA.
-    Also validates and normalizes input (e.g., converting ``DataFrame`` column
-    into grouping vector).
+    """Compute intermediate PERMANOVA results not affected by permutations.
 
-    Adapted from scikit-bio
+    This function is adapted from scikit-bio under the BSD-3 license.
+    Original code: https://tinyurl.com/3bwu8h9n
     """
     dm = distance_matrix.loc[metadata.index, metadata.index]
     grouping = metadata[column].to_list()

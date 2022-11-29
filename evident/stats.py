@@ -211,8 +211,14 @@ def _calculate_permanova_omsq(
 ) -> float:
     """Calculate omega-squared for PERMANOVA.
 
-    Code adapted from scikit-bio.
-    Calculation adapted from
+    The code used for calculating PERMANOVA effect sizes is adapted from
+        the scikit-bio package (BSD-3). We modify this code because their
+        implementation does not expose the intermediate sums-of-squares
+        values necessary to calculate omega-squared.
+
+    Original scikit-bio code: https://tinyurl.com/4c82f4u7
+
+    Effect size calculation adapted from
         https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4514928/
 
     :param sample_size: Number of samples
