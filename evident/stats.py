@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from scipy import stats
-from skbio.stats.distance._permanova import _index_combinations
 
 
 def calculate_pooled_stdev(*arrays) -> float:
@@ -251,3 +250,14 @@ def _calculate_permanova_omsq(
         "omega_sq": numerator / denominator
     }
     return results
+
+
+def _index_combinations(indices):
+    """Cartesian product of arrays.
+
+    Reproduced from scikit-bio under BSD-3 since this function is
+    deprecated in future versions (need here for older Q2 compatibility).
+
+    Original code: https://tinyurl.com/bdzb6jut
+    """
+    return np.tile(indices, len(indices)), np.repeat(indices, len(indices))
