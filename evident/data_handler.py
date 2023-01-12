@@ -857,7 +857,7 @@ class MultivariateDataHandler(_BaseDataHandler):
         :param permutations: Number of bootstrap permutations to perform.
         :type permuations: int
         """
-        num_groups = len(self.metadata[column].unique())
+        num_groups = len(self.metadata[column].dropna().unique())
 
         # Convert DM to DataFrame to handle duplicate IDs
         omega_sq = self._calculate_permanova_vals(
