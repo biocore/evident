@@ -15,8 +15,9 @@ from .results import (PowerAnalysisResult, PowerAnalysisResults,
                       RepeatedMeasuresPowerAnalysisResult, EffectSizeResult)
 from .stats import (calculate_cohens_d, calculate_cohens_f,
                     calculate_pooled_stdev, calculate_eta_squared,
-                    calculate_rm_anova_power)
-from .utils import _listify, _check_sample_overlap
+                    calculate_rm_anova_power, _calculate_permanova_omsq)
+from .utils import (_listify, _check_sample_overlap, _preprocess_input,
+                    _check_total_observations)
 
 
 class _BaseDataHandler(ABC):
@@ -252,6 +253,11 @@ class _BaseDataHandler(ABC):
         :param column: Name of column in metadata to consider
         :type column: str
 
+        :param total_observations: Total number of observations in experimental
+            design. Samples are assumed to be equally distributed among
+            column levels. Can be either int or sequence of ints.
+        :type total_observations: int or np.array[int]
+
         :param difference: Difference between groups to consider, defaults to
             None. If provided, uses the pooled standard deviation as the
             denominator to calculate the effect size with the difference as the
@@ -278,6 +284,9 @@ class _BaseDataHandler(ABC):
         none_args = [x is None for x in args]
         if sum(none_args) != 1:  # Check to make sure exactly one arg is None
             raise exc.WrongPowerArguments(*args)
+        if total_observations is not None:
+            for obs in _listify(total_observations):
+                _check_total_observations(self.metadata, column, obs)
 
         # If any of the arguments are iterable, perform power analysis on
         #     all possible argument combinations. Otherwise, perform a single
@@ -735,3 +744,217 @@ class MultivariateDataHandler(_BaseDataHandler):
     def subset_values(self, ids: list) -> np.array:
         """Get multivariate data differences among provided samples."""
         return np.array(self.data.filter(ids).to_series().values)
+
+    def calculate_effect_size(
+        self,
+        column: str,
+        difference: float = None,
+        permanova: bool = False,
+        bootstrap_iterations: int = None,
+        n_jobs: int = 1,
+        parallel_args: dict = None
+    ):
+        if not permanova:
+            return super().calculate_effect_size(
+                column=column,
+                difference=difference,
+                bootstrap_iterations=bootstrap_iterations,
+                n_jobs=n_jobs,
+                parallel_args=parallel_args
+            )
+
+        # Convert here so bootstrap is easier for duplicate samples
+        # As dm.filter doesn't allow duplicates
+        dm = self.data.to_data_frame()
+
+        pnova_vals = self._calculate_permanova_vals(
+            dm,
+            column,
+            self.metadata,
+        )
+        metric = "omega_squared"
+        result = EffectSizeResult(effect_size=pnova_vals["omega_sq"],
+                                  metric=metric, column=column,
+                                  difference=None)
+
+        if bootstrap_iterations is None:
+            return result
+
+        metadata_iter = iter(
+            self.metadata.sample(frac=1, replace=True)
+            for i in range(bootstrap_iterations)
+        )
+
+        def _bootstrap(metadata):
+            boot_es = self._calculate_permanova_vals(
+                dm,
+                column,
+                metadata
+            )
+            return boot_es["omega_sq"]
+
+        if parallel_args is None:
+            parallel_args = dict()
+
+        boot = Parallel(n_jobs=n_jobs, **parallel_args)(
+            delayed(_bootstrap)(metadata)
+            for metadata in metadata_iter
+        )
+
+        lower, upper = np.quantile(boot, [0.025, 0.975])
+        result.lower_es = lower
+        result.upper_es = upper
+        result.iterations = bootstrap_iterations
+
+        return result
+
+    def _calculate_permanova_vals(
+        self,
+        distance_matrix: pd.DataFrame,
+        column: str,
+        metadata: pd.DataFrame,
+    ):
+        # Take distance_matrix as DataFrame so we can have repeated IDs that
+        # arise from subsampling with replacement.
+        sample_size, num_groups, grouping, tri_idxs, distances = (
+            _preprocess_input(
+                distance_matrix,
+                metadata,
+                column
+            )
+        )
+        results = _calculate_permanova_omsq(sample_size, num_groups, tri_idxs,
+                                            distances, grouping)
+        return results
+
+    def power_analysis_permanova(
+        self,
+        column: str,
+        total_observations: Union[int, Iterable[int]],
+        alpha: float = 0.05,
+        permutations: int = 999
+    ) -> Union[PowerAnalysisResult, PowerAnalysisResults]:
+        """Calculate power of PERMANOVA test using bootstrapping.
+
+        Creates a null distribution and alternative distribution corresponding
+            to resampling with replacement with (1) no regard for class labels
+            and (2) within class labels respectively. Power is calculated by
+            evaluating percentage of permutations in which the null hypothesis
+            is falsely rejected.
+
+        :param column: Column containing categories
+        :type column: str
+
+        :param total_observations: Total number of observations in experimental
+            design. Samples are assumed to be equally distributed among
+            column levels. Can be either int or sequence of ints.
+        :type total_observations: int or np.array[int]
+
+        :param alpha: Significant level to use in power calculation, defaults
+            to None. Can be either float or sequence of floats.
+        :type alpha: float or np.array[float]
+
+        :param permutations: Number of bootstrap permutations to perform.
+        :type permuations: int
+        """
+        num_groups = len(self.metadata[column].dropna().unique())
+
+        # Convert DM to DataFrame to handle duplicate IDs
+        omega_sq = self._calculate_permanova_vals(
+            self.data.to_data_frame(),
+            column,
+            self.metadata
+        )["omega_sq"]
+        es_result = EffectSizeResult(
+            effect_size=omega_sq,
+            metric="omega_sq",
+            column=column,
+            difference=None,
+        )
+
+        param_combos = product(_listify(alpha), _listify(total_observations))
+        pa_results = []
+
+        for _alpha, _obs in param_combos:
+            power = self._power_analysis_permanova_single(
+                column,
+                num_groups,
+                _obs,
+                _alpha,
+                permutations
+            )
+            pa_result = PowerAnalysisResult(
+                alpha=_alpha,
+                total_observations=_obs,
+                power=power,
+                effect_size_result=es_result
+            )
+            pa_results.append(pa_result)
+
+        pa_results = PowerAnalysisResults(pa_results)
+        return pa_results
+
+    def _power_analysis_permanova_single(
+        self,
+        column: str,
+        num_groups: int,
+        total_observations: int,
+        alpha: float,
+        permutations: int
+    ) -> float:
+        _check_total_observations(self.metadata, column, total_observations)
+
+        # In case total_observations is not evenly divisible
+        group_size = round(total_observations / num_groups)
+        total_observations = num_groups * group_size
+
+        condensed_distances = self.data.to_data_frame()
+
+        full_samples = []  # Naive resampling (null)
+        strt_samples = []  # Within-group resampling (alternative)
+        for i in range(permutations):
+            boot_metadata_full = (
+                self.metadata
+                .sample(n=total_observations, replace=True)
+            )
+            _vals = [
+                [x for i in range(group_size)]
+                for x in range(num_groups)
+            ]
+            _vals = np.concatenate(_vals)
+            boot_metadata_full["_vals"] = _vals
+
+            boot_metadata_strat = (
+                self.metadata
+                .groupby(column)
+                .sample(n=group_size, replace=True)
+            )
+
+            sample_size, num_groups, grouping, tri_idxs, distances = (
+                _preprocess_input(
+                    condensed_distances,
+                    boot_metadata_full,
+                    "_vals"
+                )
+            )
+            results = _calculate_permanova_omsq(sample_size, num_groups,
+                                                tri_idxs, distances, grouping)
+            full_samples.append(results["omega_sq"])
+
+            sample_size, num_groups, grouping, tri_idxs, distances = (
+                _preprocess_input(
+                    condensed_distances,
+                    boot_metadata_strat,
+                    column
+                )
+            )
+            results = _calculate_permanova_omsq(sample_size, num_groups,
+                                                tri_idxs, distances, grouping)
+            strt_samples.append(results["omega_sq"])
+
+        crit_pct = 1 - alpha
+        h0_crit_value = np.quantile(full_samples, crit_pct)
+        h1_gt_h0_crit, = np.where(strt_samples > h0_crit_value)
+        h1_power = len(h1_gt_h0_crit) / permutations
+
+        return h1_power

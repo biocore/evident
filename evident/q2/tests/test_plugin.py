@@ -117,6 +117,42 @@ def test_multivariate_effect_size_by_cat(beta_artifact, metadata):
     assert (pairwise.columns == exp_cols).all()
 
 
+def test_multivariate_effect_size_by_cat_perm(beta_artifact, metadata):
+    non_pairwise = evident.methods.multivariate_effect_size_by_category(
+        data=beta_artifact,
+        sample_metadata=metadata,
+        permanova=True,
+        group_columns=["classification", "cd_behavior"]
+    ).effect_size_results.view(pd.DataFrame)
+    assert (non_pairwise["metric"] == "omega_squared").all()
+    assert non_pairwise.shape == (2, 3)
+    assert (non_pairwise.columns == ["effect_size", "metric", "column"]).all()
+
+
+def test_multivariate_power_analysis_perm(beta_artifact, metadata):
+    pa_results = evident.methods.multivariate_power_analysis_permanova(
+        data=beta_artifact,
+        sample_metadata=metadata,
+        group_column="sex",
+        total_observations=[25, 50, 75],
+    ).power_analysis_results.view(pd.DataFrame)
+    assert (pa_results["metric"] == "omega_sq").all()
+    assert pa_results.shape == (3, 6)
+    exp_cols = [
+        "alpha",
+        "total_observations",
+        "power",
+        "effect_size",
+        "metric",
+        "column"
+    ]
+    assert (pa_results.columns == exp_cols).all()
+    assert (pa_results["total_observations"] == [25, 50, 75]).all()
+    es = pa_results["power"].to_list()
+    sorted_es = sorted(es)
+    assert es == sorted_es
+
+
 def test_univariate_effect_size_by_cat_parallel(alpha_artifact,
                                                 metadata_w_data):
     non_pairwise = evident.methods.univariate_effect_size_by_category(

@@ -167,3 +167,97 @@ def calculate_rm_anova_power(
     q = stats.f.ppf(1 - threshold, dm, ds)
     power = stats.ncf.sf(q, dm, ds, location)
     return power
+
+
+def _calculate_ss(
+    sample_size: int,
+    num_groups: int,
+    tri_idxs: tuple,
+    distances: np.ndarray,
+    grouping: np.ndarray
+) -> (float, float, float):
+    """Calculate sums of squares components."""
+    group_sizes = np.bincount(grouping)
+    s_T = (distances ** 2).sum() / sample_size
+    grouping_matrix = -1 * np.ones((sample_size, sample_size), dtype=int)
+
+    for group_idx in range(num_groups):
+        within_indices = _index_combinations(
+            np.where(grouping == group_idx)[0]
+        )
+        grouping_matrix[within_indices] = group_idx
+
+    # Extract upper triangle (in same order as distances were extracted
+    # from full distance matrix).
+    grouping_tri = grouping_matrix[tri_idxs]
+
+    # Calculate s_W for each group, accounting for different group sizes.
+    s_W = 0
+    for i in range(num_groups):
+        s_W += (distances[grouping_tri == i] ** 2).sum() / group_sizes[i]
+
+    s_A = s_T - s_W
+
+    return s_W, s_A, s_T
+
+
+def _calculate_permanova_omsq(
+    sample_size: int,
+    num_groups: int,
+    tri_idxs: tuple,
+    distances: np.ndarray,
+    grouping: np.ndarray
+) -> float:
+    """Calculate omega-squared for PERMANOVA.
+
+    The code used for calculating PERMANOVA effect sizes is adapted from
+        the scikit-bio package (BSD-3). We modify this code because their
+        implementation does not expose the intermediate sums-of-squares
+        values necessary to calculate omega-squared.
+
+    Original scikit-bio code: https://tinyurl.com/4c82f4u7
+
+    Effect size calculation adapted from
+        https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4514928/
+
+    :param sample_size: Number of samples
+    :type sample_size: int
+
+    :param num_groups: Number of factors
+    :type num_groups: int
+
+    :param_tri_idxs: Indices for upper-triangle
+    :type tri_idxs: (np.ndarray, np.ndarray)
+
+    :param distances: Vector of distances (condensed)
+    :type distances: np.ndarray
+
+    :param grouping: Mapping of groups
+    :type grouping: np.ndarray
+
+    :returns: Omega squared value
+    :rtype: float
+    """
+    s_W, s_A, s_T = _calculate_ss(sample_size, num_groups, tri_idxs,
+                                  distances, grouping)
+    numerator = s_A - (num_groups - 1) * s_W / (sample_size - num_groups)
+    denominator = s_T + s_W / (sample_size - num_groups)
+
+    results = {
+        "s_W": s_W,
+        "s_A": s_A,
+        "s_T": s_T,
+        "omega_sq": numerator / denominator
+    }
+    return results
+
+
+def _index_combinations(indices):
+    """Cartesian product of arrays.
+
+    Reproduced from scikit-bio under BSD-3 since this function is
+    deprecated in future versions (need here for older Q2 compatibility).
+
+    Original code: https://tinyurl.com/bdzb6jut
+    """
+    return np.tile(indices, len(indices)), np.repeat(indices, len(indices))
