@@ -162,6 +162,19 @@ def test_multivariate_effect_size_by_cat_parallel(beta_artifact, metadata):
     assert (pairwise.columns == exp_cols).all()
 
 
+def test_bootstrap(alpha_artifact, metadata_w_data):
+    non_pairwise = evident.methods.univariate_effect_size_by_category(
+        sample_metadata=metadata_w_data,
+        data_column="alpha_div",
+        group_columns=["classification", "cd_behavior"],
+        n_jobs=2,
+        bootstrap_iterations=100
+    ).effect_size_results.view(pd.DataFrame)
+    for i, row in non_pairwise.iterrows():
+        assert row["lower_es"] < row["effect_size"] < row["upper_es"]
+        assert row["iterations"] == 100
+
+
 def test_visualize_es_results(es_results):
     evident.visualizers.visualize_results(results=es_results)
 
@@ -271,4 +284,36 @@ def test_univariate_bad_data(alpha_artifact, metadata, metadata_w_data):
             power=[0.8]
         )
     exp_err_msg = "Values in data_column must be numeric."
+    assert str(exc_info.value) == exp_err_msg
+
+
+def test_no_max_levels(metadata_w_data):
+    col_es_metric_map = {
+        "classification": "cohens_d",
+        "host_subject_id": "cohens_f",
+        "cd_behavior": "cohens_f"
+    }
+    res = evident.methods.univariate_effect_size_by_category(
+        sample_metadata=metadata_w_data,
+        data_column="alpha_div",
+        group_columns=list(col_es_metric_map.keys()),
+        max_levels_per_category=-1
+    ).effect_size_results.view(pd.DataFrame)
+
+    for k, v in col_es_metric_map.items():
+        row = res[res["column"] == k]
+        assert row["metric"].item() == v
+
+
+@pytest.mark.parametrize("val", [1, 0, -1])
+def test_bad_min_count(metadata_w_data, val):
+    with pytest.raises(ValueError) as exc_info:
+        evident.methods.univariate_effect_size_by_category(
+            sample_metadata=metadata_w_data,
+            data_column="alpha_div",
+            group_columns=["classification", "cd_behavior"],
+            min_count_per_level=val
+        )
+
+    exp_err_msg = "min_count_per_level must be > 1."
     assert str(exc_info.value) == exp_err_msg

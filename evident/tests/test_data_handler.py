@@ -9,7 +9,7 @@ from evident.data_handler import (UnivariateDataHandler,
                                   MultivariateDataHandler)
 import evident._exceptions as exc
 
-na_values = ["not applicable"]
+na_values = ["not applicable", "missing: not provided"]
 
 
 class TestAlphaDiv:
@@ -23,6 +23,34 @@ class TestAlphaDiv:
         a = UnivariateDataHandler(df["faith_pd"], df)
         assert a.metadata.shape == (220, len(exp_cols))
         assert a.data.shape == (220, )
+
+    def test_no_max_levels(self):
+        fname = os.path.join(os.path.dirname(__file__), "data/metadata.tsv")
+        df = pd.read_table(fname, sep="\t", index_col=0, na_values=na_values)
+        obj_cols = [
+            col for col in df.columns
+            if df[col].dtype == np.dtype("object")
+        ]
+        col_level_counts = np.array(
+            [len(df[col].dropna().unique()) for col in df]
+        )
+        non_singletons = df.columns[np.where(col_level_counts > 1)]
+        exp_cols = set(non_singletons).intersection(obj_cols)
+        a = UnivariateDataHandler(df["faith_pd"], df,
+                                  max_levels_per_category=-1)
+        assert set(a.metadata.columns) == exp_cols
+        assert a.data.shape == (220, )
+
+    @pytest.mark.parametrize("val", [1, 0, -1])
+    def test_bad_min_count(self, val):
+        fname = os.path.join(os.path.dirname(__file__), "data/metadata.tsv")
+        df = pd.read_table(fname, sep="\t", index_col=0, na_values=na_values)
+
+        with pytest.raises(ValueError) as exc_info:
+            UnivariateDataHandler(df["faith_pd"], df,
+                                  min_count_per_level=val)
+        exp_err_msg = "min_count_per_level must be > 1."
+        assert str(exc_info.value) == exp_err_msg
 
     def test_subset_alpha_values(self, alpha_mock):
         md = alpha_mock.metadata
@@ -189,7 +217,7 @@ class TestPower:
         exp_power = 0.775732
         np.testing.assert_almost_equal(calc_power, exp_power, decimal=6)
 
-    def test_beta_power_power_t(self, beta_mock):
+    def test_beta_power_t(self, beta_mock):
         calc_power = beta_mock.power_analysis(
             "classification",
             total_observations=40,
