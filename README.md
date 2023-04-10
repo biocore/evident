@@ -261,21 +261,6 @@ qiime evident univariate-effect-size-by-category \
     --o-effect-size-results alpha_effect_sizes.qza
 ```
 
-## Bootstrapped Effect Sizes
-
-Evident also allows calculation of bootstrapped effect sizes intervals.
-By providing the `bootstrap_iterations` parameter, you can shuffle the metadata with replacement and calculate the 2.5% and 97.5% quantiles.
-
-```python
-adh.calculate_effect_size("classification", bootstrap_iterations=1000)
-```
-
-This will return a result that includes `lower_es`, `upper_es`, and `iterations`.
-
-```
-EffectSizeResult(effect_size=1.0311033633149995, metric='cohens_d', column='classification', difference=None, lower_es=0.7960440465305569, upper_es=1.2986795949364291, iterations=1000)
-```
-
 ## Help with Evident
 
 If you encounter a bug in Evident, please post a GitHub issue and we will get to it as soon as we can.
