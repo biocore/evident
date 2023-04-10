@@ -258,53 +258,6 @@ qiime evident univariate-effect-size-by-category \
     --o-effect-size-results alpha_effect_sizes.qza
 ```
 
-## Repeated Measures
-
-Evident supports limited analysis of repeated measures.
-When your dataset has repeated measures, you can calculate `eta_squared` for univariate data.
-Note that multivariate data is not supported for repeated measures analysis.
-Power analysis for repeated measures implements a repeated measures ANOVA.
-Additionally, when performing power analysis *only* power can be calculated (in contrast to `UnivariateDataHandler` and `MultivariateDataHandler` where alpha, significance, and observations can be calculated).
-This power analysis assumes that the number of measurements per group is equal.
-
-With Python:
-
-```python
-from evident.data_handler import RepeatedMeasuresUnivariateDataHandler
-
-rmadh = RepeatedMeasuresUnivariateDataHandler(
-    faith_pd,
-    metadata,
-    individual_id_column="subject",
-)
-effect_size_result = rmadh.calculate_effect_size(state_column="group")
-power_analysis_result = rmadh.power_analysis(
-    state_column="group",
-    subjects=[2, 4, 5],
-    measurements=10,
-    alpha=0.05,
-    correlation=[-0.5, 0, 0.5],
-    epsilon=0.1
-)
-```
-
-With QIIME 2:
-
-```
-qiime evident univariate-power-analysis-repeated-measures \
-    --m-sample-metadata-file metadata.qza \
-    --m-sample-metadata-file faith_pd.qza \
-    --p-data-column faith_pd \
-    --p-individual-id-column subject \
-    --p-state-column group \
-    --p-subjects 2 4 5 \
-    --p-measurements 10 \
-    --p-alpha 0.05 \
-    --p-correlation -0.5 0 0.5 \
-    --p-epsilon 0.1 \
-    --o-power-analysis-results power.qza
-```
-
 ## Help with Evident
 
 If you encounter a bug in Evident, please post a GitHub issue and we will get to it as soon as we can.
